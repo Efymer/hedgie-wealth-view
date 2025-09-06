@@ -1,0 +1,138 @@
+import React from "react";
+import { Coins, ExternalLink, TrendingUp, TrendingDown } from "lucide-react";
+
+interface Token {
+  id: string;
+  symbol: string;
+  name: string;
+  balance: number;
+  decimals: number;
+  usdValue: number;
+  priceChange24h?: number;
+}
+
+interface TokenListProps {
+  tokens: Token[];
+  isLoading?: boolean;
+}
+
+export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false }) => {
+  const formatBalance = (balance: number, decimals: number) => {
+    const actualBalance = balance / Math.pow(10, decimals);
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 6,
+    }).format(actualBalance);
+  };
+
+  const formatUSD = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(value);
+  };
+
+  const formatPercentage = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'percent',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value / 100);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
+        <div className="flex items-center gap-2 mb-6">
+          <Coins className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Token Holdings</h2>
+        </div>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="shimmer glass-card rounded-lg p-4 h-16"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (tokens.length === 0) {
+    return (
+      <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
+        <div className="flex items-center gap-2 mb-6">
+          <Coins className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Token Holdings</h2>
+        </div>
+        <div className="text-center py-8">
+          <Coins className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">No tokens found for this account</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
+      <div className="flex items-center gap-2 mb-6">
+        <Coins className="h-5 w-5 text-primary" />
+        <h2 className="text-xl font-semibold">Token Holdings</h2>
+        <span className="ml-auto text-sm text-muted-foreground">
+          {tokens.length} {tokens.length === 1 ? 'token' : 'tokens'}
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        {tokens.map((token) => (
+          <div
+            key={token.id}
+            className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <span className="text-xs font-bold text-primary">
+                    {token.symbol.slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{token.symbol}</span>
+                    <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">{token.name}</p>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="font-semibold">
+                      {formatBalance(token.balance, token.decimals)} {token.symbol}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatUSD(token.usdValue)}
+                    </p>
+                  </div>
+                  {token.priceChange24h !== undefined && (
+                    <div className={`flex items-center gap-1 ${
+                      token.priceChange24h >= 0 ? 'text-success' : 'text-destructive'
+                    }`}>
+                      {token.priceChange24h >= 0 ? (
+                        <TrendingUp className="h-3 w-3" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3" />
+                      )}
+                      <span className="text-xs font-medium">
+                        {formatPercentage(Math.abs(token.priceChange24h))}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
