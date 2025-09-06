@@ -6,53 +6,53 @@
 
 @layer base {
   :root {
-    /* Crypto/Fintech Color Palette */
-    --background: 220 25% 6%;
-    --foreground: 210 20% 98%;
+    /* Modern Light Fintech Color Palette */
+    --background: 210 25% 97%;
+    --foreground: 215 25% 15%;
 
-    --card: 220 25% 8%;
-    --card-foreground: 210 20% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
 
-    --popover: 220 25% 8%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
 
-    --primary: 247 84% 57%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 200 98% 39%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 25% 12%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 210 40% 94%;
+    --secondary-foreground: 215 25% 15%;
 
-    --muted: 220 25% 10%;
-    --muted-foreground: 210 15% 65%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 268 84% 68%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 173 80% 40%;
+    --accent-foreground: 0 0% 100%;
 
     --success: 142 76% 36%;
-    --success-foreground: 210 20% 98%;
+    --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 220 25% 6%;
+    --warning-foreground: 215 25% 15%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 25% 15%;
-    --input: 220 25% 12%;
-    --ring: 247 84% 57%;
+    --border: 210 40% 92%;
+    --input: 0 0% 100%;
+    --ring: 200 98% 39%;
 
     --radius: 0.75rem;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(247 84% 57%), hsl(268 84% 68%));
-    --gradient-secondary: linear-gradient(135deg, hsl(220 25% 8%), hsl(220 25% 12%));
-    --gradient-hero: linear-gradient(135deg, hsl(220 25% 6%), hsl(247 84% 57% / 0.1));
-    --gradient-glass: linear-gradient(135deg, hsl(220 25% 15% / 0.8), hsl(220 25% 8% / 0.9));
+    /* Modern Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(200 98% 39%), hsl(173 80% 40%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 100%), hsl(210 40% 96%));
+    --gradient-hero: linear-gradient(135deg, hsl(210 25% 97%), hsl(200 98% 39% / 0.05));
+    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.9), hsl(210 40% 96% / 0.8));
 
     /* Shadows */
-    --shadow-primary: 0 10px 40px hsl(247 84% 57% / 0.3);
-    --shadow-glass: 0 8px 32px hsl(220 25% 0% / 0.3);
-    --shadow-card: 0 4px 20px hsl(220 25% 0% / 0.2);
+    --shadow-primary: 0 10px 40px hsl(200 98% 39% / 0.2);
+    --shadow-glass: 0 8px 32px hsl(215 25% 15% / 0.08);
+    --shadow-card: 0 4px 20px hsl(215 25% 15% / 0.06);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
