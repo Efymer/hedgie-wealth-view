@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { AccountSearch } from "./AccountSearch";
 import { AccountBalance } from "./AccountBalance";
 import { TokenList } from "./TokenList";
+import { TransactionHistory } from "./TransactionHistory";
+import { NetWorthChart } from "./NetWorthChart";
+import { Watchlist } from "./Watchlist";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock data for demonstration
@@ -107,9 +110,14 @@ export const HederaExplorer: React.FC = () => {
               hbarBalance={accountData.hbarBalance}
               usdValue={accountData.usdValue}
             />
+            <NetWorthChart />
             <TokenList tokens={accountData.tokens} isLoading={isLoading} />
+            <TransactionHistory accountId={accountData.accountId} transactions={[]} />
           </div>
         )}
+
+        {/* Watchlist - Always visible */}
+        <Watchlist />
 
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground mt-16">
