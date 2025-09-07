@@ -5,6 +5,7 @@ import { TokenList } from "./TokenList";
 import { TransactionHistory } from "./TransactionHistory";
 import { NetWorthChart } from "./NetWorthChart";
 import { Watchlist } from "./Watchlist";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock data for demonstration
@@ -110,14 +111,33 @@ export const HederaExplorer: React.FC = () => {
               hbarBalance={accountData.hbarBalance}
               usdValue={accountData.usdValue}
             />
-            <NetWorthChart />
-            <TokenList tokens={accountData.tokens} isLoading={isLoading} />
-            <TransactionHistory accountId={accountData.accountId} transactions={[]} />
+            
+            <Tabs defaultValue="portfolio" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+                <TabsTrigger value="networth">Net Worth</TabsTrigger>
+                <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="portfolio" className="mt-6">
+                <TokenList tokens={accountData.tokens} isLoading={isLoading} />
+              </TabsContent>
+              
+              <TabsContent value="networth" className="mt-6">
+                <NetWorthChart />
+              </TabsContent>
+              
+              <TabsContent value="transactions" className="mt-6">
+                <TransactionHistory accountId={accountData.accountId} transactions={[]} />
+              </TabsContent>
+              
+              <TabsContent value="watchlist" className="mt-6">
+                <Watchlist />
+              </TabsContent>
+            </Tabs>
           </div>
         )}
-
-        {/* Watchlist - Always visible */}
-        <Watchlist />
 
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground mt-16">
