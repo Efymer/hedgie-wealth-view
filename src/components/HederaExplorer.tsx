@@ -4,6 +4,7 @@ import { AccountBalance } from "./AccountBalance";
 import { TokenList } from "./TokenList";
 import { TransactionHistory } from "./TransactionHistory";
 import { Watchlist } from "./Watchlist";
+import { Breadcrumb } from "./Breadcrumb";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -86,9 +87,19 @@ export const HederaExplorer: React.FC = () => {
     }
   };
 
+  const breadcrumbItems = !accountData 
+    ? [{ label: "Home", active: true }]
+    : [
+        { label: "Home" },
+        { label: `Account ${accountData.accountId}`, active: true }
+      ];
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
+        {/* Breadcrumb */}
+        <Breadcrumb items={breadcrumbItems} />
+
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold gradient-text">
