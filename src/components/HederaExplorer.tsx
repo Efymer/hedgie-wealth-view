@@ -3,7 +3,6 @@ import { AccountSearch } from "./AccountSearch";
 import { AccountBalance } from "./AccountBalance";
 import { TokenList } from "./TokenList";
 import { TransactionHistory } from "./TransactionHistory";
-import { NetWorthChart } from "./NetWorthChart";
 import { Watchlist } from "./Watchlist";
 
 import { useToast } from "@/hooks/use-toast";
@@ -103,6 +102,9 @@ export const HederaExplorer: React.FC = () => {
         {/* Search */}
         <AccountSearch onSearch={handleSearch} isLoading={isLoading} />
 
+        {/* Watchlist - Always visible */}
+        <Watchlist />
+
         {/* Results */}
         {accountData && (
           <div className="space-y-6">
@@ -113,14 +115,8 @@ export const HederaExplorer: React.FC = () => {
             />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-6">
-                <TokenList tokens={accountData.tokens} isLoading={isLoading} />
-                <TransactionHistory accountId={accountData.accountId} transactions={[]} />
-              </div>
-              <div className="space-y-6">
-                <NetWorthChart />
-                <Watchlist />
-              </div>
+              <TokenList tokens={accountData.tokens} isLoading={isLoading} />
+              <TransactionHistory accountId={accountData.accountId} transactions={[]} />
             </div>
           </div>
         )}
