@@ -99,14 +99,14 @@ export const HederaExplorer: React.FC = () => {
           </p>
         </div>
 
-        {/* Search */}
-        <AccountSearch onSearch={handleSearch} isLoading={isLoading} />
-
-        {/* Watchlist - Always visible */}
-        <Watchlist />
-
-        {/* Results */}
-        {accountData && (
+        {!accountData ? (
+          /* Initial Screen - Search and Watchlist Only */
+          <div className="space-y-8">
+            <AccountSearch onSearch={handleSearch} isLoading={isLoading} />
+            <Watchlist />
+          </div>
+        ) : (
+          /* Search Results - Account Overview, Tokens, and Transactions */
           <div className="space-y-6">
             <AccountBalance
               accountId={accountData.accountId}
