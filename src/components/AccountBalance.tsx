@@ -1,5 +1,5 @@
 import React from "react";
-import { TrendingUp, Wallet, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, DollarSign } from "lucide-react";
 
 interface AccountBalanceProps {
   accountId: string;
@@ -66,11 +66,18 @@ export const AccountBalance: React.FC<AccountBalanceProps> = ({
               <p className="text-sm text-muted-foreground">HBAR</p>
               <span className="text-xs text-muted-foreground">•</span>
               <p className="text-sm text-muted-foreground">{formatUSD(hbarPrice)}</p>
-              <span className={`text-xs ${
+              <div className={`flex items-center gap-1 text-xs ${
                 hbarChange24h >= 0 ? 'text-success' : 'text-destructive'
               }`}>
-                {hbarChange24h >= 0 ? '+' : ''}{formatChange(hbarChange24h)}
-              </span>
+                {hbarChange24h >= 0 ? (
+                  <TrendingUp className="h-3 w-3" />
+                ) : (
+                  <TrendingDown className="h-3 w-3" />
+                )}
+                <span>
+                  {hbarChange24h >= 0 ? '+' : ''}{formatChange(hbarChange24h)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
