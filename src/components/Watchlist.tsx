@@ -201,12 +201,24 @@ export const Watchlist: React.FC<WatchlistProps> = ({
             placeholder="0.0.123456"
             value={newAddress}
             onChange={(e) => setNewAddress(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddItem();
+              }
+            }}
             className="flex-1"
           />
           <Input
             placeholder="Account name"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddItem();
+              }
+            }}
             className="flex-1"
           />
           <Button onClick={handleAddItem} className="px-4">
