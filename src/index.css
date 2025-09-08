@@ -6,21 +6,21 @@
 
 @layer base {
   :root {
-    /* Simple Dark Theme - Black/White with Green/Red accents */
+    /* Modern Dark Theme with Better Contrast */
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
 
     --primary: 0 0% 100%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
 
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 70%;
@@ -28,20 +28,37 @@
     --accent: 120 100% 50%;
     --accent-foreground: 0 0% 0%;
 
-    --success: 120 100% 40%;
+    --success: 120 60% 50%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 45 100% 50%;
+    --warning: 45 100% 60%;
     --warning-foreground: 0 0% 0%;
 
-    --destructive: 0 100% 50%;
+    --destructive: 0 75% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 20%;
-    --input: 0 0% 10%;
+    --input: 0 0% 12%;
     --ring: 0 0% 100%;
 
     --radius: 0.75rem;
+
+    /* Toast/Alert specific colors for better visibility */
+    --toast-background: 0 0% 10%;
+    --toast-foreground: 0 0% 95%;
+    --toast-border: 0 0% 25%;
+
+    --toast-success-background: 120 60% 15%;
+    --toast-success-foreground: 120 60% 90%;
+    --toast-success-border: 120 60% 35%;
+
+    --toast-warning-background: 45 100% 15%;
+    --toast-warning-foreground: 45 100% 90%;
+    --toast-warning-border: 45 100% 35%;
+
+    --toast-destructive-background: 0 75% 15%;
+    --toast-destructive-foreground: 0 75% 90%;
+    --toast-destructive-border: 0 75% 35%;
 
     /* Simple Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(0 0% 5%), hsl(0 0% 10%));
@@ -58,32 +75,32 @@
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-glass: backdrop-filter 0.3s ease;
 
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 100%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: 0 0% 100%;
   }
 
   .dark {
-    /* Same simple dark theme for .dark class */
+    /* Same improved dark theme for .dark class */
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
 
     --primary: 0 0% 100%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
 
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 70%;
@@ -91,18 +108,35 @@
     --accent: 120 100% 50%;
     --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 100% 50%;
+    --destructive: 0 75% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 20%;
-    --input: 0 0% 10%;
+    --input: 0 0% 12%;
     --ring: 0 0% 100%;
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 100%;
+
+    --toast-background: 0 0% 10%;
+    --toast-foreground: 0 0% 95%;
+    --toast-border: 0 0% 25%;
+
+    --toast-success-background: 120 60% 15%;
+    --toast-success-foreground: 120 60% 90%;
+    --toast-success-border: 120 60% 35%;
+
+    --toast-warning-background: 45 100% 15%;
+    --toast-warning-foreground: 45 100% 90%;
+    --toast-warning-border: 45 100% 35%;
+
+    --toast-destructive-background: 0 75% 15%;
+    --toast-destructive-foreground: 0 75% 90%;
+    --toast-destructive-border: 0 75% 35%;
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: 0 0% 100%;
   }
