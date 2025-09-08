@@ -5,12 +5,16 @@ interface AccountBalanceProps {
   accountId: string;
   hbarBalance: number;
   usdValue: number;
+  hbarPrice?: number;
+  hbarChange24h?: number;
 }
 
 export const AccountBalance: React.FC<AccountBalanceProps> = ({
   accountId,
   hbarBalance,
   usdValue,
+  hbarPrice = 0.063,
+  hbarChange24h = 2.85,
 }) => {
   const formatBalance = (balance: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -24,6 +28,14 @@ export const AccountBalance: React.FC<AccountBalanceProps> = ({
       style: 'currency',
       currency: 'USD',
     }).format(value);
+  };
+
+  const formatChange = (change: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'percent',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(change / 100);
   };
 
   return (
@@ -50,7 +62,16 @@ export const AccountBalance: React.FC<AccountBalanceProps> = ({
             <p className="text-3xl font-bold gradient-text">
               {formatBalance(hbarBalance)}
             </p>
-            <p className="text-sm text-muted-foreground">HBAR</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">HBAR</p>
+              <span className="text-xs text-muted-foreground">•</span>
+              <p className="text-sm text-muted-foreground">{formatUSD(hbarPrice)}</p>
+              <span className={`text-xs ${
+                hbarChange24h >= 0 ? 'text-success' : 'text-destructive'
+              }`}>
+                {hbarChange24h >= 0 ? '+' : ''}{formatChange(hbarChange24h)}
+              </span>
+            </div>
           </div>
         </div>
 

@@ -75,6 +75,83 @@ const mockTransactions: Transaction[] = [
     fee: 1.2,
     hash: "0x7890...qrst",
     status: "failed"
+  },
+  {
+    id: "6",
+    type: "transfer",
+    timestamp: "2024-01-13T08:30:00Z",
+    amount: 1500,
+    token: "HBAR",
+    counterparty: "0.0.345678",
+    fee: 0.03,
+    hash: "0xabcd...1234",
+    status: "success"
+  },
+  {
+    id: "7",
+    type: "swap",
+    timestamp: "2024-01-12T15:45:00Z",
+    amount: -2000,
+    token: "USDC",
+    counterparty: "HeliSwap",
+    fee: 3.2,
+    hash: "0xefgh...5678",
+    status: "success"
+  },
+  {
+    id: "8",
+    type: "contract_call",
+    timestamp: "2024-01-12T11:20:00Z",
+    amount: -25,
+    token: "HBAR",
+    counterparty: "0.0.567890",
+    fee: 0.08,
+    hash: "0xijkl...9012",
+    status: "success"
+  },
+  {
+    id: "9",
+    type: "transfer",
+    timestamp: "2024-01-11T19:15:00Z",
+    amount: 750,
+    token: "SAUCE",
+    counterparty: "0.0.234567",
+    fee: 0.01,
+    hash: "0xmnop...3456",
+    status: "success"
+  },
+  {
+    id: "10",
+    type: "swap",
+    timestamp: "2024-01-11T14:00:00Z",
+    amount: 300,
+    token: "HBARX",
+    counterparty: "SaucerSwap",
+    fee: 1.8,
+    hash: "0xqrst...7890",
+    status: "success"
+  },
+  {
+    id: "11",
+    type: "transfer",
+    timestamp: "2024-01-10T16:30:00Z",
+    amount: -850,
+    token: "HBAR",
+    counterparty: "0.0.654321",
+    fee: 0.04,
+    hash: "0xuvwx...abcd",
+    status: "success"
+  },
+  {
+    id: "12",
+    type: "contract_call",
+    timestamp: "2024-01-10T09:45:00Z",
+    amount: -75,
+    token: "HBAR",
+    counterparty: "0.0.987654",
+    fee: 0.12,
+    hash: "0xyzab...efgh",
+    status: "failed"
   }
 ];
 
