@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { AccountSearch } from "./AccountSearch";
 import { AccountBalance } from "./AccountBalance";
 import { TokenList } from "./TokenList";
@@ -14,9 +15,17 @@ import { tinybarToHBAR, useHBARBalance, useHBARPrice, useTokenPrices, useAccount
 // Live tokens will be sourced from Mirror Node + priced via HashPack
 
 export const HederaExplorer: React.FC = () => {
+  const navigate = useNavigate();
+  const params = useParams();
   const [accountId, setAccountId] = useState<string>("");
   const [hideZeroUsd, setHideZeroUsd] = useState<boolean>(true);
   const { toast } = useToast();
+
+  // Initialize accountId from route params and react to changes
+  useEffect(() => {
+    const id = (params?.accountId as string) || "";
+    setAccountId(id);
+  }, [params?.accountId]);
 
   const { data: balanceEntry, isLoading: isBalanceLoading, isError: isBalanceError } = useHBARBalance(accountId);
   const { data: priceData, isLoading: isPriceLoading, isError: isPriceError } = useHBARPrice();
@@ -68,7 +77,7 @@ export const HederaExplorer: React.FC = () => {
     return list;
   }, [tokenDetails, priceMap, hideZeroUsd]);
 
-console.log(tokens);
+  console.log(tokens);
 
   const usdValue = useMemo(() => {
     const tokensUsd = tokens.reduce((sum, t) => sum + (t.usdValue ?? 0), 0);
@@ -85,7 +94,7 @@ console.log(tokens);
       return;
     }
 
-    setAccountId(id);
+    navigate(`/account/${id}`);
     toast({
       title: "Account Found",
       description: `Successfully loaded data for ${id}`,
@@ -104,7 +113,7 @@ console.log(tokens);
       <div className="max-w-6xl mx-auto space-y-8">
         <Breadcrumb 
           items={breadcrumbItems} 
-          onHomeClick={() => setAccountId("")}
+          onHomeClick={() => navigate("/")}
         />
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold gradient-text">
@@ -118,7 +127,7 @@ console.log(tokens);
         {!accountId ? (
           <div className="space-y-8">
             <AccountSearch onSearch={handleSearch} isLoading={false} />
-            <Watchlist onSelect={(address) => setAccountId(address)} />
+            <Watchlist onSelect={(address) => navigate(`/account/${address}`)} />
           </div>
         ) : (
           <div className="space-y-6">
