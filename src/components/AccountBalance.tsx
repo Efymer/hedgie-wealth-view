@@ -1,5 +1,6 @@
 import React from "react";
 import { TrendingUp, TrendingDown, Wallet, DollarSign } from "lucide-react";
+import { formatAmount, formatUSD, formatPercent } from "@/lib/format";
 
 interface AccountBalanceProps {
   accountId: string;
@@ -13,31 +14,9 @@ export const AccountBalance: React.FC<AccountBalanceProps> = ({
   accountId,
   hbarBalance,
   usdValue,
-  hbarPrice = 0.063,
-  hbarChange24h = 2.85,
+  hbarPrice = 0,
+  hbarChange24h = 0,
 }) => {
-  const formatBalance = (balance: number) => {
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 6,
-    }).format(balance);
-  };
-
-  const formatUSD = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  };
-
-  const formatChange = (change: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'percent',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(change / 100);
-  };
-
   return (
     <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
       <div className="mb-6">
@@ -60,11 +39,9 @@ export const AccountBalance: React.FC<AccountBalanceProps> = ({
           </div>
           <div className="space-y-1">
             <p className="text-3xl font-bold gradient-text">
-              {formatBalance(hbarBalance)}
+              {formatAmount(hbarBalance, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
             </p>
             <div className="flex items-center gap-2">
-              <p className="text-sm text-muted-foreground">HBAR</p>
-              <span className="text-xs text-muted-foreground">•</span>
               <p className="text-sm text-muted-foreground">{formatUSD(hbarPrice)}</p>
               <div className={`flex items-center gap-1 text-xs ${
                 hbarChange24h >= 0 ? 'text-success' : 'text-destructive'
@@ -75,10 +52,13 @@ export const AccountBalance: React.FC<AccountBalanceProps> = ({
                   <TrendingDown className="h-3 w-3" />
                 )}
                 <span>
-                  {hbarChange24h >= 0 ? '+' : ''}{formatChange(hbarChange24h)}
+                  {hbarChange24h >= 0 ? '+' : ''}{formatPercent(hbarChange24h)}
                 </span>
               </div>
             </div>
+            <p className="text-sm text-muted-foreground">
+              ≈ {formatUSD(hbarBalance * hbarPrice)}
+            </p>
           </div>
         </div>
 

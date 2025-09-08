@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Star, StarOff, Trash2, Plus, Search, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useQueries } from "@tanstack/react-query";
+import { getHBARBalance, tinybarToHBAR } from "@/queries";
 
 interface WatchlistItem {
   id: string;
@@ -16,6 +18,7 @@ interface WatchlistItem {
 
 interface WatchlistProps {
   items?: WatchlistItem[];
+  onSelect?: (address: string) => void;
 }
 
 const mockWatchlistItems: WatchlistItem[] = [
@@ -70,7 +73,8 @@ const saveWatchlistToStorage = (items: WatchlistItem[]) => {
 };
 
 export const Watchlist: React.FC<WatchlistProps> = ({ 
-  items: initialItems 
+  items: initialItems,
+  onSelect,
 }) => {
   const [items, setItems] = useState<WatchlistItem[]>(() => 
     initialItems || loadWatchlistFromStorage()
@@ -78,6 +82,29 @@ export const Watchlist: React.FC<WatchlistProps> = ({
   const [newAddress, setNewAddress] = useState("");
   const [newName, setNewName] = useState("");
   const { toast } = useToast();
+
+  // Live HBAR balances for each watchlist address
+  const accountIds = useMemo(() => items.map((i) => i.address), [items]);
+
+  const balanceQueries = useQueries({
+    queries: accountIds.map((id) => ({
+      queryKey: ["hbar", "balance", id],
+      queryFn: () => getHBARBalance(id),
+      enabled: !!id,
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+    })),
+  });
+
+  const balancesMap = useMemo(() => {
+    const map = new Map<string, number>();
+    accountIds.forEach((id, idx) => {
+      const q = balanceQueries[idx];
+      const tiny = q?.data?.balance ?? 0;
+      map.set(id, tinybarToHBAR(tiny));
+    });
+    return map;
+  }, [accountIds, balanceQueries]);
 
   const handleAddItem = () => {
     if (!newAddress.trim() || !newName.trim()) {
@@ -200,7 +227,8 @@ export const Watchlist: React.FC<WatchlistProps> = ({
           items.map((item) => (
             <div
               key={item.id}
-              className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group"
+              className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group cursor-pointer"
+              onClick={() => onSelect?.(item.address)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -224,7 +252,7 @@ export const Watchlist: React.FC<WatchlistProps> = ({
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="font-semibold">
-                      {formatBalance(item.balance || 0)}
+                      {formatBalance(balancesMap.get(item.address) ?? 0)}
                     </p>
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
@@ -243,7 +271,7 @@ export const Watchlist: React.FC<WatchlistProps> = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRemoveItem(item.id)}
+                    onClick={(e) => { e.stopPropagation(); handleRemoveItem(item.id); }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />

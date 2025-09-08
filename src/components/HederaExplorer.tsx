@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { AccountSearch } from "./AccountSearch";
 import { AccountBalance } from "./AccountBalance";
 import { TokenList } from "./TokenList";
@@ -7,103 +7,105 @@ import { Watchlist } from "./Watchlist";
 import { Breadcrumb } from "./Breadcrumb";
 
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { tinybarToHBAR, useHBARBalance, useHBARPrice, useTokenPrices, useAccountTokenDetails, TokenPricesResponse } from "@/queries";
 
-// Mock data for demonstration
-const mockTokens = [
-  {
-    id: "0.0.456456",
-    symbol: "USDC",
-    name: "USD Coin",
-    balance: 1000000000, // 1000 USDC with 6 decimals
-    decimals: 6,
-    usdValue: 1000,
-    priceChange24h: 0.12,
-  },
-  {
-    id: "0.0.789789",
-    symbol: "SAUCE",
-    name: "SaucerSwap Token",
-    balance: 500000000000, // 500000 SAUCE with 6 decimals
-    decimals: 6,
-    usdValue: 2500,
-    priceChange24h: -2.45,
-  },
-  {
-    id: "0.0.123123",
-    symbol: "HBARX",
-    name: "Stader HBARX",
-    balance: 25000000000, // 250 HBARX with 8 decimals
-    decimals: 8,
-    usdValue: 850,
-    priceChange24h: 1.85,
-  },
-];
+// Live tokens will be sourced from Mirror Node + priced via HashPack
 
 export const HederaExplorer: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [accountData, setAccountData] = useState<{
-    accountId: string;
-    hbarBalance: number;
-    usdValue: number;
-    tokens: typeof mockTokens;
-  } | null>(null);
+  const [accountId, setAccountId] = useState<string>("");
+  const [hideZeroUsd, setHideZeroUsd] = useState<boolean>(true);
   const { toast } = useToast();
 
-  const handleSearch = async (accountId: string) => {
-    setIsLoading(true);
-    
-    try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Validate Hedera account ID format (basic validation)
-      if (!/^0\.0\.\d+$/.test(accountId)) {
-        throw new Error("Invalid Hedera account ID format");
-      }
+  const { data: balanceEntry, isLoading: isBalanceLoading, isError: isBalanceError } = useHBARBalance(accountId);
+  const { data: priceData, isLoading: isPriceLoading, isError: isPriceError } = useHBARPrice();
+  const { data: tokenPrices } = useTokenPrices(accountId);
+  const { data: tokenDetails, isLoading: isTokensLoading } = useAccountTokenDetails(accountId);
 
-      // Mock account data
-      const mockHbarBalance = 1250.75;
-      const mockUsdValue = mockHbarBalance * 0.063 + mockTokens.reduce((sum, token) => sum + token.usdValue, 0);
+  const hbarBalance = useMemo(() => tinybarToHBAR(balanceEntry?.balance ?? 0), [balanceEntry]);
+  const hbarPrice = priceData?.usd ?? 0.063;
+  const hbarChange24h = priceData?.usdChange24h ?? 0;
 
-      setAccountData({
-        accountId,
-        hbarBalance: mockHbarBalance,
-        usdValue: mockUsdValue,
-        tokens: mockTokens,
+  const priceMap = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!tokenPrices) return map;
+    const data = tokenPrices as TokenPricesResponse;
+    if (Array.isArray(data)) {
+      (data as Array<{ id?: string; token_id?: string; priceUsd?: number }>).forEach((row) => {
+        const id = row.id ?? row.token_id;
+        const price = typeof row.priceUsd === "number" ? row.priceUsd : 0;
+        if (id) map.set(id, price);
       });
-
-      toast({
-        title: "Account Found",
-        description: `Successfully loaded data for ${accountId}`,
+    } else if (typeof data === "object") {
+      // If the API ever returns an object map, prefer numeric values, expecting they represent USD price per token
+      Object.entries(data as Record<string, number>).forEach(([id, priceUsd]) => {
+        map.set(id, typeof priceUsd === "number" ? priceUsd : 0);
       });
-    } catch (error) {
+    }
+    return map;
+  }, [tokenPrices]);
+
+  const tokens = useMemo(() => {
+    const list = (tokenDetails ?? [])
+      .filter((t: { type?: string }) => t.type !== "NON_FUNGIBLE_UNIQUE")
+      .map((t) => {
+        const price = priceMap.get(t.token_id) ?? 0;
+        const actualBalance = t.decimals ? t.balance / Math.pow(10, t.decimals) : t.balance;
+        const usdValue = actualBalance * price;
+
+        return {
+          id: t.token_id,
+          symbol: t.symbol,
+          name: t.name,
+          balance: t.balance,
+          decimals: t.decimals,
+          usdValue,
+          priceUsd: price,
+        };
+      })
+      .filter((tk) => (hideZeroUsd ? tk.usdValue > 0.01 : true));
+    return list;
+  }, [tokenDetails, priceMap, hideZeroUsd]);
+
+console.log(tokens);
+
+  const usdValue = useMemo(() => {
+    const tokensUsd = tokens.reduce((sum, t) => sum + (t.usdValue ?? 0), 0);
+    return hbarBalance * hbarPrice + tokensUsd;
+  }, [hbarBalance, hbarPrice, tokens]);
+
+  const handleSearch = (id: string) => {
+    if (!/^0\.0\.\d+$/.test(id)) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to fetch account data",
+        description: "Invalid Hedera account ID format",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+      return;
     }
+
+    setAccountId(id);
+    toast({
+      title: "Account Found",
+      description: `Successfully loaded data for ${id}`,
+    });
   };
 
-  const breadcrumbItems = !accountData 
+  const breadcrumbItems = !accountId
     ? [{ label: "Home", active: true }]
     : [
         { label: "Home" },
-        { label: `Account ${accountData.accountId}`, active: true }
+        { label: `Account ${accountId}`, active: true }
       ];
 
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Breadcrumb */}
         <Breadcrumb 
           items={breadcrumbItems} 
-          onHomeClick={() => setAccountData(null)}
+          onHomeClick={() => setAccountId("")}
         />
-
-        {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold gradient-text">
             Hedera Explorer
@@ -113,25 +115,38 @@ export const HederaExplorer: React.FC = () => {
           </p>
         </div>
 
-        {!accountData ? (
-          /* Initial Screen - Search and Watchlist Only */
+        {!accountId ? (
           <div className="space-y-8">
-            <AccountSearch onSearch={handleSearch} isLoading={isLoading} />
-            <Watchlist />
+            <AccountSearch onSearch={handleSearch} isLoading={false} />
+            <Watchlist onSelect={(address) => setAccountId(address)} />
           </div>
         ) : (
-          /* Search Results - Account Overview, Tokens, and Transactions */
           <div className="space-y-6">
             <AccountBalance
-              accountId={accountData.accountId}
-              hbarBalance={accountData.hbarBalance}
-              usdValue={accountData.usdValue}
+              accountId={accountId}
+              hbarBalance={hbarBalance}
+              usdValue={usdValue}
+              hbarPrice={hbarPrice}
+              hbarChange24h={hbarChange24h}
             />
-            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <TokenList tokens={accountData.tokens} isLoading={isLoading} />
-              <TransactionHistory accountId={accountData.accountId} transactions={[]} />
+              <div className="space-y-3">
+                <div className="flex items-center justify-end">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="hide-zero">Hide $0.00 tokens</Label>
+                    <Switch id="hide-zero" checked={hideZeroUsd} onCheckedChange={setHideZeroUsd} />
+                  </div>
+                </div>
+                <TokenList tokens={tokens} isLoading={isBalanceLoading || isPriceLoading || isTokensLoading} />
+              </div>
+              <TransactionHistory accountId={accountId} transactions={[]} />
             </div>
+
+            {(isBalanceError || isPriceError) && (
+              <div className="text-sm text-destructive">
+                Failed to load live data. Please try again.
+              </div>
+            )}
           </div>
         )}
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { Coins, ExternalLink, TrendingUp, TrendingDown } from "lucide-react";
+import { formatTokenBalance, formatUSD, formatPercent, formatAmount, formatUSDWithDecimals } from "@/lib/format";
 
 interface Token {
   id: string;
@@ -8,6 +9,7 @@ interface Token {
   balance: number;
   decimals: number;
   usdValue: number;
+  priceUsd?: number;
   priceChange24h?: number;
 }
 
@@ -17,28 +19,6 @@ interface TokenListProps {
 }
 
 export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false }) => {
-  const formatBalance = (balance: number, decimals: number) => {
-    const actualBalance = balance / Math.pow(10, decimals);
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 6,
-    }).format(actualBalance);
-  };
-
-  const formatUSD = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  };
-
-  const formatPercentage = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'percent',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value / 100);
-  };
 
   if (isLoading) {
     return (
@@ -99,7 +79,11 @@ export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false 
                     <span className="font-semibold">{token.symbol}</span>
                     <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  <p className="text-sm text-muted-foreground">{token.name}</p>
+                  {typeof token.priceUsd === 'number' && (
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {formatUSDWithDecimals(token.priceUsd, token.decimals)}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -107,7 +91,7 @@ export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false 
                 <div className="flex items-center gap-3">
                   <div>
                     <p className="font-semibold">
-                      {formatBalance(token.balance, token.decimals)} {token.symbol}
+                      {formatAmount(token.balance / Math.pow(10, token.decimals), { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {formatUSD(token.usdValue)}
@@ -123,7 +107,7 @@ export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false 
                         <TrendingDown className="h-3 w-3" />
                       )}
                       <span className="text-xs font-medium">
-                        {formatPercentage(Math.abs(token.priceChange24h))}
+                        {formatPercent(Math.abs(token.priceChange24h))}
                       </span>
                     </div>
                   )}
