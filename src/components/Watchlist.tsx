@@ -250,7 +250,7 @@ export const Watchlist: React.FC<WatchlistProps> = ({
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <div className="text-right">
+                  {/* <div className="text-right">
                     <p className="font-semibold">
                       {formatBalance(balancesMap.get(item.address) ?? 0)}
                     </p>
@@ -266,7 +266,7 @@ export const Watchlist: React.FC<WatchlistProps> = ({
                         </span>
                       )}
                     </div>
-                  </div>
+                  </div> */}
                   
                   <Button
                     variant="ghost"
