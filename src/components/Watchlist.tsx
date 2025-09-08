@@ -6,10 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 
 interface WatchlistItem {
   id: string;
-  type: 'account' | 'token';
   address: string;
   name: string;
-  symbol?: string;
   balance?: number;
   value?: number;
   change24h?: number;
@@ -23,7 +21,6 @@ interface WatchlistProps {
 const mockWatchlistItems: WatchlistItem[] = [
   {
     id: "1",
-    type: "account",
     address: "0.0.123456",
     name: "Main Trading Account",
     balance: 1250.75,
@@ -32,19 +29,7 @@ const mockWatchlistItems: WatchlistItem[] = [
     addedAt: "2024-01-15T10:30:00Z"
   },
   {
-    id: "2", 
-    type: "token",
-    address: "0.0.456456",
-    name: "USD Coin",
-    symbol: "USDC",
-    balance: 1000,
-    value: 1000,
-    change24h: 0.02,
-    addedAt: "2024-01-14T15:20:00Z"
-  },
-  {
-    id: "3",
-    type: "account", 
+    id: "2",
     address: "0.0.789789",
     name: "DeFi Wallet",
     balance: 850.30,
@@ -53,22 +38,43 @@ const mockWatchlistItems: WatchlistItem[] = [
     addedAt: "2024-01-13T09:45:00Z"
   },
   {
-    id: "4",
-    type: "token",
-    address: "0.0.123123",
-    name: "SaucerSwap Token", 
-    symbol: "SAUCE",
-    balance: 500000,
-    value: 2500,
-    change24h: -3.45,
-    addedAt: "2024-01-12T14:10:00Z"
+    id: "3",
+    address: "0.0.345678",
+    name: "Savings Account",
+    balance: 2150.45,
+    value: 6890.12,
+    change24h: 4.75,
+    addedAt: "2024-01-12T16:20:00Z"
   }
 ];
 
+// localStorage utilities
+const WATCHLIST_STORAGE_KEY = 'hedera-explorer-watchlist';
+
+const loadWatchlistFromStorage = (): WatchlistItem[] => {
+  try {
+    const stored = localStorage.getItem(WATCHLIST_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : mockWatchlistItems;
+  } catch (error) {
+    console.warn('Failed to load watchlist from localStorage:', error);
+    return mockWatchlistItems;
+  }
+};
+
+const saveWatchlistToStorage = (items: WatchlistItem[]) => {
+  try {
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(items));
+  } catch (error) {
+    console.warn('Failed to save watchlist to localStorage:', error);
+  }
+};
+
 export const Watchlist: React.FC<WatchlistProps> = ({ 
-  items: initialItems = mockWatchlistItems 
+  items: initialItems 
 }) => {
-  const [items, setItems] = useState<WatchlistItem[]>(initialItems);
+  const [items, setItems] = useState<WatchlistItem[]>(() => 
+    initialItems || loadWatchlistFromStorage()
+  );
   const [newAddress, setNewAddress] = useState("");
   const [newName, setNewName] = useState("");
   const { toast } = useToast();
@@ -77,7 +83,17 @@ export const Watchlist: React.FC<WatchlistProps> = ({
     if (!newAddress.trim() || !newName.trim()) {
       toast({
         title: "Missing Information",
-        description: "Please enter both address and name",
+        description: "Please enter both account address and name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate Hedera account ID format
+    if (!/^0\.0\.\d+$/.test(newAddress.trim())) {
+      toast({
+        title: "Invalid Format",
+        description: "Please enter a valid Hedera account ID (e.g., 0.0.123456)",
         variant: "destructive"
       });
       return;
@@ -85,16 +101,17 @@ export const Watchlist: React.FC<WatchlistProps> = ({
 
     const newItem: WatchlistItem = {
       id: Date.now().toString(),
-      type: newAddress.includes('.') ? 'account' : 'token',
       address: newAddress.trim(),
       name: newName.trim(),
-      balance: Math.random() * 1000,
-      value: Math.random() * 5000,
-      change24h: (Math.random() - 0.5) * 10,
+      balance: Math.random() * 1000 + 500, // Random balance between 500-1500 HBAR
+      value: Math.random() * 5000 + 1000, // Random USD value between $1000-$6000
+      change24h: (Math.random() - 0.5) * 10, // Random change between -5% and +5%
       addedAt: new Date().toISOString()
     };
 
-    setItems([...items, newItem]);
+    const updatedItems = [...items, newItem];
+    setItems(updatedItems);
+    saveWatchlistToStorage(updatedItems);
     setNewAddress("");
     setNewName("");
     
@@ -106,7 +123,9 @@ export const Watchlist: React.FC<WatchlistProps> = ({
 
   const handleRemoveItem = (id: string) => {
     const item = items.find(item => item.id === id);
-    setItems(items.filter(item => item.id !== id));
+    const updatedItems = items.filter(item => item.id !== id);
+    setItems(updatedItems);
+    saveWatchlistToStorage(updatedItems);
     
     toast({
       title: "Removed from Watchlist",
@@ -121,12 +140,12 @@ export const Watchlist: React.FC<WatchlistProps> = ({
     }).format(value);
   };
 
-  const formatBalance = (balance: number, symbol?: string) => {
+  const formatBalance = (balance: number) => {
     const formatted = new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 6,
     }).format(balance);
-    return symbol ? `${formatted} ${symbol}` : `${formatted} HBAR`;
+    return `${formatted} HBAR`;
   };
 
   const formatChange = (change: number) => {
@@ -141,7 +160,7 @@ export const Watchlist: React.FC<WatchlistProps> = ({
     <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <Star className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-semibold">Watchlist</h2>
+        <h2 className="text-xl font-semibold">Account Watchlist</h2>
         <span className="ml-auto text-sm text-muted-foreground">
           {items.length} {items.length === 1 ? 'item' : 'items'}
         </span>
@@ -149,16 +168,16 @@ export const Watchlist: React.FC<WatchlistProps> = ({
 
       {/* Add New Item */}
       <div className="glass-card rounded-lg p-4 border border-border/30 mb-6">
-        <h3 className="text-sm font-medium mb-3">Add to Watchlist</h3>
+        <h3 className="text-sm font-medium mb-3">Add Account to Watchlist</h3>
         <div className="flex gap-3">
           <Input
-            placeholder="0.0.123456 or account name"
+            placeholder="0.0.123456"
             value={newAddress}
             onChange={(e) => setNewAddress(e.target.value)}
             className="flex-1"
           />
           <Input
-            placeholder="Display name"
+            placeholder="Account name"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className="flex-1"
@@ -174,8 +193,8 @@ export const Watchlist: React.FC<WatchlistProps> = ({
         {items.length === 0 ? (
           <div className="text-center py-8">
             <StarOff className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No items in your watchlist yet</p>
-            <p className="text-sm text-muted-foreground">Add accounts or tokens to track them</p>
+            <p className="text-muted-foreground">No accounts in your watchlist yet</p>
+            <p className="text-sm text-muted-foreground">Add Hedera accounts to track their balances</p>
           </div>
         ) : (
           items.map((item) => (
@@ -186,19 +205,13 @@ export const Watchlist: React.FC<WatchlistProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    {item.type === 'account' ? (
-                      <Star className="h-4 w-4 text-primary" />
-                    ) : (
-                      <span className="text-xs font-bold text-primary">
-                        {item.symbol?.slice(0, 2) || 'TK'}
-                      </span>
-                    )}
+                    <Star className="h-4 w-4 text-primary" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{item.name}</span>
                       <span className="px-2 py-1 rounded-full text-xs bg-secondary text-secondary-foreground">
-                        {item.type}
+                        account
                       </span>
                       <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
@@ -211,7 +224,7 @@ export const Watchlist: React.FC<WatchlistProps> = ({
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="font-semibold">
-                      {formatBalance(item.balance || 0, item.symbol)}
+                      {formatBalance(item.balance || 0)}
                     </p>
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
