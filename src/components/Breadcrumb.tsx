@@ -9,9 +9,10 @@ interface BreadcrumbItem {
 
 interface BreadcrumbProps {
   items: BreadcrumbItem[];
+  onHomeClick?: () => void;
 }
 
-export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
+export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, onHomeClick }) => {
   return (
     <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
       {items.map((item, index) => (
@@ -25,6 +26,11 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
                 ? "text-foreground font-medium"
                 : "text-muted-foreground hover:text-foreground cursor-pointer"
             }`}
+            onClick={() => {
+              if (item.label === "Home" && onHomeClick && !item.active) {
+                onHomeClick();
+              }
+            }}
           >
             {item.label}
           </span>

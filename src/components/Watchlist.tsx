@@ -231,7 +231,7 @@ export const Watchlist: React.FC<WatchlistProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveItem(item.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
