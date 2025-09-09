@@ -49,6 +49,10 @@ export const tinybarToHBAR = (tinybars: number | undefined | null): number => {
 type MirrorNodeAccount = {
   account: string;
   created_timestamp?: string;
+  // Staking-related fields (if present)
+  staked_node_id?: number | null;
+  staked_account_id?: string | null;
+  decline_reward?: boolean | null;
   [k: string]: unknown;
 };
 
@@ -356,5 +360,37 @@ export const useTokenPriceChanges = (enabled: boolean = true, network: "mainnet"
     queryFn: () => getTokenPriceChanges(network),
     enabled,
     staleTime: 60_000,
+  });
+};
+
+/**
+ * Network Nodes (Mirror Node)
+ */
+type MirrorNodeNode = {
+  node_id: number;
+  description?: string;
+  account_id?: string;
+  [k: string]: unknown;
+};
+
+type MirrorNodeNodesResponse = {
+  nodes: MirrorNodeNode[];
+  links?: { next?: string | null };
+};
+
+const getNetworkNodes = async (): Promise<MirrorNodeNode[]> => {
+  // Fetch up to 200 nodes; mainnet has far fewer
+  const url = `${MIRROR_NODE}/api/v1/network/nodes?limit=200`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return [];
+  const data = (await res.json()) as MirrorNodeNodesResponse;
+  return data?.nodes ?? [];
+};
+
+export const useNetworkNodes = () => {
+  return useQuery({
+    queryKey: ["network", "nodes"],
+    queryFn: getNetworkNodes,
+    staleTime: 10 * 60_000,
   });
 };
