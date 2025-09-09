@@ -1,6 +1,11 @@
 import React from "react";
 import { Coins, ExternalLink, TrendingUp, TrendingDown } from "lucide-react";
-import { formatTokenBalance, formatUSD, formatPercent, formatAmount, formatUSDWithDecimals } from "@/lib/format";
+import {
+  formatUSD,
+  formatPercent,
+  formatAmount,
+  formatUSDWithDecimals,
+} from "@/lib/format";
 
 interface Token {
   id: string;
@@ -18,8 +23,10 @@ interface TokenListProps {
   isLoading?: boolean;
 }
 
-export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false }) => {
-
+export const TokenList: React.FC<TokenListProps> = ({
+  tokens,
+  isLoading = false,
+}) => {
   if (isLoading) {
     return (
       <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
@@ -29,7 +36,10 @@ export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false 
         </div>
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="shimmer glass-card rounded-lg p-4 h-16"></div>
+            <div
+              key={i}
+              className="shimmer glass-card rounded-lg p-4 h-16"
+            ></div>
           ))}
         </div>
       </div>
@@ -45,7 +55,9 @@ export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false 
         </div>
         <div className="text-center py-8">
           <Coins className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No tokens found for this account</p>
+          <p className="text-muted-foreground">
+            No tokens found for this account
+          </p>
         </div>
       </div>
     );
@@ -57,7 +69,7 @@ export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false 
         <Coins className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">Token Holdings</h2>
         <span className="ml-auto text-sm text-muted-foreground">
-          {tokens.length} {tokens.length === 1 ? 'token' : 'tokens'}
+          {tokens.length} {tokens.length === 1 ? "token" : "tokens"}
         </span>
       </div>
 
@@ -79,7 +91,7 @@ export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false 
                     <span className="font-semibold">{token.symbol}</span>
                     <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  {typeof token.priceUsd === 'number' && (
+                  {typeof token.priceUsd === "number" && (
                     <p className="text-sm text-muted-foreground mt-0.5">
                       {formatUSDWithDecimals(token.priceUsd, token.decimals)}
                     </p>
@@ -91,16 +103,23 @@ export const TokenList: React.FC<TokenListProps> = ({ tokens, isLoading = false 
                 <div className="flex items-center gap-3">
                   <div>
                     <p className="font-semibold">
-                      {formatAmount(token.balance / Math.pow(10, token.decimals), { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                      {formatAmount(
+                        token.balance / Math.pow(10, token.decimals),
+                        { minimumFractionDigits: 3, maximumFractionDigits: 3 }
+                      )}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {formatUSD(token.usdValue)}
                     </p>
                   </div>
                   {token.priceChange24h !== undefined && (
-                    <div className={`flex items-center gap-1 ${
-                      token.priceChange24h >= 0 ? 'text-success' : 'text-destructive'
-                    }`}>
+                    <div
+                      className={`flex items-center gap-1 ${
+                        token.priceChange24h >= 0
+                          ? "text-success"
+                          : "text-destructive"
+                      }`}
+                    >
                       {token.priceChange24h >= 0 ? (
                         <TrendingUp className="h-3 w-3" />
                       ) : (

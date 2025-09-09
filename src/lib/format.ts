@@ -1,5 +1,15 @@
+// Returns the preferred browser locale, falling back to 'en-US' if not available (e.g., SSR)
+const getBrowserLocale = (): string => {
+  if (typeof navigator !== 'undefined') {
+    const lang = (navigator.languages && navigator.languages[0]) || navigator.language;
+    if (lang) return lang;
+  }
+  return 'en-US';
+};
+
 export const formatAmount = (value: number, opts?: { minimumFractionDigits?: number; maximumFractionDigits?: number; locale?: string }) => {
-  const { minimumFractionDigits = 0, maximumFractionDigits = 6, locale = 'en-US' } = opts || {};
+  const { minimumFractionDigits = 0, maximumFractionDigits = 6 } = opts || {};
+  const locale = (opts && opts.locale) || getBrowserLocale();
   return new Intl.NumberFormat(locale, {
     minimumFractionDigits,
     maximumFractionDigits,
@@ -11,8 +21,9 @@ export const formatTokenBalance = (rawBalance: number, decimals: number, opts?: 
   return formatAmount(actual, { minimumFractionDigits: 0, maximumFractionDigits: 6, locale: opts?.locale });
 };
 
-export const formatUSD = (value: number, locale: string = 'en-US') => {
-  return new Intl.NumberFormat(locale, {
+export const formatUSD = (value: number, locale?: string) => {
+  const loc = locale || getBrowserLocale();
+  return new Intl.NumberFormat(loc, {
     style: 'currency',
     currency: 'USD',
   }).format(value ?? 0);
@@ -21,10 +32,11 @@ export const formatUSD = (value: number, locale: string = 'en-US') => {
 export const formatUSDWithDecimals = (
   value: number,
   decimals: number,
-  locale: string = 'en-US'
+  locale?: string
 ) => {
+  const loc = locale || getBrowserLocale();
   const fraction = Number.isFinite(decimals) ? Math.max(0, Math.floor(decimals)) : 2;
-  return new Intl.NumberFormat(locale, {
+  return new Intl.NumberFormat(loc, {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: fraction,
@@ -33,8 +45,9 @@ export const formatUSDWithDecimals = (
 };
 
 // Expects a percentage value in the 0-100 range (e.g., 2.85 for +2.85%)
-export const formatPercent = (value: number, locale: string = 'en-US') => {
-  return new Intl.NumberFormat(locale, {
+export const formatPercent = (value: number, locale?: string) => {
+  const loc = locale || getBrowserLocale();
+  return new Intl.NumberFormat(loc, {
     style: 'percent',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
