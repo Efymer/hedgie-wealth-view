@@ -1,5 +1,5 @@
 import React from "react";
-import { Wallet, DollarSign } from "lucide-react";
+import { Wallet, DollarSign, Calendar } from "lucide-react";
 import { formatUSD } from "@/lib/format";
 
 interface AccountBalanceProps {
@@ -22,7 +22,10 @@ export const AccountBalance: React.FC<AccountBalanceProps> = ({
         </div>
         <p className="text-muted-foreground font-mono text-sm">{accountId}</p>
         {createdAt && (
-          <p className="text-xs text-muted-foreground mt-1">Created on {createdAt}</p>
+          <div className="flex items-center gap-1.5 mt-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Created on {createdAt}</p>
+          </div>
         )}
       </div>
       <div className="grid grid-cols-1 gap-6">
