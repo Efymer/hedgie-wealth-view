@@ -21,12 +21,6 @@ export const AccountBalance: React.FC<AccountBalanceProps> = ({
           <h2 className="text-xl font-semibold">Account Overview</h2>
         </div>
         <p className="text-muted-foreground font-mono text-sm">{accountId}</p>
-        {createdAt && (
-          <div className="flex items-center gap-1.5 mt-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Created on {createdAt}</p>
-          </div>
-        )}
       </div>
       <div className="grid grid-cols-1 gap-6">
         <div className="glass-card rounded-lg p-6 border border-border/30">
@@ -44,6 +38,12 @@ export const AccountBalance: React.FC<AccountBalanceProps> = ({
             </p>
             <p className="text-sm text-muted-foreground">Total Portfolio Value</p>
           </div>
+          {createdAt && (
+            <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-border/30">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Created on {createdAt}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
