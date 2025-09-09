@@ -45,10 +45,15 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 }) => {
   const [filter, setFilter] = useState<string>("all");
 
-  const getIcon = (type: string) => {
+  const getIcon = (type: string, amount?: number) => {
     switch (type) {
       case "transfer":
-        return <ArrowUpRight className="h-4 w-4" />;
+        // Received (amount >= 0) shows an incoming arrow, Sent (amount < 0) shows an outgoing arrow
+        return amount !== undefined && amount >= 0 ? (
+          <ArrowDownLeft className="h-4 w-4" />
+        ) : (
+          <ArrowUpRight className="h-4 w-4" />
+        );
       case "swap":
         return <Repeat className="h-4 w-4" />;
       case "contract_call":
@@ -80,10 +85,16 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     });
   };
 
-  const formatAmountNumber = (amount: number) => {
+  const formatAmountNumber = (amount: number, token: string) => {
     const absAmount = Math.abs(amount);
     const sign = amount >= 0 ? "+" : "-";
-    return `${sign}${absAmount.toLocaleString()}`;
+    const isHBAR = token === "HBAR";
+    const hasFraction = Math.abs(absAmount - Math.trunc(absAmount)) > 0;
+    const formatter = new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: hasFraction ? 1 : 0,
+      maximumFractionDigits: isHBAR ? 8 : 8,
+    });
+    return `${sign}${formatter.format(absAmount)}`;
   };
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -133,25 +144,20 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                       tx.type
                     )}`}
                   >
-                    {getIcon(tx.type)}
+                    {getIcon(tx.type, tx.amount)}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold capitalize">
                         {tx.type.replace("_", " ")}
                       </span>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          tx.status === "success"
-                            ? "bg-success/20 text-success"
-                            : "bg-destructive/20 text-destructive"
-                        }`}
-                      >
-                        {tx.status}
-                      </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {tx.type === "transfer" ? "To: " : "Via: "}
+                      {tx.type === "transfer"
+                        ? tx.amount >= 0
+                          ? "From: "
+                          : "To: "
+                        : "Via: "}
                       {tx.counterparty}
                     </p>
                   </div>
@@ -164,7 +170,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                         <span
                           className={tx.amount >= 0 ? "text-success" : "text-foreground"}
                         >
-                          {formatAmountNumber(tx.amount)}
+                          {formatAmountNumber(tx.amount, tx.token)}
                         </span>
                         <span>{` ${tx.token}`}</span>
                       </p>
