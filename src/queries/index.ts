@@ -1,4 +1,4 @@
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, useInfiniteQuery } from "@tanstack/react-query";
 
 /**
  * Mirror Node + Price APIs
@@ -97,6 +97,79 @@ export const useHBARBalance = (walletId: string) => {
     staleTime: 30_000,
     gcTime: 5 * 60_000,
     retry: 1,
+  });
+};
+
+/**
+ * Transactions (Mirror Node)
+ */
+export type MirrorNodeTransaction = {
+  transaction_id: string;
+  consensus_timestamp: string; // e.g., "1757376159.611104000"
+  name: string; // e.g., "CRYPTOTRANSFER", "CONTRACTCALL"
+  result: string; // e.g., "SUCCESS"
+  parent_consensus_timestamp?: string | null;
+  charged_tx_fee?: number; // tinybars
+  transaction_hash?: string; // base64
+  node?: string | null;
+  token_transfers?: Array<{
+    token_id: string;
+    account: string;
+    amount: number;
+    is_approval?: boolean;
+  }>;
+  transfers?: Array<{
+    account: string;
+    amount: number; // tinybars (HBAR)
+    is_approval?: boolean;
+  }>;
+};
+
+type MirrorNodeTransactionsResponse = {
+  transactions: MirrorNodeTransaction[];
+  links?: { next?: string | null };
+};
+
+const getAccountTransactions = async (walletId: string): Promise<MirrorNodeTransaction[]> => {
+  if (!walletId) return [];
+  const url = `${MIRROR_NODE}/api/v1/transactions/?account.id=${encodeURIComponent(walletId)}&limit=20&order=desc`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return [];
+  const data = (await res.json()) as MirrorNodeTransactionsResponse;
+  return data?.transactions ?? [];
+};
+
+export const useAccountTransactions = (walletId: string) => {
+  return useQuery({
+    queryKey: ["account", walletId, "transactions"],
+    queryFn: () => getAccountTransactions(walletId),
+    enabled: !!walletId,
+    staleTime: 30_000,
+  });
+};
+
+// Infinite pagination for transactions
+const getAccountTransactionsPage = async (walletId: string, next: string | null): Promise<MirrorNodeTransactionsResponse> => {
+  let url: string;
+  if (next) {
+    // next is a path like "/api/v1/transactions?account.id=...&timestamp=lt:..."
+    url = `${MIRROR_NODE}${next.startsWith('/') ? '' : '/'}${next}`;
+  } else {
+    url = `${MIRROR_NODE}/api/v1/transactions/?account.id=${encodeURIComponent(walletId)}&limit=10&order=desc`;
+  }
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return { transactions: [], links: { next: null } };
+  return (await res.json()) as MirrorNodeTransactionsResponse;
+};
+
+export const useAccountTransactionsInfinite = (walletId: string) => {
+  return useInfiniteQuery({
+    queryKey: ["account", walletId, "transactions", "infinite"],
+    enabled: !!walletId,
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) => getAccountTransactionsPage(walletId, pageParam),
+    getNextPageParam: (lastPage) => lastPage?.links?.next ?? null,
+    staleTime: 30_000,
   });
 };
 

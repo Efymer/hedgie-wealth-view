@@ -1,174 +1,57 @@
 import React, { useState } from "react";
-import { History, Filter, ArrowUpRight, ArrowDownLeft, Repeat, Code } from "lucide-react";
+import {
+  History,
+  Filter,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Repeat,
+  Code,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-interface Transaction {
+export interface Transaction {
   id: string;
-  type: 'transfer' | 'swap' | 'contract_call';
+  type: "transfer" | "contract_call";
   timestamp: string;
   amount: number;
   token: string;
   counterparty: string;
   fee: number;
   hash: string;
-  status: 'success' | 'failed';
+  status: "success" | "failed";
 }
 
 interface TransactionHistoryProps {
   accountId: string;
   transactions: Transaction[];
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 }
 
-const mockTransactions: Transaction[] = [
-  {
-    id: "1",
-    type: "transfer",
-    timestamp: "2024-01-15T14:30:00Z",
-    amount: -500,
-    token: "HBAR",
-    counterparty: "0.0.789789",
-    fee: 0.05,
-    hash: "0x1234...abcd",
-    status: "success"
-  },
-  {
-    id: "2", 
-    type: "swap",
-    timestamp: "2024-01-15T12:15:00Z",
-    amount: 1000,
-    token: "USDC",
-    counterparty: "SaucerSwap",
-    fee: 2.5,
-    hash: "0x5678...efgh",
-    status: "success"
-  },
-  {
-    id: "3",
-    type: "contract_call",
-    timestamp: "2024-01-14T16:45:00Z", 
-    amount: -50,
-    token: "HBAR",
-    counterparty: "0.0.456456",
-    fee: 0.1,
-    hash: "0x9012...ijkl",
-    status: "success"
-  },
-  {
-    id: "4",
-    type: "transfer",
-    timestamp: "2024-01-14T10:20:00Z",
-    amount: 250,
-    token: "SAUCE",
-    counterparty: "0.0.123123",
-    fee: 0.02,
-    hash: "0x3456...mnop",
-    status: "success"
-  },
-  {
-    id: "5",
-    type: "swap",
-    timestamp: "2024-01-13T09:10:00Z",
-    amount: -100,
-    token: "HBARX",
-    counterparty: "Stader",
-    fee: 1.2,
-    hash: "0x7890...qrst",
-    status: "failed"
-  },
-  {
-    id: "6",
-    type: "transfer",
-    timestamp: "2024-01-13T08:30:00Z",
-    amount: 1500,
-    token: "HBAR",
-    counterparty: "0.0.345678",
-    fee: 0.03,
-    hash: "0xabcd...1234",
-    status: "success"
-  },
-  {
-    id: "7",
-    type: "swap",
-    timestamp: "2024-01-12T15:45:00Z",
-    amount: -2000,
-    token: "USDC",
-    counterparty: "HeliSwap",
-    fee: 3.2,
-    hash: "0xefgh...5678",
-    status: "success"
-  },
-  {
-    id: "8",
-    type: "contract_call",
-    timestamp: "2024-01-12T11:20:00Z",
-    amount: -25,
-    token: "HBAR",
-    counterparty: "0.0.567890",
-    fee: 0.08,
-    hash: "0xijkl...9012",
-    status: "success"
-  },
-  {
-    id: "9",
-    type: "transfer",
-    timestamp: "2024-01-11T19:15:00Z",
-    amount: 750,
-    token: "SAUCE",
-    counterparty: "0.0.234567",
-    fee: 0.01,
-    hash: "0xmnop...3456",
-    status: "success"
-  },
-  {
-    id: "10",
-    type: "swap",
-    timestamp: "2024-01-11T14:00:00Z",
-    amount: 300,
-    token: "HBARX",
-    counterparty: "SaucerSwap",
-    fee: 1.8,
-    hash: "0xqrst...7890",
-    status: "success"
-  },
-  {
-    id: "11",
-    type: "transfer",
-    timestamp: "2024-01-10T16:30:00Z",
-    amount: -850,
-    token: "HBAR",
-    counterparty: "0.0.654321",
-    fee: 0.04,
-    hash: "0xuvwx...abcd",
-    status: "success"
-  },
-  {
-    id: "12",
-    type: "contract_call",
-    timestamp: "2024-01-10T09:45:00Z",
-    amount: -75,
-    token: "HBAR",
-    counterparty: "0.0.987654",
-    fee: 0.12,
-    hash: "0xyzab...efgh",
-    status: "failed"
-  }
-];
-
-export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ 
-  accountId, 
-  transactions = mockTransactions 
+export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
+  accountId,
+  transactions,
+  hasMore = false,
+  onLoadMore,
+  isLoadingMore = false,
 }) => {
   const [filter, setFilter] = useState<string>("all");
-  const [tokenFilter, setTokenFilter] = useState<string>("all");
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'transfer':
+      case "transfer":
         return <ArrowUpRight className="h-4 w-4" />;
-      case 'swap':
+      case "swap":
         return <Repeat className="h-4 w-4" />;
-      case 'contract_call':
+      case "contract_call":
         return <Code className="h-4 w-4" />;
       default:
         return <ArrowUpRight className="h-4 w-4" />;
@@ -177,39 +60,36 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'transfer':
-        return 'text-primary';
-      case 'swap':
-        return 'text-accent';
-      case 'contract_call':
-        return 'text-warning';
+      case "transfer":
+        return "text-primary";
+      case "swap":
+        return "text-accent";
+      case "contract_call":
+        return "text-warning";
       default:
-        return 'text-muted-foreground';
+        return "text-muted-foreground";
     }
   };
 
   const formatDate = (timestamp: string) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(timestamp).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const formatAmount = (amount: number, token: string) => {
+  const formatAmountNumber = (amount: number) => {
     const absAmount = Math.abs(amount);
-    const sign = amount >= 0 ? '+' : '-';
-    return `${sign}${absAmount.toLocaleString()} ${token}`;
+    const sign = amount >= 0 ? "+" : "-";
+    return `${sign}${absAmount.toLocaleString()}`;
   };
 
-  const filteredTransactions = transactions.filter(tx => {
+  const filteredTransactions = transactions.filter((tx) => {
     const typeMatch = filter === "all" || tx.type === filter;
-    const tokenMatch = tokenFilter === "all" || tx.token === tokenFilter;
-    return typeMatch && tokenMatch;
+    return typeMatch;
   });
-
-  const uniqueTokens = [...new Set(transactions.map(tx => tx.token))];
 
   return (
     <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
@@ -218,7 +98,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           <History className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-semibold">Transaction History</h2>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-32">
@@ -227,20 +107,6 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="transfer">Transfer</SelectItem>
-              <SelectItem value="swap">Swap</SelectItem>
-              <SelectItem value="contract_call">Contract</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={tokenFilter} onValueChange={setTokenFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Token" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Tokens</SelectItem>
-              {uniqueTokens.map(token => (
-                <SelectItem key={token} value={token}>{token}</SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>
@@ -250,7 +116,9 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         {filteredTransactions.length === 0 ? (
           <div className="text-center py-8">
             <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No transactions found for the selected filters</p>
+            <p className="text-muted-foreground">
+              No transactions found for the selected filters
+            </p>
           </div>
         ) : (
           filteredTransactions.map((tx) => (
@@ -260,22 +128,31 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full bg-secondary flex items-center justify-center ${getTypeColor(tx.type)}`}>
+                  <div
+                    className={`w-10 h-10 rounded-full bg-secondary flex items-center justify-center ${getTypeColor(
+                      tx.type
+                    )}`}
+                  >
                     {getIcon(tx.type)}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold capitalize">{tx.type.replace('_', ' ')}</span>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        tx.status === 'success' 
-                          ? 'bg-success/20 text-success' 
-                          : 'bg-destructive/20 text-destructive'
-                      }`}>
+                      <span className="font-semibold capitalize">
+                        {tx.type.replace("_", " ")}
+                      </span>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          tx.status === "success"
+                            ? "bg-success/20 text-success"
+                            : "bg-destructive/20 text-destructive"
+                        }`}
+                      >
                         {tx.status}
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {tx.type === 'transfer' ? 'To: ' : 'Via: '}{tx.counterparty}
+                      {tx.type === "transfer" ? "To: " : "Via: "}
+                      {tx.counterparty}
                     </p>
                   </div>
                 </div>
@@ -283,18 +160,21 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                 <div className="text-right">
                   <div className="flex items-center gap-3">
                     <div>
-                      <p className={`font-semibold ${
-                        tx.amount >= 0 ? 'text-success' : 'text-foreground'
-                      }`}>
-                        {formatAmount(tx.amount, tx.token)}
+                      <p className="font-semibold">
+                        <span
+                          className={tx.amount >= 0 ? "text-success" : "text-foreground"}
+                        >
+                          {formatAmountNumber(tx.amount)}
+                        </span>
+                        <span>{` ${tx.token}`}</span>
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {formatDate(tx.timestamp)}
                       </p>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       View
@@ -306,6 +186,14 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           ))
         )}
       </div>
+
+      {hasMore && (
+        <div className="flex justify-center mt-4">
+          <Button onClick={onLoadMore} disabled={isLoadingMore} variant="outline">
+            {isLoadingMore ? "Loading..." : "Load more"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

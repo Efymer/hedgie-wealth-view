@@ -2,13 +2,24 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AccountBalance } from "./AccountBalance";
 import { TokenList } from "./TokenList";
-import { TransactionHistory } from "./TransactionHistory";
+import { TransactionHistory, Transaction } from "./TransactionHistory";
 import { Breadcrumb } from "./Breadcrumb";
 
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { tinybarToHBAR, useHBARBalance, useHBARPrice, useTokenPrices, useAccountTokenDetails, TokenPricesResponse, useTokenPriceChanges, useAccountInfo } from "@/queries";
+import {
+  tinybarToHBAR,
+  useHBARBalance,
+  useHBARPrice,
+  useTokenPrices,
+  useAccountTokenDetails,
+  TokenPricesResponse,
+  useTokenPriceChanges,
+  useAccountInfo,
+  useAccountTransactionsInfinite,
+  MirrorNodeTransaction,
+} from "@/queries";
 
 export const HederaExplorer: React.FC = () => {
   const navigate = useNavigate();
@@ -23,14 +34,27 @@ export const HederaExplorer: React.FC = () => {
     setAccountId(id);
   }, [params?.accountId]);
 
-  const { data: balanceEntry, isLoading: isBalanceLoading, isError: isBalanceError } = useHBARBalance(accountId);
-  const { data: priceData, isLoading: isPriceLoading, isError: isPriceError } = useHBARPrice();
+  const {
+    data: balanceEntry,
+    isLoading: isBalanceLoading,
+    isError: isBalanceError,
+  } = useHBARBalance(accountId);
+  const {
+    data: priceData,
+    isLoading: isPriceLoading,
+    isError: isPriceError,
+  } = useHBARPrice();
   const { data: tokenPrices } = useTokenPrices(accountId);
   const { data: priceChanges } = useTokenPriceChanges(!!accountId, "mainnet");
-  const { data: tokenDetails, isLoading: isTokensLoading } = useAccountTokenDetails(accountId);
+  const { data: tokenDetails, isLoading: isTokensLoading } =
+    useAccountTokenDetails(accountId);
   const { data: accountInfo } = useAccountInfo(accountId);
+  const txInfinite = useAccountTransactionsInfinite(accountId);
 
-  const hbarBalance = useMemo(() => tinybarToHBAR(balanceEntry?.balance ?? 0), [balanceEntry]);
+  const hbarBalance = useMemo(
+    () => tinybarToHBAR(balanceEntry?.balance ?? 0),
+    [balanceEntry]
+  );
   const hbarPrice = priceData?.usd ?? 0.063;
   const hbarChange24h = priceData?.usdChange24h ?? 0;
 
@@ -40,7 +64,11 @@ export const HederaExplorer: React.FC = () => {
     const seconds = parseInt(ts.split(".")[0] || "0", 10);
     if (!Number.isFinite(seconds)) return undefined;
     const d = new Date(seconds * 1000);
-    return d.toLocaleString(undefined, { year: "numeric", month: "short", day: "2-digit" });
+    return d.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
   }, [accountInfo?.created_timestamp]);
 
   const priceMap = useMemo(() => {
@@ -48,16 +76,20 @@ export const HederaExplorer: React.FC = () => {
     if (!tokenPrices) return map;
     const data = tokenPrices as TokenPricesResponse;
     if (Array.isArray(data)) {
-      (data as Array<{ id?: string; token_id?: string; priceUsd?: number }>).forEach((row) => {
+      (
+        data as Array<{ id?: string; token_id?: string; priceUsd?: number }>
+      ).forEach((row) => {
         const id = row.id ?? row.token_id;
         const price = typeof row.priceUsd === "number" ? row.priceUsd : 0;
         if (id) map.set(id, price);
       });
     } else if (typeof data === "object") {
       // If the API ever returns an object map, prefer numeric values, expecting they represent USD price per token
-      Object.entries(data as Record<string, number>).forEach(([id, priceUsd]) => {
-        map.set(id, typeof priceUsd === "number" ? priceUsd : 0);
-      });
+      Object.entries(data as Record<string, number>).forEach(
+        ([id, priceUsd]) => {
+          map.set(id, typeof priceUsd === "number" ? priceUsd : 0);
+        }
+      );
     }
     return map;
   }, [tokenPrices]);
@@ -68,7 +100,9 @@ export const HederaExplorer: React.FC = () => {
       .filter((t: { type?: string }) => t.type !== "NON_FUNGIBLE_UNIQUE")
       .map((t) => {
         const price = priceMap.get(t.token_id) ?? 0;
-        const actualBalance = t.decimals ? t.balance / Math.pow(10, t.decimals) : t.balance;
+        const actualBalance = t.decimals
+          ? t.balance / Math.pow(10, t.decimals)
+          : t.balance;
         const usdValue = actualBalance * price;
         const changeRaw = priceChanges?.[t.token_id];
         const change = typeof changeRaw === "number" ? changeRaw : undefined;
@@ -99,27 +133,128 @@ export const HederaExplorer: React.FC = () => {
 
     const combined = [hbarToken, ...mapped];
     return combined.filter((tk) => (hideZeroUsd ? tk.usdValue > 0.01 : true));
-  }, [tokenDetails, priceMap, hideZeroUsd, hbarBalance, hbarPrice, hbarChange24h, priceChanges]);
+  }, [
+    tokenDetails,
+    priceMap,
+    hideZeroUsd,
+    hbarBalance,
+    hbarPrice,
+    hbarChange24h,
+    priceChanges,
+  ]);
 
   const usdValue = useMemo(() => {
     // Sum USD value from tokens (HBAR is included as a token above)
     return tokens.reduce((sum, t) => sum + (t.usdValue ?? 0), 0);
   }, [tokens]);
 
+  // Build a quick symbol map for token_id -> symbol
+  const tokenSymbolMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (tokenDetails ?? []).forEach((t) => {
+      if (t.token_id && t.symbol) map.set(t.token_id, t.symbol);
+    });
+    return map;
+  }, [tokenDetails]);
+
+  // Build decimals map for token_id -> decimals
+  const tokenDecimalsMap = useMemo(() => {
+    const map = new Map<string, number>();
+    (tokenDetails ?? []).forEach((t) => {
+      if (t.token_id && typeof t.decimals === "number")
+        map.set(t.token_id, t.decimals);
+    });
+    return map;
+  }, [tokenDetails]);
+
+  // Map Mirror Node transactions to TransactionHistory's expected shape
+  const mappedTransactions: Transaction[] = useMemo(() => {
+    const flat: MirrorNodeTransaction[] = (
+      txInfinite.data?.pages || []
+    ).flatMap(
+      (p: { transactions?: MirrorNodeTransaction[] }) => p.transactions || []
+    );
+    // Only use CRYPTOTRANSFER transactions and exclude child records (those with parent_consensus_timestamp)
+    const onlyTransfers = flat.filter((tx) => tx.name === 'CRYPTOTRANSFER' && !tx.parent_consensus_timestamp);
+    const list: Transaction[] = onlyTransfers.map((tx: MirrorNodeTransaction) => {
+      const type = "transfer";
+
+      // Find token transfer involving this account
+      const tokenEntry = (tx.token_transfers || []).find(
+        (t) => t.account === accountId
+      );
+      // Find HBAR transfer involving this account
+      const hbarEntry = (tx.transfers || []).find(
+        (t) => t.account === accountId
+      );
+
+      // Amount and token label
+      let amount = 0;
+      let token = "";
+      if (tokenEntry) {
+        const dec = tokenEntry.token_id
+          ? tokenDecimalsMap.get(tokenEntry.token_id) ?? 0
+          : 0;
+        amount = dec
+          ? tokenEntry.amount / Math.pow(10, dec)
+          : tokenEntry.amount;
+        const sym = tokenEntry.token_id
+          ? tokenSymbolMap.get(tokenEntry.token_id)
+          : undefined;
+        token = sym || tokenEntry.token_id || "TOKEN";
+      } else if (hbarEntry) {
+        amount = tinybarToHBAR(hbarEntry.amount);
+        token = "HBAR";
+      }
+
+      // Counterparty: pick the other side of the first relevant transfer
+      let counterparty = "";
+      if (tokenEntry) {
+        const other = (tx.token_transfers || []).find(
+          (t) => t.token_id === tokenEntry.token_id && t.account !== accountId
+        );
+        counterparty = other?.account || "";
+      } else if (hbarEntry) {
+        const other = (tx.transfers || []).find((t) => t.account !== accountId);
+        counterparty = other?.account || "";
+      }
+
+      // Timestamp to ISO
+      const sec = parseInt(
+        (tx.consensus_timestamp || "0").split(".")[0] || "0",
+        10
+      );
+      const timestamp = new Date(sec * 1000).toISOString();
+
+      const status: "success" | "failed" =
+        tx.result === "SUCCESS" ? "success" : "failed";
+
+      return {
+        id: tx.transaction_id || tx.consensus_timestamp,
+        type,
+        timestamp,
+        amount,
+        token: token || "HBAR",
+        counterparty: counterparty || "—",
+        fee:
+          typeof tx.charged_tx_fee === "number"
+            ? tinybarToHBAR(tx.charged_tx_fee)
+            : 0,
+        hash: tx.transaction_hash || "",
+        status,
+      };
+    });
+    return list;
+  }, [txInfinite.data?.pages, accountId, tokenSymbolMap, tokenDecimalsMap]);
+
   const breadcrumbItems = !accountId
     ? [{ label: "Home", active: true }]
-    : [
-        { label: "Home" },
-        { label: `Account ${accountId}`, active: true }
-      ];
+    : [{ label: "Home" }, { label: `Account ${accountId}`, active: true }];
 
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <Breadcrumb 
-          items={breadcrumbItems} 
-          onHomeClick={() => navigate("/")}
-        />
+        <Breadcrumb items={breadcrumbItems} onHomeClick={() => navigate("/")} />
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold gradient-text">
             Hedera Explorer
@@ -141,12 +276,27 @@ export const HederaExplorer: React.FC = () => {
                 <div className="flex items-center justify-end">
                   <div className="flex items-center gap-2">
                     <Label htmlFor="hide-zero">Hide $0.00 tokens</Label>
-                    <Switch id="hide-zero" checked={hideZeroUsd} onCheckedChange={setHideZeroUsd} />
+                    <Switch
+                      id="hide-zero"
+                      checked={hideZeroUsd}
+                      onCheckedChange={setHideZeroUsd}
+                    />
                   </div>
                 </div>
-                <TokenList tokens={tokens} isLoading={isBalanceLoading || isPriceLoading || isTokensLoading} />
+                <TokenList
+                  tokens={tokens}
+                  isLoading={
+                    isBalanceLoading || isPriceLoading || isTokensLoading
+                  }
+                />
               </div>
-              <TransactionHistory accountId={accountId} transactions={[]} />
+              <TransactionHistory
+                accountId={accountId}
+                transactions={mappedTransactions}
+                hasMore={!!txInfinite.hasNextPage}
+                onLoadMore={() => txInfinite.fetchNextPage()}
+                isLoadingMore={txInfinite.isFetchingNextPage}
+              />
             </div>
 
             {(isBalanceError || isPriceError) && (
@@ -159,7 +309,10 @@ export const HederaExplorer: React.FC = () => {
 
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground mt-16">
-          <p>Built for the Hedera community • Real-time data powered by Hedera APIs</p>
+          <p>
+            Built for the Hedera community • Real-time data powered by Hedera
+            APIs
+          </p>
         </div>
       </div>
     </div>
