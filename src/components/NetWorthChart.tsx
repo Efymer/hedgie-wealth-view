@@ -1,38 +1,36 @@
 import React from "react";
 import { TrendingUp, DollarSign } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-
-interface NetWorthData {
-  date: string;
-  value: number;
-  change: number;
-}
+import { useNetWorthData, NetWorthData } from "@/hooks/useNetWorthData";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NetWorthChartProps {
-  data?: NetWorthData[];
+  userId?: string;
 }
 
-const mockNetWorthData: NetWorthData[] = [
-  { date: "2024-01-01", value: 4200, change: 0 },
-  { date: "2024-01-02", value: 4350, change: 3.57 },
-  { date: "2024-01-03", value: 4180, change: -3.91 },
-  { date: "2024-01-04", value: 4420, change: 5.74 },
-  { date: "2024-01-05", value: 4680, change: 5.88 },
-  { date: "2024-01-06", value: 4520, change: -3.42 },
-  { date: "2024-01-07", value: 4750, change: 5.09 },
-  { date: "2024-01-08", value: 4890, change: 2.95 },
-  { date: "2024-01-09", value: 4720, change: -3.48 },
-  { date: "2024-01-10", value: 4965, change: 5.19 },
-  { date: "2024-01-11", value: 5120, change: 3.12 },
-  { date: "2024-01-12", value: 5080, change: -0.78 },
-  { date: "2024-01-13", value: 5240, change: 3.15 },
-  { date: "2024-01-14", value: 5185, change: -1.05 },
-  { date: "2024-01-15", value: 5350, change: 3.18 },
-];
+export const NetWorthChart: React.FC<NetWorthChartProps> = ({ userId }) => {
+  const { data: netWorthData, isLoading, error } = useNetWorthData(userId);
 
-export const NetWorthChart: React.FC<NetWorthChartProps> = ({ 
-  data = mockNetWorthData 
-}) => {
+  // Fallback mock data for demonstration when no real data exists
+  const mockNetWorthData: NetWorthData[] = [
+    { date: "2024-01-01", value: 4200, change: 0 },
+    { date: "2024-01-02", value: 4350, change: 3.57 },
+    { date: "2024-01-03", value: 4180, change: -3.91 },
+    { date: "2024-01-04", value: 4420, change: 5.74 },
+    { date: "2024-01-05", value: 4680, change: 5.88 },
+    { date: "2024-01-06", value: 4520, change: -3.42 },
+    { date: "2024-01-07", value: 4750, change: 5.09 },
+    { date: "2024-01-08", value: 4890, change: 2.95 },
+    { date: "2024-01-09", value: 4720, change: -3.48 },
+    { date: "2024-01-10", value: 4965, change: 5.19 },
+    { date: "2024-01-11", value: 5120, change: 3.12 },
+    { date: "2024-01-12", value: 5080, change: -0.78 },
+    { date: "2024-01-13", value: 5240, change: 3.15 },
+    { date: "2024-01-14", value: 5185, change: -1.05 },
+    { date: "2024-01-15", value: 5350, change: 3.18 },
+  ];
+
+  const data = netWorthData && netWorthData.length > 0 ? netWorthData : mockNetWorthData;
   const currentValue = data[data.length - 1]?.value || 0;
   const previousValue = data[data.length - 2]?.value || 0;
   const totalChange = ((currentValue - previousValue) / previousValue) * 100;
@@ -71,6 +69,16 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
     }
     return null;
   };
+
+  if (error) {
+    return (
+      <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
+        <div className="text-center text-destructive">
+          <p>Error loading net worth data: {error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
