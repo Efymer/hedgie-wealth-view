@@ -9,11 +9,12 @@ const COINGECKO_PRICE =
 const HASHPACK_PRICES = "https://api-lb.hashpack.app/prices";
 const HASHPACK_TOKEN_INFO =
   "https://hashpack-mirror.b-cdn.net/getTokenInfo?network=mainnet&token_ids=";
+const HASHPACK_PRICE_CHANGES = "https://api.hashpack.app/price-changes";
 
 /**
  * Types
  */
-export type MirrorNodeBalanceEntry = {
+type MirrorNodeBalanceEntry = {
   account: string;     // e.g. "0.0.12345"
   balance: number;     // tinybars
   tokens?: Array<{
@@ -22,12 +23,12 @@ export type MirrorNodeBalanceEntry = {
   }>;
 };
 
-export type MirrorNodeBalancesResponse = {
+type MirrorNodeBalancesResponse = {
   timestamp?: string;
   balances: MirrorNodeBalanceEntry[];
 };
 
-export type HbarPriceResponse = {
+type HbarPriceResponse = {
   ["hedera-hashgraph"]?: {
     usd: number;
     usd_24h_change?: number;
@@ -40,6 +41,36 @@ export type HbarPriceResponse = {
 export const tinybarToHBAR = (tinybars: number | undefined | null): number => {
   if (!tinybars) return 0;
   return tinybars / 100_000_000;
+};
+
+/**
+ * Account Info (Mirror Node)
+ */
+type MirrorNodeAccount = {
+  account: string;
+  created_timestamp?: string;
+  [k: string]: unknown;
+};
+
+
+type MirrorNodeAccountResponse = MirrorNodeAccount;
+
+const getAccountInfo = async (walletId: string): Promise<MirrorNodeAccount | null> => {
+  if (!walletId) return null;
+  const url = `${MIRROR_NODE}/api/v1/accounts/${encodeURIComponent(walletId)}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return null;
+  const data = (await res.json()) as MirrorNodeAccountResponse;
+  return data as MirrorNodeAccount;
+};
+
+export const useAccountInfo = (walletId: string) => {
+  return useQuery({
+    queryKey: ["account", walletId, "info"],
+    queryFn: () => getAccountInfo(walletId),
+    enabled: !!walletId,
+    staleTime: 5 * 60_000,
+  });
 };
 
 /**
@@ -72,7 +103,7 @@ export const useHBARBalance = (walletId: string) => {
 /**
  * Price Query (CoinGecko)
  */
-export const getHBARPrice = async (): Promise<{ usd: number; usdChange24h: number }> => {
+const getHBARPrice = async (): Promise<{ usd: number; usdChange24h: number }> => {
   const res = await fetch(COINGECKO_PRICE, {
     headers: { Accept: "application/json" },
   });
@@ -101,18 +132,18 @@ export const useHBARPrice = () => {
 /**
  * Account Tokens (Mirror Node)
  */
-export type AccountTokenBalance = {
+type AccountTokenBalance = {
   token_id: string;
   balance: number; // integer in smallest unit
   decimals?: number;
 };
 
-export type AccountTokensResponse = {
+type AccountTokensResponse = {
   tokens: AccountTokenBalance[];
   links?: { next?: string };
 };
 
-export const getAccountTokens = async (walletId: string): Promise<AccountTokenBalance[]> => {
+const getAccountTokens = async (walletId: string): Promise<AccountTokenBalance[]> => {
   if (!walletId) return [];
   const url = `${MIRROR_NODE}/api/v1/accounts/${encodeURIComponent(walletId)}/tokens?limit=100`;
   const res = await fetch(url);
@@ -121,7 +152,7 @@ export const getAccountTokens = async (walletId: string): Promise<AccountTokenBa
   return data?.tokens ?? [];
 };
 
-export type TokenInfo = {
+type TokenInfo = {
   token_id: string;
   symbol: string;
   name: string;
@@ -130,7 +161,7 @@ export type TokenInfo = {
 };
 
 // Batched token info fetch (HashPack mirror)
-export const getTokenInfosBatch = async (tokenIds: string[]): Promise<Record<string, TokenInfo>> => {
+const getTokenInfosBatch = async (tokenIds: string[]): Promise<Record<string, TokenInfo>> => {
   if (!tokenIds.length) return {};
   const url = `${HASHPACK_TOKEN_INFO}${encodeURIComponent(tokenIds.join(","))}`;
   const res = await fetch(url);
@@ -158,7 +189,7 @@ export const getTokenInfosBatch = async (tokenIds: string[]): Promise<Record<str
   return map;
 };
 
-export const useAccountTokens = (walletId: string) => {
+const useAccountTokens = (walletId: string) => {
   return useQuery({
     queryKey: ["account", walletId, "tokens"],
     queryFn: () => getAccountTokens(walletId),
@@ -212,7 +243,7 @@ export type TokenPricesResponse =
       [k: string]: unknown;
     }>;
 
-export const getTokenPrices = async (): Promise<TokenPricesResponse> => {
+const getTokenPrices = async (): Promise<TokenPricesResponse> => {
   // Axios equivalent: axios.post(HASHPACK_PRICES)
   const res = await fetch(HASHPACK_PRICES, { method: "POST" });
   if (!res.ok) return [] as unknown as TokenPricesResponse;
@@ -229,16 +260,28 @@ export const useTokenPrices = (accountId: string) => {
 };
 
 /**
- * Parallel balances helper (optional)
+ * Token 24h Price Changes (HashPack API)
+ * Returns a map of token_id => percent change (e.g., -15.08). Some entries can be null.
  */
-export const useManyHBARBalances = (walletIds: string[]) => {
-  return useQueries({
-    queries: walletIds.map((id) => ({
-      queryKey: ["hbar", "balance", id],
-      queryFn: () => getHBARBalance(id),
-      enabled: !!id,
-      staleTime: 30_000,
-      gcTime: 5 * 60_000,
-    })),
+type TokenPriceChangesResponse = Record<string, number | null>;
+
+const getTokenPriceChanges = async (
+  network: "mainnet" | "testnet" = "mainnet"
+): Promise<TokenPriceChangesResponse> => {
+  const res = await fetch(HASHPACK_PRICE_CHANGES, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ network }),
+  });
+  if (!res.ok) return {} as TokenPriceChangesResponse;
+  return (await res.json()) as TokenPriceChangesResponse;
+};
+
+export const useTokenPriceChanges = (enabled: boolean = true, network: "mainnet" | "testnet" = "mainnet") => {
+  return useQuery({
+    queryKey: ["prices", "changes", network],
+    queryFn: () => getTokenPriceChanges(network),
+    enabled,
+    staleTime: 60_000,
   });
 };

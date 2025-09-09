@@ -1,18 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AccountSearch } from "./AccountSearch";
 import { AccountBalance } from "./AccountBalance";
 import { TokenList } from "./TokenList";
 import { TransactionHistory } from "./TransactionHistory";
-import { Watchlist } from "./Watchlist";
 import { Breadcrumb } from "./Breadcrumb";
 
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { tinybarToHBAR, useHBARBalance, useHBARPrice, useTokenPrices, useAccountTokenDetails, TokenPricesResponse } from "@/queries";
-
-// Live tokens will be sourced from Mirror Node + priced via HashPack
+import { tinybarToHBAR, useHBARBalance, useHBARPrice, useTokenPrices, useAccountTokenDetails, TokenPricesResponse, useTokenPriceChanges, useAccountInfo } from "@/queries";
 
 export const HederaExplorer: React.FC = () => {
   const navigate = useNavigate();
@@ -30,11 +26,22 @@ export const HederaExplorer: React.FC = () => {
   const { data: balanceEntry, isLoading: isBalanceLoading, isError: isBalanceError } = useHBARBalance(accountId);
   const { data: priceData, isLoading: isPriceLoading, isError: isPriceError } = useHBARPrice();
   const { data: tokenPrices } = useTokenPrices(accountId);
+  const { data: priceChanges } = useTokenPriceChanges(!!accountId, "mainnet");
   const { data: tokenDetails, isLoading: isTokensLoading } = useAccountTokenDetails(accountId);
+  const { data: accountInfo } = useAccountInfo(accountId);
 
   const hbarBalance = useMemo(() => tinybarToHBAR(balanceEntry?.balance ?? 0), [balanceEntry]);
   const hbarPrice = priceData?.usd ?? 0.063;
   const hbarChange24h = priceData?.usdChange24h ?? 0;
+
+  const createdAt = useMemo(() => {
+    const ts = accountInfo?.created_timestamp; // e.g., "1562591528.000123456"
+    if (!ts) return undefined;
+    const seconds = parseInt(ts.split(".")[0] || "0", 10);
+    if (!Number.isFinite(seconds)) return undefined;
+    const d = new Date(seconds * 1000);
+    return d.toLocaleString(undefined, { year: "numeric", month: "short", day: "2-digit" });
+  }, [accountInfo?.created_timestamp]);
 
   const priceMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -56,12 +63,15 @@ export const HederaExplorer: React.FC = () => {
   }, [tokenPrices]);
 
   const tokens = useMemo(() => {
-    const list = (tokenDetails ?? [])
+    // Map fungible tokens from account details
+    const mapped = (tokenDetails ?? [])
       .filter((t: { type?: string }) => t.type !== "NON_FUNGIBLE_UNIQUE")
       .map((t) => {
         const price = priceMap.get(t.token_id) ?? 0;
         const actualBalance = t.decimals ? t.balance / Math.pow(10, t.decimals) : t.balance;
         const usdValue = actualBalance * price;
+        const changeRaw = priceChanges?.[t.token_id];
+        const change = typeof changeRaw === "number" ? changeRaw : undefined;
 
         return {
           id: t.token_id,
@@ -71,35 +81,30 @@ export const HederaExplorer: React.FC = () => {
           decimals: t.decimals,
           usdValue,
           priceUsd: price,
+          priceChange24h: change,
         };
-      })
-      .filter((tk) => (hideZeroUsd ? tk.usdValue > 0.01 : true));
-    return list;
-  }, [tokenDetails, priceMap, hideZeroUsd]);
+      });
 
-  console.log(tokens);
+    // Add HBAR as a token entry
+    const hbarToken = {
+      id: "HBAR",
+      symbol: "HBAR",
+      name: "Hedera",
+      balance: Math.round(hbarBalance * Math.pow(10, 8)),
+      decimals: 4,
+      usdValue: hbarBalance * hbarPrice,
+      priceUsd: hbarPrice,
+      priceChange24h: hbarChange24h,
+    };
+
+    const combined = [hbarToken, ...mapped];
+    return combined.filter((tk) => (hideZeroUsd ? tk.usdValue > 0.01 : true));
+  }, [tokenDetails, priceMap, hideZeroUsd, hbarBalance, hbarPrice, hbarChange24h, priceChanges]);
 
   const usdValue = useMemo(() => {
-    const tokensUsd = tokens.reduce((sum, t) => sum + (t.usdValue ?? 0), 0);
-    return hbarBalance * hbarPrice + tokensUsd;
-  }, [hbarBalance, hbarPrice, tokens]);
-
-  const handleSearch = (id: string) => {
-    if (!/^0\.0\.\d+$/.test(id)) {
-      toast({
-        title: "Error",
-        description: "Invalid Hedera account ID format",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    navigate(`/account/${id}`);
-    toast({
-      title: "Account Found",
-      description: `Successfully loaded data for ${id}`,
-    });
-  };
+    // Sum USD value from tokens (HBAR is included as a token above)
+    return tokens.reduce((sum, t) => sum + (t.usdValue ?? 0), 0);
+  }, [tokens]);
 
   const breadcrumbItems = !accountId
     ? [{ label: "Home", active: true }]
@@ -124,19 +129,12 @@ export const HederaExplorer: React.FC = () => {
           </p>
         </div>
 
-        {!accountId ? (
-          <div className="space-y-8">
-            <AccountSearch onSearch={handleSearch} isLoading={false} />
-            <Watchlist onSelect={(address) => navigate(`/account/${address}`)} />
-          </div>
-        ) : (
+        {!accountId ? null : (
           <div className="space-y-6">
             <AccountBalance
               accountId={accountId}
-              hbarBalance={hbarBalance}
               usdValue={usdValue}
-              hbarPrice={hbarPrice}
-              hbarChange24h={hbarChange24h}
+              createdAt={createdAt}
             />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-3">
