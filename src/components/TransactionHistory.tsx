@@ -168,7 +168,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                     <div>
                       <p className="font-semibold">
                         <span
-                          className={tx.amount >= 0 ? "text-success" : "text-foreground"}
+                          className={tx.amount >= 0 ? "text-success" : "text-destructive"}
                         >
                           {formatAmountNumber(tx.amount, tx.token)}
                         </span>
