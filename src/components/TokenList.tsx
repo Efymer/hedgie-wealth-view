@@ -1,5 +1,7 @@
 import React from "react";
 import { Coins, ExternalLink, TrendingUp, TrendingDown } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   formatUSD,
   formatPercent,
@@ -21,11 +23,15 @@ interface Token {
 interface TokenListProps {
   tokens: Token[];
   isLoading?: boolean;
+  hideZeroUsd?: boolean;
+  onHideZeroUsdChange?: (checked: boolean) => void;
 }
 
 export const TokenList: React.FC<TokenListProps> = ({
   tokens,
   isLoading = false,
+  hideZeroUsd = true,
+  onHideZeroUsdChange,
 }) => {
   if (isLoading) {
     return (
@@ -68,9 +74,19 @@ export const TokenList: React.FC<TokenListProps> = ({
       <div className="flex items-center gap-2 mb-6">
         <Coins className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">Token Holdings</h2>
-        <span className="ml-auto text-sm text-muted-foreground">
+        <span className="ml-auto text-sm text-muted-foreground mr-4">
           {tokens.length} {tokens.length === 1 ? "token" : "tokens"}
         </span>
+        {onHideZeroUsdChange && (
+          <div className="flex items-center gap-2">
+            <Label htmlFor="hide-zero" className="text-sm">Hide $0.00</Label>
+            <Switch
+              id="hide-zero"
+              checked={hideZeroUsd}
+              onCheckedChange={onHideZeroUsdChange}
+            />
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">

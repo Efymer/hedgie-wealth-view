@@ -273,21 +273,13 @@ export const HederaExplorer: React.FC = () => {
             />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <div className="flex items-center justify-end">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="hide-zero">Hide $0.00 tokens</Label>
-                    <Switch
-                      id="hide-zero"
-                      checked={hideZeroUsd}
-                      onCheckedChange={setHideZeroUsd}
-                    />
-                  </div>
-                </div>
                 <TokenList
                   tokens={tokens}
                   isLoading={
                     isBalanceLoading || isPriceLoading || isTokensLoading
                   }
+                  hideZeroUsd={hideZeroUsd}
+                  onHideZeroUsdChange={setHideZeroUsd}
                 />
               </div>
               <TransactionHistory
