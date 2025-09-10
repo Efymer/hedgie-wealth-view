@@ -302,10 +302,6 @@ export const HederaExplorer: React.FC = () => {
                     isBalanceLoading || isPriceLoading || isTokensLoading
                   }
                 />
-                <NFTList
-                  nfts={nfts}
-                  isLoading={isTokensLoading}
-                />
               </div>
               <TransactionHistory
                 accountId={accountId}
@@ -315,6 +311,11 @@ export const HederaExplorer: React.FC = () => {
                 isLoadingMore={txInfinite.isFetchingNextPage}
               />
             </div>
+            
+            <NFTList
+              nfts={nfts}
+              isLoading={isTokensLoading}
+            />
 
             {(isBalanceError || isPriceError) && (
               <div className="text-sm text-destructive">
