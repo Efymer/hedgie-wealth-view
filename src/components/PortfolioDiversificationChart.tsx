@@ -1,7 +1,15 @@
 import React, { useMemo } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart as RePieChart, Pie, Cell } from "recharts";
 import { PieChart as PieChartIcon } from "lucide-react";
 import { formatUSD, formatPercent } from "@/lib/format";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 
 interface Token {
   id: string;
@@ -18,55 +26,28 @@ interface PortfolioDiversificationChartProps {
 // Generate colors using HSL values from our design system
 const generateColors = (count: number): string[] => {
   const baseColors = [
-    "hsl(220, 70%, 60%)", // accent
-    "hsl(120, 60%, 50%)", // success  
-    "hsl(45, 100%, 60%)", // warning
-    "hsl(0, 75%, 60%)", // destructive
-    "hsl(280, 70%, 60%)", // purple
-    "hsl(160, 70%, 50%)", // teal
-    "hsl(30, 90%, 60%)", // orange
-    "hsl(200, 80%, 60%)", // blue
+    "hsl(var(--accent))",
+    "hsl(var(--success))",
+    "hsl(var(--warning))",
+    "hsl(var(--destructive))",
+    "hsl(280 70% 60%)",
+    "hsl(160 70% 50%)",
+    "hsl(30 90% 60%)",
+    "hsl(200 80% 60%)",
   ];
-  
+
   const colors: string[] = [];
   for (let i = 0; i < count; i++) {
     if (i < baseColors.length) {
       colors.push(baseColors[i]);
     } else {
-      // Generate additional colors using HSL
       const hue = (i * 137.5) % 360; // Golden angle approximation
-      colors.push(`hsl(${hue}, 65%, 55%)`);
+      colors.push(`hsl(${hue} 65% 55%)`);
     }
   }
   return colors;
 };
 
-interface TooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    value: number;
-    payload: {
-      symbol: string;
-      value: number;
-      percentage: number;
-    };
-  }>;
-}
-
-const CustomTooltip: React.FC<TooltipProps> = ({ active, payload }) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="glass-card rounded-lg p-3 border border-border/50">
-        <p className="font-semibold">{data.symbol}</p>
-        <p className="text-sm text-muted-foreground">
-          {formatUSD(data.value)} ({formatPercent(data.percentage)})
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
 
 export const PortfolioDiversificationChart: React.FC<PortfolioDiversificationChartProps> = ({
   tokens,
@@ -89,7 +70,19 @@ export const PortfolioDiversificationChart: React.FC<PortfolioDiversificationCha
       }));
   }, [tokens]);
 
+
   const colors = useMemo(() => generateColors(chartData.length), [chartData.length]);
+
+  const chartConfig: ChartConfig = useMemo(() => {
+    const cfg: ChartConfig = {};
+    chartData.forEach((d, i) => {
+      cfg[d.symbol] = {
+        label: d.symbol,
+        color: colors[i] ?? "hsl(var(--accent))",
+      };
+    });
+    return cfg;
+  }, [chartData, colors]);
 
   if (isLoading) {
     return (
@@ -131,36 +124,45 @@ export const PortfolioDiversificationChart: React.FC<PortfolioDiversificationCha
           Top {chartData.length} holdings
         </span>
       </div>
-      
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={120}
-              paddingAngle={2}
-              dataKey="value"
-            >
-              {chartData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={colors[index]} />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              verticalAlign="bottom"
-              height={36}
-              formatter={(value, entry) => (
-                <span style={{ color: 'hsl(var(--foreground))' }}>
-                  {value} ({formatPercent((entry.payload as any)?.percentage || 0)})
-                </span>
-              )}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+
+      <ChartContainer config={chartConfig} className="h-80 w-full">
+        <RePieChart>
+          <Pie
+            data={chartData}
+            dataKey="value"
+            nameKey="symbol"
+            cx="50%"
+            cy="50%"
+            innerRadius={70}
+            outerRadius={120}
+            paddingAngle={1.5}
+            cornerRadius={2}
+          >
+            {chartData.map((d) => (
+              <Cell
+                key={d.symbol}
+                fill={`var(--color-${d.symbol})`}
+                stroke={`hsl(var(--background))`}
+                strokeWidth={2}
+              />
+            ))}
+          </Pie>
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                formatter={(value, name, item) => {
+                  const pct = (item?.payload as any)?.percentage ?? 0;
+                  return [
+                    `${formatUSD(Number(value))} (${formatPercent(pct)})`,
+                    String(name),
+                  ];
+                }}
+              />
+            }
+          />
+          <ChartLegend content={<ChartLegendContent nameKey="symbol" />} />
+        </RePieChart>
+      </ChartContainer>
     </div>
   );
 };
