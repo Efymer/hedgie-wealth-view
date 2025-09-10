@@ -5,6 +5,7 @@ import { TokenList } from "./TokenList";
 import { TransactionHistory, Transaction } from "./TransactionHistory";
 import { Breadcrumb } from "./Breadcrumb";
 import { PortfolioDiversificationChart } from "./PortfolioDiversificationChart";
+import { NFTList } from "./NFTList";
 
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -143,6 +144,19 @@ export const HederaExplorer: React.FC = () => {
     hbarChange24h,
     priceChanges,
   ]);
+
+  const nfts = useMemo(() => {
+    // Map NFT tokens from account details
+    return (tokenDetails ?? [])
+      .filter((t: { type?: string }) => t.type === "NON_FUNGIBLE_UNIQUE")
+      .map((t) => ({
+        id: t.token_id,
+        symbol: t.symbol,
+        name: t.name,
+        balance: t.balance,
+        type: t.type,
+      }));
+  }, [tokenDetails]);
 
   const usdValue = useMemo(() => {
     // Sum USD value from tokens (HBAR is included as a token above)
@@ -287,6 +301,10 @@ export const HederaExplorer: React.FC = () => {
                   isLoading={
                     isBalanceLoading || isPriceLoading || isTokensLoading
                   }
+                />
+                <NFTList
+                  nfts={nfts}
+                  isLoading={isTokensLoading}
                 />
               </div>
               <TransactionHistory
