@@ -4,6 +4,7 @@ import { AccountBalance } from "./AccountBalance";
 import { TokenList } from "./TokenList";
 import { TransactionHistory, Transaction } from "./TransactionHistory";
 import { Breadcrumb } from "./Breadcrumb";
+import { PortfolioDiversificationChart } from "./PortfolioDiversificationChart";
 
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -272,7 +273,7 @@ export const HederaExplorer: React.FC = () => {
               createdAt={createdAt}
             />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-3">
+              <div className="space-y-6">
                 <TokenList
                   tokens={tokens}
                   isLoading={
@@ -280,6 +281,12 @@ export const HederaExplorer: React.FC = () => {
                   }
                   hideZeroUsd={hideZeroUsd}
                   onHideZeroUsdChange={setHideZeroUsd}
+                />
+                <PortfolioDiversificationChart
+                  tokens={tokens}
+                  isLoading={
+                    isBalanceLoading || isPriceLoading || isTokensLoading
+                  }
                 />
               </div>
               <TransactionHistory
