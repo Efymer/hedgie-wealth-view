@@ -8,6 +8,7 @@ import {
   Code,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatAmount } from "@/lib/format";
 import {
   Select,
   SelectContent,
@@ -85,16 +86,15 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     });
   };
 
-  const formatAmountNumber = (amount: number, token: string) => {
-    const absAmount = Math.abs(amount);
+  const formatTxAmount = (amount: number) => {
+    const abs = Math.abs(amount);
     const sign = amount >= 0 ? "+" : "-";
-    const isHBAR = token === "HBAR";
-    const hasFraction = Math.abs(absAmount - Math.trunc(absAmount)) > 0;
-    const formatter = new Intl.NumberFormat(undefined, {
-      minimumFractionDigits: hasFraction ? 1 : 0,
-      maximumFractionDigits: isHBAR ? 8 : 8,
+    // Mirror the TokenList display: fixed 3 fraction digits
+    const formatted = formatAmount(abs, {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
     });
-    return `${sign}${formatter.format(absAmount)}`;
+    return `${sign}${formatted}`;
   };
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -170,7 +170,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                         <span
                           className={tx.amount >= 0 ? "text-success" : "text-destructive"}
                         >
-                          {formatAmountNumber(tx.amount, tx.token)}
+                          {formatTxAmount(tx.amount)}
                         </span>
                         <span>{` ${tx.token}`}</span>
                       </p>

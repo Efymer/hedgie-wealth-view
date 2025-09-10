@@ -315,6 +315,7 @@ export const HederaExplorer: React.FC = () => {
             <NFTList
               nfts={nfts}
               isLoading={isTokensLoading}
+              accountId={accountId}
             />
 
             {(isBalanceError || isPriceError) && (

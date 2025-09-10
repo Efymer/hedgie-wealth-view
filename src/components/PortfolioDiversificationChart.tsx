@@ -153,8 +153,7 @@ export const PortfolioDiversificationChart: React.FC<PortfolioDiversificationCha
                 formatter={(value, name, item) => {
                   const pct = (item?.payload as any)?.percentage ?? 0;
                   return [
-                    `${formatUSD(Number(value))} (${formatPercent(pct)})`,
-                    String(name),
+                    `${formatUSD(Number(value))} - (${formatPercent(pct)}) ${name}`,
                   ];
                 }}
               />

@@ -394,3 +394,92 @@ export const useNetworkNodes = () => {
     staleTime: 10 * 60_000,
   });
 };
+
+/**
+ * NFTs (Mirror Node + IPFS via HashPack CDN)
+ */
+export type AccountNFT = {
+  token_id: string; // e.g. "0.0.12345"
+  serial_number: number;
+  metadata?: string; // base64-encoded
+  [k: string]: unknown;
+};
+
+type AccountNFTsResponse = {
+  nfts: AccountNFT[];
+  links?: { next?: string | null };
+};
+
+const getAccountNFTs = async (walletId: string): Promise<AccountNFT[]> => {
+  if (!walletId) return [];
+  const url = `${MIRROR_NODE}/api/v1/accounts/${encodeURIComponent(
+    walletId
+  )}/nfts?limit=100`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return [];
+  const data = (await res.json()) as AccountNFTsResponse;
+  return data?.nfts ?? [];
+};
+
+export const useAccountNFTs = (walletId: string) => {
+  return useQuery({
+    queryKey: ["account", walletId, "nfts"],
+    queryFn: () => getAccountNFTs(walletId),
+    enabled: !!walletId,
+    staleTime: 60_000,
+  });
+};
+
+// Helper to extract CID from base64-encoded metadata containing an ipfs:// URI
+export const extractCIDFromBase64Metadata = (metadataBase64?: string | null): string | null => {
+  if (!metadataBase64) return null;
+  try {
+    // Browser base64 decode (Vite app runs in browser)
+    if (typeof atob !== "function") return null;
+    const jsonStr = atob(metadataBase64);
+    // Attempt to parse JSON first; if it fails, fall back to raw string search
+    try {
+      const obj = JSON.parse(jsonStr);
+      const val: unknown = (obj as Record<string, unknown>)?.["uri"] ?? (obj as Record<string, unknown>)?.["metadata"] ?? (obj as Record<string, unknown>)?.["ipfs"] ?? (obj as Record<string, unknown>)?.["image"];
+      if (typeof val === "string") {
+        const m = val.match(/ipfs:\/\/([^\s"']+)/i);
+        if (m?.[1]) return m[1];
+      }
+      // If JSON has no uri/image, still try raw string
+    } catch (_) {
+      // Not JSON, continue to raw extraction
+    }
+    const rawMatch = jsonStr.match(/ipfs:\/\/([^\s"']+)/i);
+    if (rawMatch?.[1]) return rawMatch[1];
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
+// Given a CID, fetch JSON metadata via HashPack CDN gateway
+export const getNFTMetadata = async (cid: string | null | undefined): Promise<unknown | null> => {
+  if (!cid) return null;
+  const url = `https://hashpack.b-cdn.net/ipfs/${cid}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return null;
+  // Some metadata can be JSON; others might be images. Try JSON first, fallback to blob URL if not JSON
+  try {
+    const data = await res.json();
+    return data;
+  } catch {
+    // Not JSON; return null (callers can handle separately if needed)
+    return null;
+  }
+};
+
+export const useNFTMetadata = (metadataBase64?: string | null, enabled: boolean = true) => {
+  const cid = extractCIDFromBase64Metadata(metadataBase64);
+  return useQuery({
+    queryKey: ["nft", "metadata", cid],
+    queryFn: () => getNFTMetadata(cid),
+    enabled: !!cid && enabled,
+    staleTime: 10 * 60_000,
+  });
+};
+
