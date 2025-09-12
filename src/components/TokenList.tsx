@@ -100,7 +100,7 @@ export const TokenList: React.FC<TokenListProps> = ({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="space-y-3">
         {tokens.map((token) => {
           const whaleData = isAccountWhaleForToken(token.id);
           
