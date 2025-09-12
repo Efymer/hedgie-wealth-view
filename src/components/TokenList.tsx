@@ -1,13 +1,15 @@
 import React from "react";
-import { Coins, ExternalLink, TrendingUp, TrendingDown } from "lucide-react";
+import { Coins, ExternalLink, TrendingUp, TrendingDown, Crown } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   formatUSD,
   formatPercent,
   formatAmount,
   formatUSDWithDecimals,
 } from "@/lib/format";
+import { isAccountWhaleForToken } from "@/lib/whale-detection";
 
 interface Token {
   id: string;
@@ -90,67 +92,80 @@ export const TokenList: React.FC<TokenListProps> = ({
       </div>
 
       <div className="space-y-3">
-        {tokens.map((token) => (
-          <div
-            key={token.id}
-            className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="text-xs font-bold text-primary">
-                    {token.symbol.slice(0, 2).toUpperCase()}
-                  </span>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{token.symbol}</span>
-                    <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                  {typeof token.priceUsd === "number" && (
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      {formatUSDWithDecimals(token.priceUsd, token.decimals)}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="text-right">
+        {tokens.map((token) => {
+          const whaleData = isAccountWhaleForToken(token.id);
+          
+          return (
+            <div
+              key={token.id}
+              className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group"
+            >
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div>
-                    <p className="font-semibold">
-                      {formatAmount(
-                        token.balance / Math.pow(10, token.decimals),
-                        { minimumFractionDigits: 3, maximumFractionDigits: 3 }
-                      )}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatUSD(token.usdValue)}
-                    </p>
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span className="text-xs font-bold text-primary">
+                      {token.symbol.slice(0, 2).toUpperCase()}
+                    </span>
                   </div>
-                  {token.priceChange24h !== undefined && (
-                    <div
-                      className={`flex items-center gap-1 ${
-                        token.priceChange24h >= 0
-                          ? "text-success"
-                          : "text-destructive"
-                      }`}
-                    >
-                      {token.priceChange24h >= 0 ? (
-                        <TrendingUp className="h-3 w-3" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{token.symbol}</span>
+                      {whaleData.isWhale && (
+                        <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30 flex items-center gap-1">
+                          <Crown className="h-3 w-3" />
+                          <span className="text-xs">
+                            Whale #{whaleData.rank}
+                            {whaleData.percentage && ` (${whaleData.percentage}%)`}
+                          </span>
+                        </Badge>
                       )}
-                      <span className="text-xs font-medium">
-                        {formatPercent(Math.abs(token.priceChange24h))}
-                      </span>
+                      <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                  )}
+                    {typeof token.priceUsd === "number" && (
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {formatUSDWithDecimals(token.priceUsd, token.decimals)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="font-semibold">
+                        {formatAmount(
+                          token.balance / Math.pow(10, token.decimals),
+                          { minimumFractionDigits: 3, maximumFractionDigits: 3 }
+                        )}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatUSD(token.usdValue)}
+                      </p>
+                    </div>
+                    {token.priceChange24h !== undefined && (
+                      <div
+                        className={`flex items-center gap-1 ${
+                          token.priceChange24h >= 0
+                            ? "text-success"
+                            : "text-destructive"
+                        }`}
+                      >
+                        {token.priceChange24h >= 0 ? (
+                          <TrendingUp className="h-3 w-3" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3" />
+                        )}
+                        <span className="text-xs font-medium">
+                          {formatPercent(Math.abs(token.priceChange24h))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
