@@ -109,8 +109,7 @@ export const TokenList: React.FC<TokenListProps> = ({
               key={token.id}
               className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group"
             >
-              {/* Main token info row */}
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                     <span className="text-xs font-bold text-primary">
@@ -120,6 +119,15 @@ export const TokenList: React.FC<TokenListProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{token.symbol}</span>
+                      {true && (
+                        <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30 flex items-center gap-1">
+                          <Crown className="h-3 w-3" />
+                          <span className="text-xs">
+                            Whale #{whaleData.rank}
+                            {whaleData.percentage && ` (${whaleData.percentage}%)`}
+                          </span>
+                        </Badge>
+                      )}
                       <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     {typeof token.priceUsd === "number" && (
@@ -132,6 +140,20 @@ export const TokenList: React.FC<TokenListProps> = ({
 
                 <div className="text-right">
                   <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedToken({
+                        id: token.id,
+                        symbol: token.symbol,
+                        decimals: token.decimals,
+                      })}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Users className="h-3 w-3 mr-1" />
+                      <span className="text-xs">Top Holders</span>
+                    </Button>
+                    
                     <div>
                       <p className="font-semibold">
                         {formatAmount(
@@ -163,35 +185,6 @@ export const TokenList: React.FC<TokenListProps> = ({
                     )}
                   </div>
                 </div>
-              </div>
-
-              {/* Metadata row - whale status and actions */}
-              <div className="flex items-center justify-between pt-2 border-t border-border/20">
-                <div className="flex items-center gap-2">
-                  {whaleData.isWhale && (
-                    <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30 flex items-center gap-1">
-                      <Crown className="h-3 w-3" />
-                      <span className="text-xs">
-                        Whale #{whaleData.rank}
-                        {whaleData.percentage && ` (${whaleData.percentage}%)`}
-                      </span>
-                    </Badge>
-                  )}
-                </div>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedToken({
-                    id: token.id,
-                    symbol: token.symbol,
-                    decimals: token.decimals,
-                  })}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Users className="h-3 w-3 mr-1" />
-                  <span className="text-xs">Top Holders</span>
-                </Button>
               </div>
             </div>
           );
