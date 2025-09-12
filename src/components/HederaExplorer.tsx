@@ -295,6 +295,7 @@ export const HederaExplorer: React.FC = () => {
                   }
                   hideZeroUsd={hideZeroUsd}
                   onHideZeroUsdChange={setHideZeroUsd}
+                  currentAccountId={accountId}
                 />
                 <PortfolioDiversificationChart
                   tokens={tokens}

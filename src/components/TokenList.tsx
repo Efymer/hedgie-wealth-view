@@ -1,8 +1,9 @@
-import React from "react";
-import { Coins, ExternalLink, TrendingUp, TrendingDown, Crown } from "lucide-react";
+import React, { useState } from "react";
+import { Coins, ExternalLink, TrendingUp, TrendingDown, Crown, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   formatUSD,
   formatPercent,
@@ -10,6 +11,7 @@ import {
   formatUSDWithDecimals,
 } from "@/lib/format";
 import { isAccountWhaleForToken } from "@/lib/whale-detection";
+import { TopHoldersModal } from "./TopHoldersModal";
 
 interface Token {
   id: string;
@@ -27,6 +29,7 @@ interface TokenListProps {
   isLoading?: boolean;
   hideZeroUsd?: boolean;
   onHideZeroUsdChange?: (checked: boolean) => void;
+  currentAccountId?: string;
 }
 
 export const TokenList: React.FC<TokenListProps> = ({
@@ -34,7 +37,13 @@ export const TokenList: React.FC<TokenListProps> = ({
   isLoading = false,
   hideZeroUsd = true,
   onHideZeroUsdChange,
+  currentAccountId,
 }) => {
+  const [selectedToken, setSelectedToken] = useState<{
+    id: string;
+    symbol: string;
+    decimals: number;
+  } | null>(null);
   if (isLoading) {
     return (
       <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
@@ -131,6 +140,20 @@ export const TokenList: React.FC<TokenListProps> = ({
 
                 <div className="text-right">
                   <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedToken({
+                        id: token.id,
+                        symbol: token.symbol,
+                        decimals: token.decimals,
+                      })}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Users className="h-3 w-3 mr-1" />
+                      <span className="text-xs">Top Holders</span>
+                    </Button>
+                    
                     <div>
                       <p className="font-semibold">
                         {formatAmount(
@@ -167,6 +190,17 @@ export const TokenList: React.FC<TokenListProps> = ({
           );
         })}
       </div>
+      
+      {selectedToken && (
+        <TopHoldersModal
+          isOpen={!!selectedToken}
+          onClose={() => setSelectedToken(null)}
+          tokenId={selectedToken.id}
+          tokenSymbol={selectedToken.symbol}
+          decimals={selectedToken.decimals}
+          currentAccountId={currentAccountId}
+        />
+      )}
     </div>
   );
 };
