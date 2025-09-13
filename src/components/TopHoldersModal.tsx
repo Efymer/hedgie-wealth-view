@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Users, Crown, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 import {
   Dialog,
   DialogContent,
@@ -9,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatAmount, formatPercent } from "@/lib/format";
-import { getTopHolders, TopHolder } from "@/lib/top-holders";
+import { useTopTokenHolders, useTokenInfo } from "@/queries";
 
 interface TopHoldersModalProps {
   isOpen: boolean;
@@ -28,7 +30,33 @@ export const TopHoldersModal: React.FC<TopHoldersModalProps> = ({
   decimals,
   currentAccountId,
 }) => {
-  const topHolders = getTopHolders(tokenId);
+  const navigate = useNavigate();
+  const { data: balances = [], isLoading: isBalancesLoading } = useTopTokenHolders(tokenId, 100, isOpen);
+  const { data: info, isLoading: isInfoLoading } = useTokenInfo(tokenId, isOpen);
+
+  const totalSupply = info?.total_supply ?? 0;
+
+  type HolderRow = {
+    rank: number;
+    accountId: string;
+    balance: number;
+    percentageOfSupply: number;
+    isCurrentAccount?: boolean;
+  };
+
+  const topHolders: HolderRow[] = useMemo(() => {
+    const rows = (balances || []).map((b, i) => {
+      const pct = totalSupply > 0 ? (b.balance / totalSupply) * 100 : 0;
+      return {
+        rank: i + 1,
+        accountId: b.account,
+        balance: b.balance,
+        percentageOfSupply: parseFloat(pct.toFixed(6)),
+        isCurrentAccount: currentAccountId ? b.account === currentAccountId : false,
+      } as HolderRow;
+    });
+    return rows;
+  }, [balances, totalSupply, currentAccountId]);
 
   const formatBalance = (balance: number) => {
     const actualBalance = balance / Math.pow(10, decimals);
@@ -62,10 +90,25 @@ export const TopHoldersModal: React.FC<TopHoldersModalProps> = ({
         
         <ScrollArea className="h-[60vh] w-full">
           <div className="space-y-2">
-            {topHolders.map((holder) => (
+            {(isBalancesLoading || isInfoLoading) && (
+              <div className="text-sm text-muted-foreground p-4">Loading top holders…</div>
+            )}
+            {!isBalancesLoading && !isInfoLoading && topHolders.map((holder) => (
               <div
                 key={holder.accountId}
-                className={`glass-card rounded-lg p-4 border transition-all ${
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  navigate(`/account/${holder.accountId}`);
+                  onClose();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    navigate(`/account/${holder.accountId}`);
+                    onClose();
+                  }
+                }}
+                className={`glass-card rounded-lg p-4 border transition-all cursor-pointer ${
                   holder.isCurrentAccount
                     ? "border-primary/50 bg-primary/5"
                     : "border-border/30 hover:border-primary/30"

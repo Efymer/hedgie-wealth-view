@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Coins, ExternalLink, TrendingUp, TrendingDown, Crown, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,7 @@ import {
   formatAmount,
   formatUSDWithDecimals,
 } from "@/lib/format";
-import { isAccountWhaleForToken } from "@/lib/whale-detection";
+import { useWhaleDetection } from "@/lib/whale-detection";
 import { TopHoldersModal } from "./TopHoldersModal";
 
 interface Token {
@@ -44,6 +44,13 @@ export const TokenList: React.FC<TokenListProps> = ({
     symbol: string;
     decimals: number;
   } | null>(null);
+
+  const tokenIds = useMemo(() => tokens.map((t) => t.id), [tokens]);
+  const { data: whaleMap, isLoading: isWhaleLoading } = useWhaleDetection(
+    currentAccountId,
+    tokenIds,
+    100
+  );
   if (isLoading) {
     return (
       <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
@@ -102,7 +109,7 @@ export const TokenList: React.FC<TokenListProps> = ({
 
       <div className="space-y-3">
         {tokens.map((token) => {
-          const whaleData = isAccountWhaleForToken(token.id);
+          const whaleData = whaleMap?.[token.id] ?? { tokenId: token.id, isWhale: false };
           
           return (
             <div
@@ -119,12 +126,11 @@ export const TokenList: React.FC<TokenListProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{token.symbol}</span>
-                      {true && (
+                      {whaleData.isWhale && (
                         <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30 flex items-center gap-1">
                           <Crown className="h-3 w-3" />
                           <span className="text-xs">
                             Whale #{whaleData.rank}
-                            {whaleData.percentage && ` (${whaleData.percentage}%)`}
                           </span>
                         </Badge>
                       )}

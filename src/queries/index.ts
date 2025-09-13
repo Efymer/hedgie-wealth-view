@@ -483,3 +483,128 @@ export const useNFTMetadata = (metadataBase64?: string | null, enabled: boolean 
   });
 };
 
+
+/**
+ * Token Balances (Mirror Node)
+ * GET /api/v1/tokens/{tokenId}/balances
+ */
+export type TokenBalanceEntry = {
+  account: string;
+  balance: number; // smallest unit
+};
+
+export type TokenBalancesResponse = {
+  timestamp?: string;
+  balances: TokenBalanceEntry[];
+  links?: { next?: string | null };
+};
+
+export const getTokenBalances = async (
+  tokenId: string,
+  limit: number = 100
+): Promise<TokenBalanceEntry[]> => {
+  if (!tokenId) return [];
+  const url = `${MIRROR_NODE}/api/v1/tokens/${encodeURIComponent(tokenId)}/balances?order=desc&limit=${limit}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return [];
+  const data = (await res.json()) as TokenBalancesResponse;
+  return data?.balances ?? [];
+};
+
+export const useTokenBalances = (tokenId: string, limit: number = 100, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ["token", tokenId, "balances", { limit }],
+    queryFn: () => getTokenBalances(tokenId, limit),
+    enabled: !!tokenId && enabled,
+    staleTime: 60_000,
+  });
+};
+
+/**
+ * Top N token holders by balance (client-side aggregation with pagination)
+ */
+export const getTokenBalancesPage = async (
+  tokenId: string,
+  limit: number = 100,
+  next: string | null = null
+): Promise<TokenBalancesResponse> => {
+  let url: string;
+  if (next) {
+    url = `${MIRROR_NODE}${next.startsWith('/') ? '' : '/'}${next}`;
+  } else {
+    url = `${MIRROR_NODE}/api/v1/tokens/${encodeURIComponent(tokenId)}/balances?limit=${limit}`;
+  }
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return { balances: [], links: { next: null } } as TokenBalancesResponse;
+  return (await res.json()) as TokenBalancesResponse;
+};
+
+export const getTopTokenHolders = async (
+  tokenId: string,
+  topN: number = 100,
+  pageLimit: number = 100,
+  maxPages: number = 10
+): Promise<TokenBalanceEntry[]> => {
+  if (!tokenId) return [];
+  let holders: TokenBalanceEntry[] = [];
+  let pagesFetched = 0;
+  let next: string | null = null;
+  do {
+    const page = await getTokenBalancesPage(tokenId, pageLimit, next);
+    holders = holders.concat(page.balances || []);
+    next = page?.links?.next ?? null;
+    pagesFetched += 1;
+    // Early stop if we already have more than topN; we can still keep going if needed,
+    // but this heuristic limits requests if many pages are unnecessary.
+    if (holders.length >= topN) break;
+  } while (next && pagesFetched < maxPages);
+
+  // Sort by balance desc and take topN
+  holders.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+  return holders.slice(0, topN);
+};
+
+export const useTopTokenHolders = (
+  tokenId: string,
+  topN: number = 100,
+  enabled: boolean = true
+) => {
+  return useQuery({
+    queryKey: ["token", tokenId, "topHolders", { topN }],
+    queryFn: () => getTopTokenHolders(tokenId, topN),
+    enabled: !!tokenId && enabled,
+    staleTime: 60_000,
+  });
+};
+
+/**
+ * Token Info (Mirror Node)
+ * GET /api/v1/tokens/{tokenId}
+ */
+export type MirrorNodeTokenInfo = {
+  token_id: string;
+  symbol?: string;
+  name?: string;
+  decimals?: number;
+  total_supply?: number; // in smallest unit
+  type?: string;
+  [k: string]: unknown;
+};
+
+export const getTokenInfo = async (tokenId: string): Promise<MirrorNodeTokenInfo | null> => {
+  if (!tokenId) return null;
+  const url = `${MIRROR_NODE}/api/v1/tokens/${encodeURIComponent(tokenId)}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return null;
+  return (await res.json()) as MirrorNodeTokenInfo;
+};
+
+export const useTokenInfo = (tokenId: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ["token", tokenId, "info"],
+    queryFn: () => getTokenInfo(tokenId),
+    enabled: !!tokenId && enabled,
+    staleTime: 10 * 60_000,
+  });
+};
+
