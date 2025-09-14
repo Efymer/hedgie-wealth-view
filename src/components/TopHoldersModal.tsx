@@ -60,10 +60,10 @@ export const TopHoldersModal: React.FC<TopHoldersModalProps> = ({
 
   const formatBalance = (balance: number) => {
     const actualBalance = balance / Math.pow(10, decimals);
-    return formatAmount(actualBalance, { 
-      minimumFractionDigits: 0, 
-      maximumFractionDigits: decimals > 4 ? 4 : decimals 
-    });
+    return formatAmount(
+      actualBalance,
+      { minimumFractionDigits: 3, maximumFractionDigits: 3 }
+    )
   };
 
   const getRankBadgeVariant = (rank: number) => {

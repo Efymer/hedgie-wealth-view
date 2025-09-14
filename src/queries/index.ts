@@ -543,7 +543,7 @@ export const getTopTokenHolders = async (
   tokenId: string,
   topN: number = 100,
   pageLimit: number = 100,
-  maxPages: number = 10
+  maxPages: number = 999
 ): Promise<TokenBalanceEntry[]> => {
   if (!tokenId) return [];
   let holders: TokenBalanceEntry[] = [];
@@ -554,9 +554,6 @@ export const getTopTokenHolders = async (
     holders = holders.concat(page.balances || []);
     next = page?.links?.next ?? null;
     pagesFetched += 1;
-    // Early stop if we already have more than topN; we can still keep going if needed,
-    // but this heuristic limits requests if many pages are unnecessary.
-    if (holders.length >= topN) break;
   } while (next && pagesFetched < maxPages);
 
   // Sort by balance desc and take topN
