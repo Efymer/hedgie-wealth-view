@@ -178,13 +178,13 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                         {formatDate(tx.timestamp)}
                       </p>
                     </div>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="sm"
                       className="opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       View
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               </div>
