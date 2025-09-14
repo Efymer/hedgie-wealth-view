@@ -158,8 +158,7 @@ export const TokenList: React.FC<TokenListProps> = ({
                     >
                       <Users className="h-3 w-3 mr-1" />
                       <span className="text-xs">Top Holders</span>
-                    </Button>  */}
-                    
+                    </Button> */}
                     <div>
                       <p className="font-semibold">
                         {formatAmount(
