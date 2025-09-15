@@ -546,19 +546,28 @@ export const getTopTokenHolders = async (
   maxPages: number = 999
 ): Promise<TokenBalanceEntry[]> => {
   if (!tokenId) return [];
-  let holders: TokenBalanceEntry[] = [];
-  let pagesFetched = 0;
-  let next: string | null = null;
-  do {
-    const page = await getTokenBalancesPage(tokenId, pageLimit, next);
-    holders = holders.concat(page.balances || []);
-    next = page?.links?.next ?? null;
-    pagesFetched += 1;
-  } while (next && pagesFetched < maxPages);
+  try {
+    // Delegate heavy pagination + caching to serverless backend
+    const url = `/api/tokens/top-holders?tokenId=${encodeURIComponent(tokenId)}&topN=${topN}`;
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) throw new Error(`Backend responded ${res.status}`);
+    const data = (await res.json()) as { data?: TokenBalanceEntry[] };
+    return data?.data ?? [];
+  } catch {
+    // Fallback to client-side pagination in dev or when API is unavailable
+    let holders: TokenBalanceEntry[] = [];
+    let pagesFetched = 0;
+    let next: string | null = null;
+    do {
+      const page = await getTokenBalancesPage(tokenId, pageLimit, next);
+      holders = holders.concat(page.balances || []);
+      next = page?.links?.next ?? null;
+      pagesFetched += 1;
+    } while (next && pagesFetched < maxPages);
 
-  // Sort by balance desc and take topN
-  holders.sort((a, b) => (b.balance || 0) - (a.balance || 0));
-  return holders.slice(0, topN);
+    holders.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+    return holders.slice(0, topN);
+  }
 };
 
 export const useTopTokenHolders = (

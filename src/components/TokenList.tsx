@@ -146,7 +146,7 @@ export const TokenList: React.FC<TokenListProps> = ({
 
                 <div className="text-right">
                   <div className="flex items-center gap-3">
-                    {/* <Button
+                    <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setSelectedToken({
@@ -158,7 +158,7 @@ export const TokenList: React.FC<TokenListProps> = ({
                     >
                       <Users className="h-3 w-3 mr-1" />
                       <span className="text-xs">Top Holders</span>
-                    </Button> */}
+                    </Button>
                     <div>
                       <p className="font-semibold">
                         {formatAmount(
