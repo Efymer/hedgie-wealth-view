@@ -15,8 +15,8 @@ const HASHPACK_PRICE_CHANGES = "https://api.hashpack.app/price-changes";
  * Types
  */
 type MirrorNodeBalanceEntry = {
-  account: string;     // e.g. "0.0.12345"
-  balance: number;     // tinybars
+  account: string; // e.g. "0.0.12345"
+  balance: number; // tinybars
   tokens?: Array<{
     token_id: string;
     balance: number;
@@ -56,10 +56,11 @@ type MirrorNodeAccount = {
   [k: string]: unknown;
 };
 
-
 type MirrorNodeAccountResponse = MirrorNodeAccount;
 
-const getAccountInfo = async (walletId: string): Promise<MirrorNodeAccount | null> => {
+const getAccountInfo = async (
+  walletId: string
+): Promise<MirrorNodeAccount | null> => {
   if (!walletId) return null;
   const url = `${MIRROR_NODE}/api/v1/accounts/${encodeURIComponent(walletId)}`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
@@ -80,10 +81,14 @@ export const useAccountInfo = (walletId: string) => {
 /**
  * Balance Query
  */
-export const getHBARBalance = async (walletId: string): Promise<MirrorNodeBalanceEntry | null> => {
+export const getHBARBalance = async (
+  walletId: string
+): Promise<MirrorNodeBalanceEntry | null> => {
   if (!walletId) return null;
 
-  const url = `${MIRROR_NODE}/api/v1/balances?account.id=${encodeURIComponent(walletId)}`;
+  const url = `${MIRROR_NODE}/api/v1/balances?account.id=${encodeURIComponent(
+    walletId
+  )}`;
   const res = await fetch(url);
   if (!res.ok) {
     // Invalid account or transient error
@@ -134,9 +139,13 @@ type MirrorNodeTransactionsResponse = {
   links?: { next?: string | null };
 };
 
-const getAccountTransactions = async (walletId: string): Promise<MirrorNodeTransaction[]> => {
+const getAccountTransactions = async (
+  walletId: string
+): Promise<MirrorNodeTransaction[]> => {
   if (!walletId) return [];
-  const url = `${MIRROR_NODE}/api/v1/transactions/?account.id=${encodeURIComponent(walletId)}&limit=20&order=desc`;
+  const url = `${MIRROR_NODE}/api/v1/transactions/?account.id=${encodeURIComponent(
+    walletId
+  )}&limit=20&order=desc`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) return [];
   const data = (await res.json()) as MirrorNodeTransactionsResponse;
@@ -153,13 +162,18 @@ export const useAccountTransactions = (walletId: string) => {
 };
 
 // Infinite pagination for transactions
-const getAccountTransactionsPage = async (walletId: string, next: string | null): Promise<MirrorNodeTransactionsResponse> => {
+const getAccountTransactionsPage = async (
+  walletId: string,
+  next: string | null
+): Promise<MirrorNodeTransactionsResponse> => {
   let url: string;
   if (next) {
     // next is a path like "/api/v1/transactions?account.id=...&timestamp=lt:..."
-    url = `${MIRROR_NODE}${next.startsWith('/') ? '' : '/'}${next}`;
+    url = `${MIRROR_NODE}${next.startsWith("/") ? "" : "/"}${next}`;
   } else {
-    url = `${MIRROR_NODE}/api/v1/transactions/?account.id=${encodeURIComponent(walletId)}&limit=10&order=desc`;
+    url = `${MIRROR_NODE}/api/v1/transactions/?account.id=${encodeURIComponent(
+      walletId
+    )}&limit=10&order=desc`;
   }
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) return { transactions: [], links: { next: null } };
@@ -171,7 +185,8 @@ export const useAccountTransactionsInfinite = (walletId: string) => {
     queryKey: ["account", walletId, "transactions", "infinite"],
     enabled: !!walletId,
     initialPageParam: null as string | null,
-    queryFn: async ({ pageParam }) => getAccountTransactionsPage(walletId, pageParam),
+    queryFn: async ({ pageParam }) =>
+      getAccountTransactionsPage(walletId, pageParam),
     getNextPageParam: (lastPage) => lastPage?.links?.next ?? null,
     staleTime: 30_000,
   });
@@ -180,13 +195,16 @@ export const useAccountTransactionsInfinite = (walletId: string) => {
 /**
  * Price Query (CoinGecko)
  */
-const getHBARPrice = async (): Promise<{ usd: number; usdChange24h: number }> => {
+const getHBARPrice = async (): Promise<{
+  usd: number;
+  usdChange24h: number;
+}> => {
   const res = await fetch(COINGECKO_PRICE, {
     headers: { Accept: "application/json" },
   });
   if (!res.ok) {
     // Fallback if rate-limited
-    return { usd: 0.00, usdChange24h: 0 };
+    return { usd: 0.0, usdChange24h: 0 };
   }
   const data = (await res.json()) as HbarPriceResponse;
   const node = data?.["hedera-hashgraph"];
@@ -220,9 +238,13 @@ type AccountTokensResponse = {
   links?: { next?: string };
 };
 
-const getAccountTokens = async (walletId: string): Promise<AccountTokenBalance[]> => {
+const getAccountTokens = async (
+  walletId: string
+): Promise<AccountTokenBalance[]> => {
   if (!walletId) return [];
-  const url = `${MIRROR_NODE}/api/v1/accounts/${encodeURIComponent(walletId)}/tokens?limit=100`;
+  const url = `${MIRROR_NODE}/api/v1/accounts/${encodeURIComponent(
+    walletId
+  )}/tokens?limit=100`;
   const res = await fetch(url);
   if (!res.ok) return [];
   const data = (await res.json()) as AccountTokensResponse;
@@ -238,7 +260,9 @@ type TokenInfo = {
 };
 
 // Batched token info fetch (HashPack mirror)
-const getTokenInfosBatch = async (tokenIds: string[]): Promise<Record<string, TokenInfo>> => {
+const getTokenInfosBatch = async (
+  tokenIds: string[]
+): Promise<Record<string, TokenInfo>> => {
   if (!tokenIds.length) return {};
   const url = `${HASHPACK_TOKEN_INFO}${encodeURIComponent(tokenIds.join(","))}`;
   const res = await fetch(url);
@@ -354,7 +378,10 @@ const getTokenPriceChanges = async (
   return (await res.json()) as TokenPriceChangesResponse;
 };
 
-export const useTokenPriceChanges = (enabled: boolean = true, network: "mainnet" | "testnet" = "mainnet") => {
+export const useTokenPriceChanges = (
+  enabled: boolean = true,
+  network: "mainnet" | "testnet" = "mainnet"
+) => {
   return useQuery({
     queryKey: ["prices", "changes", network],
     queryFn: () => getTokenPriceChanges(network),
@@ -431,7 +458,9 @@ export const useAccountNFTs = (walletId: string) => {
 };
 
 // Helper to extract CID from base64-encoded metadata containing an ipfs:// URI
-export const extractCIDFromBase64Metadata = (metadataBase64?: string | null): string | null => {
+export const extractCIDFromBase64Metadata = (
+  metadataBase64?: string | null
+): string | null => {
   if (!metadataBase64) return null;
   try {
     // Browser base64 decode (Vite app runs in browser)
@@ -440,7 +469,11 @@ export const extractCIDFromBase64Metadata = (metadataBase64?: string | null): st
     // Attempt to parse JSON first; if it fails, fall back to raw string search
     try {
       const obj = JSON.parse(jsonStr);
-      const val: unknown = (obj as Record<string, unknown>)?.["uri"] ?? (obj as Record<string, unknown>)?.["metadata"] ?? (obj as Record<string, unknown>)?.["ipfs"] ?? (obj as Record<string, unknown>)?.["image"];
+      const val: unknown =
+        (obj as Record<string, unknown>)?.["uri"] ??
+        (obj as Record<string, unknown>)?.["metadata"] ??
+        (obj as Record<string, unknown>)?.["ipfs"] ??
+        (obj as Record<string, unknown>)?.["image"];
       if (typeof val === "string") {
         const m = val.match(/ipfs:\/\/([^\s"']+)/i);
         if (m?.[1]) return m[1];
@@ -458,7 +491,9 @@ export const extractCIDFromBase64Metadata = (metadataBase64?: string | null): st
 };
 
 // Given a CID, fetch JSON metadata via HashPack CDN gateway
-export const getNFTMetadata = async (cid: string | null | undefined): Promise<unknown | null> => {
+export const getNFTMetadata = async (
+  cid: string | null | undefined
+): Promise<unknown | null> => {
   if (!cid) return null;
   const url = `https://hashpack.b-cdn.net/ipfs/${cid}`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
@@ -473,7 +508,10 @@ export const getNFTMetadata = async (cid: string | null | undefined): Promise<un
   }
 };
 
-export const useNFTMetadata = (metadataBase64?: string | null, enabled: boolean = true) => {
+export const useNFTMetadata = (
+  metadataBase64?: string | null,
+  enabled: boolean = true
+) => {
   const cid = extractCIDFromBase64Metadata(metadataBase64);
   return useQuery({
     queryKey: ["nft", "metadata", cid],
@@ -482,7 +520,6 @@ export const useNFTMetadata = (metadataBase64?: string | null, enabled: boolean 
     staleTime: 10 * 60_000,
   });
 };
-
 
 /**
  * Token Balances (Mirror Node)
@@ -504,14 +541,20 @@ export const getTokenBalances = async (
   limit: number = 100
 ): Promise<TokenBalanceEntry[]> => {
   if (!tokenId) return [];
-  const url = `${MIRROR_NODE}/api/v1/tokens/${encodeURIComponent(tokenId)}/balances?order=desc&limit=${limit}`;
+  const url = `${MIRROR_NODE}/api/v1/tokens/${encodeURIComponent(
+    tokenId
+  )}/balances?order=desc&limit=${limit}`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) return [];
   const data = (await res.json()) as TokenBalancesResponse;
   return data?.balances ?? [];
 };
 
-export const useTokenBalances = (tokenId: string, limit: number = 100, enabled: boolean = true) => {
+export const useTokenBalances = (
+  tokenId: string,
+  limit: number = 100,
+  enabled: boolean = true
+) => {
   return useQuery({
     queryKey: ["token", tokenId, "balances", { limit }],
     queryFn: () => getTokenBalances(tokenId, limit),
@@ -520,54 +563,20 @@ export const useTokenBalances = (tokenId: string, limit: number = 100, enabled: 
   });
 };
 
-/**
- * Top N token holders by balance (client-side aggregation with pagination)
- */
-export const getTokenBalancesPage = async (
-  tokenId: string,
-  limit: number = 100,
-  next: string | null = null
-): Promise<TokenBalancesResponse> => {
-  let url: string;
-  if (next) {
-    url = `${MIRROR_NODE}${next.startsWith('/') ? '' : '/'}${next}`;
-  } else {
-    url = `${MIRROR_NODE}/api/v1/tokens/${encodeURIComponent(tokenId)}/balances?limit=${limit}`;
-  }
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) return { balances: [], links: { next: null } } as TokenBalancesResponse;
-  return (await res.json()) as TokenBalancesResponse;
-};
-
 export const getTopTokenHolders = async (
   tokenId: string,
   topN: number = 100,
-  pageLimit: number = 100,
-  maxPages: number = 999
 ): Promise<TokenBalanceEntry[]> => {
   if (!tokenId) return [];
-  try {
-    // Delegate heavy pagination + caching to serverless backend
-    const url = `/api/tokens/top-holders?tokenId=${encodeURIComponent(tokenId)}&topN=${topN}`;
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) throw new Error(`Backend responded ${res.status}`);
-    const data = (await res.json()) as { data?: TokenBalanceEntry[] };
-    return data?.data ?? [];
-  } catch {
-    // Fallback to client-side pagination in dev or when API is unavailable
-    let holders: TokenBalanceEntry[] = [];
-    let pagesFetched = 0;
-    let next: string | null = null;
-    do {
-      const page = await getTokenBalancesPage(tokenId, pageLimit, next);
-      holders = holders.concat(page.balances || []);
-      next = page?.links?.next ?? null;
-      pagesFetched += 1;
-    } while (next && pagesFetched < maxPages);
-
-    holders.sort((a, b) => (b.balance || 0) - (a.balance || 0));
-    return holders.slice(0, topN);
-  }
+  // Delegate heavy pagination + caching to serverless backend
+  const base = import.meta.env.MODE === 'development' ? 'https://hbarwatch.vercel.app' : '';
+  const url = `${base}/api/tokens/top-holders?tokenId=${encodeURIComponent(
+    tokenId
+  )}&topN=${topN}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`Backend responded ${res.status}`);
+  const data = (await res.json()) as { data?: TokenBalanceEntry[] };
+  return data?.data ?? [];
 };
 
 export const useTopTokenHolders = (
@@ -597,7 +606,9 @@ export type MirrorNodeTokenInfo = {
   [k: string]: unknown;
 };
 
-export const getTokenInfo = async (tokenId: string): Promise<MirrorNodeTokenInfo | null> => {
+export const getTokenInfo = async (
+  tokenId: string
+): Promise<MirrorNodeTokenInfo | null> => {
   if (!tokenId) return null;
   const url = `${MIRROR_NODE}/api/v1/tokens/${encodeURIComponent(tokenId)}`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
@@ -613,4 +624,3 @@ export const useTokenInfo = (tokenId: string, enabled: boolean = true) => {
     staleTime: 10 * 60_000,
   });
 };
-

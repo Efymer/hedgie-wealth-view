@@ -8,8 +8,6 @@ import { PortfolioDiversificationChart } from "./PortfolioDiversificationChart";
 import { NFTList } from "./NFTList";
 
 import { useToast } from "@/hooks/use-toast";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import {
   tinybarToHBAR,
   useHBARBalance,
@@ -22,6 +20,11 @@ import {
   useAccountTransactionsInfinite,
   MirrorNodeTransaction,
 } from "@/queries";
+import { NetWorthChart } from "./NetWorthChart";
+const base =
+  import.meta.env.MODE === "development" ? "https://hbarwatch.vercel.app" : "";
+
+type NetWorthData = { date: string; value: number; change: number };
 
 export const HederaExplorer: React.FC = () => {
   const navigate = useNavigate();
@@ -29,7 +32,19 @@ export const HederaExplorer: React.FC = () => {
   const [accountId, setAccountId] = useState<string>("");
   const [hideZeroUsd, setHideZeroUsd] = useState<boolean>(true);
   const { toast } = useToast();
-
+  const [networthData, setNetworthData] = useState<NetWorthData[] | undefined>(
+    undefined
+  );
+  useEffect(() => {
+    if (!accountId) return;
+    const url = `${base}/api/networth?accountId=${encodeURIComponent(
+      accountId
+    )}&limit=90`;
+    fetch(url, { headers: { Accept: "application/json" } })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
+      .then((j) => setNetworthData(j?.data || []))
+      .catch(() => setNetworthData(undefined));
+  }, [accountId]);
   // Initialize accountId from route params and react to changes
   useEffect(() => {
     const id = (params?.accountId as string) || "";
@@ -190,75 +205,81 @@ export const HederaExplorer: React.FC = () => {
       (p: { transactions?: MirrorNodeTransaction[] }) => p.transactions || []
     );
     // Only use CRYPTOTRANSFER transactions and exclude child records (those with parent_consensus_timestamp)
-    const onlyTransfers = flat.filter((tx) => tx.name === 'CRYPTOTRANSFER' && !tx.parent_consensus_timestamp);
-    const list: Transaction[] = onlyTransfers.map((tx: MirrorNodeTransaction) => {
-      const type = "transfer";
+    const onlyTransfers = flat.filter(
+      (tx) => tx.name === "CRYPTOTRANSFER" && !tx.parent_consensus_timestamp
+    );
+    const list: Transaction[] = onlyTransfers.map(
+      (tx: MirrorNodeTransaction) => {
+        const type = "transfer";
 
-      // Find token transfer involving this account
-      const tokenEntry = (tx.token_transfers || []).find(
-        (t) => t.account === accountId
-      );
-      // Find HBAR transfer involving this account
-      const hbarEntry = (tx.transfers || []).find(
-        (t) => t.account === accountId
-      );
-
-      // Amount and token label
-      let amount = 0;
-      let token = "";
-      if (tokenEntry) {
-        const dec = tokenEntry.token_id
-          ? tokenDecimalsMap.get(tokenEntry.token_id) ?? 0
-          : 0;
-        amount = dec
-          ? tokenEntry.amount / Math.pow(10, dec)
-          : tokenEntry.amount;
-        const sym = tokenEntry.token_id
-          ? tokenSymbolMap.get(tokenEntry.token_id)
-          : undefined;
-        token = sym || tokenEntry.token_id || "TOKEN";
-      } else if (hbarEntry) {
-        amount = tinybarToHBAR(hbarEntry.amount);
-        token = "HBAR";
-      }
-
-      // Counterparty: pick the other side of the first relevant transfer
-      let counterparty = "";
-      if (tokenEntry) {
-        const other = (tx.token_transfers || []).find(
-          (t) => t.token_id === tokenEntry.token_id && t.account !== accountId
+        // Find token transfer involving this account
+        const tokenEntry = (tx.token_transfers || []).find(
+          (t) => t.account === accountId
         );
-        counterparty = other?.account || "";
-      } else if (hbarEntry) {
-        const other = (tx.transfers || []).find((t) => t.account !== accountId);
-        counterparty = other?.account || "";
+        // Find HBAR transfer involving this account
+        const hbarEntry = (tx.transfers || []).find(
+          (t) => t.account === accountId
+        );
+
+        // Amount and token label
+        let amount = 0;
+        let token = "";
+        if (tokenEntry) {
+          const dec = tokenEntry.token_id
+            ? tokenDecimalsMap.get(tokenEntry.token_id) ?? 0
+            : 0;
+          amount = dec
+            ? tokenEntry.amount / Math.pow(10, dec)
+            : tokenEntry.amount;
+          const sym = tokenEntry.token_id
+            ? tokenSymbolMap.get(tokenEntry.token_id)
+            : undefined;
+          token = sym || tokenEntry.token_id || "TOKEN";
+        } else if (hbarEntry) {
+          amount = tinybarToHBAR(hbarEntry.amount);
+          token = "HBAR";
+        }
+
+        // Counterparty: pick the other side of the first relevant transfer
+        let counterparty = "";
+        if (tokenEntry) {
+          const other = (tx.token_transfers || []).find(
+            (t) => t.token_id === tokenEntry.token_id && t.account !== accountId
+          );
+          counterparty = other?.account || "";
+        } else if (hbarEntry) {
+          const other = (tx.transfers || []).find(
+            (t) => t.account !== accountId
+          );
+          counterparty = other?.account || "";
+        }
+
+        // Timestamp to ISO
+        const sec = parseInt(
+          (tx.consensus_timestamp || "0").split(".")[0] || "0",
+          10
+        );
+        const timestamp = new Date(sec * 1000).toISOString();
+
+        const status: "success" | "failed" =
+          tx.result === "SUCCESS" ? "success" : "failed";
+
+        return {
+          id: tx.transaction_id || tx.consensus_timestamp,
+          type,
+          timestamp,
+          amount,
+          token: token || "HBAR",
+          counterparty: counterparty || "—",
+          fee:
+            typeof tx.charged_tx_fee === "number"
+              ? tinybarToHBAR(tx.charged_tx_fee)
+              : 0,
+          hash: tx.transaction_hash || "",
+          status,
+        };
       }
-
-      // Timestamp to ISO
-      const sec = parseInt(
-        (tx.consensus_timestamp || "0").split(".")[0] || "0",
-        10
-      );
-      const timestamp = new Date(sec * 1000).toISOString();
-
-      const status: "success" | "failed" =
-        tx.result === "SUCCESS" ? "success" : "failed";
-
-      return {
-        id: tx.transaction_id || tx.consensus_timestamp,
-        type,
-        timestamp,
-        amount,
-        token: token || "HBAR",
-        counterparty: counterparty || "—",
-        fee:
-          typeof tx.charged_tx_fee === "number"
-            ? tinybarToHBAR(tx.charged_tx_fee)
-            : 0,
-        hash: tx.transaction_hash || "",
-        status,
-      };
-    });
+    );
     return list;
   }, [txInfinite.data?.pages, accountId, tokenSymbolMap, tokenDecimalsMap]);
 
@@ -297,6 +318,8 @@ export const HederaExplorer: React.FC = () => {
                   onHideZeroUsdChange={setHideZeroUsd}
                   currentAccountId={accountId}
                 />
+                <NetWorthChart data={networthData} />
+
                 <PortfolioDiversificationChart
                   tokens={tokens}
                   isLoading={
@@ -304,6 +327,7 @@ export const HederaExplorer: React.FC = () => {
                   }
                 />
               </div>
+
               <TransactionHistory
                 accountId={accountId}
                 transactions={mappedTransactions}
@@ -312,7 +336,7 @@ export const HederaExplorer: React.FC = () => {
                 isLoadingMore={txInfinite.isFetchingNextPage}
               />
             </div>
-            
+
             <NFTList
               nfts={nfts}
               isLoading={isTokensLoading}
