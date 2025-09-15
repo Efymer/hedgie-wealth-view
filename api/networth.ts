@@ -45,8 +45,8 @@ export default async function handler(req: Req, res: Res) {
       }
     }
 
-    // Reverse back to chronological order (oldest -> newest)
-    points.reverse();
+    // Ensure chronological order (oldest -> newest) by score (timestamp)
+    points.sort((a, b) => a.score - b.score);
 
     // Compute percentage change vs previous
     const data: NetWorthPoint[] = points.map((p, idx) => {

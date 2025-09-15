@@ -218,9 +218,6 @@ export default async function handler(req: Req, res: Res) {
             .filter(Boolean)
         : undefined;
 
-    console.log(process.env.ACCOUNTS_CSV);
-    console.log(typeof process.env.ACCOUNTS_CSV);
-    console.log(Array.isArray(process.env.ACCOUNTS_CSV));
     const envAccounts =
       typeof process.env.ACCOUNTS_CSV === "string"
         ? process.env.ACCOUNTS_CSV.split(",")

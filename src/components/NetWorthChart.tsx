@@ -34,9 +34,10 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
   data = mockNetWorthData 
 }) => {
   const currentValue = data[data.length - 1]?.value || 0;
-  const previousValue = data[data.length - 2]?.value || 0;
-  const totalChange = ((currentValue - previousValue) / previousValue) * 100;
-  const totalChangeAmount = currentValue - previousValue;
+  const previousValue = data.length >= 2 ? (data[data.length - 2]?.value || 0) : 0;
+  const hasBaseline = data.length >= 2 && previousValue !== 0;
+  const totalChange = hasBaseline ? ((currentValue - previousValue) / previousValue) * 100 : 0;
+  const totalChangeAmount = hasBaseline ? (currentValue - previousValue) : 0;
 
   const formatValue = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -83,7 +84,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
 
       <div className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="glass-card rounded-lg p-4 border border-border/30">
+          {/* <div className="glass-card rounded-lg p-4 border border-border/30">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-muted-foreground">Current Value</span>
@@ -91,26 +92,35 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
             <p className="text-2xl font-bold gradient-text">
               {formatValue(currentValue)}
             </p>
-          </div>
+          </div> */}
 
           <div className="glass-card rounded-lg p-4 border border-border/30">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className={`h-4 w-4 ${
-                totalChange >= 0 ? 'text-success' : 'text-destructive'
+                hasBaseline ? (totalChange >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground'
               }`} />
               <span className="text-sm font-medium text-muted-foreground">24h Change</span>
             </div>
             <div className="flex items-center gap-2">
-              <p className={`text-2xl font-bold ${
-                totalChange >= 0 ? 'text-success' : 'text-destructive'
-              }`}>
-                {totalChange >= 0 ? '+' : ''}{totalChange.toFixed(2)}%
-              </p>
-              <p className={`text-sm ${
-                totalChange >= 0 ? 'text-success' : 'text-destructive'
-              }`}>
-                ({totalChange >= 0 ? '+' : ''}{formatValue(totalChangeAmount)})
-              </p>
+              {hasBaseline ? (
+                <>
+                  <p className={`text-2xl font-bold ${
+                    totalChange >= 0 ? 'text-success' : 'text-destructive'
+                  }`}>
+                    {totalChange >= 0 ? '+' : ''}{totalChange.toFixed(2)}%
+                  </p>
+                  <p className={`text-sm ${
+                    totalChange >= 0 ? 'text-success' : 'text-destructive'
+                  }`}>
+                    ({totalChange >= 0 ? '+' : ''}{formatValue(totalChangeAmount)})
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-muted-foreground">—</p>
+                  <p className="text-sm text-muted-foreground">(no baseline yet)</p>
+                </>
+              )}
             </div>
           </div>
         </div>
