@@ -46,11 +46,12 @@ export const TokenList: React.FC<TokenListProps> = ({
   } | null>(null);
 
   const tokenIds = useMemo(() => tokens.map((t) => t.id), [tokens]);
-  const { data: whaleMap, isLoading: isWhaleLoading } = useWhaleDetection(
+  const { data: whaleMap } = useWhaleDetection(
     currentAccountId,
     tokenIds,
     100
   );
+
   if (isLoading) {
     return (
       <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
@@ -110,7 +111,7 @@ export const TokenList: React.FC<TokenListProps> = ({
       <div className="space-y-3">
         {tokens.map((token) => {
           const whaleData = whaleMap?.[token.id] ?? { tokenId: token.id, isWhale: false };
-          
+
           return (
             <div
               key={token.id}
@@ -134,7 +135,6 @@ export const TokenList: React.FC<TokenListProps> = ({
                           </span>
                         </Badge>
                       )}
-                      <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     {typeof token.priceUsd === "number" && (
                       <p className="text-sm text-muted-foreground mt-0.5">

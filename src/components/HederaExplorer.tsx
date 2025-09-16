@@ -142,7 +142,7 @@ export const HederaExplorer: React.FC = () => {
       symbol: "HBAR",
       name: "Hedera",
       balance: Math.round(hbarBalance * Math.pow(10, 8)),
-      decimals: 4,
+      decimals: 8,
       usdValue: hbarBalance * hbarPrice,
       priceUsd: hbarPrice,
       priceChange24h: hbarChange24h,
