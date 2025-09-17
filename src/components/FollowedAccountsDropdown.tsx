@@ -23,8 +23,8 @@ export const FollowedAccountsDropdown: React.FC = () => {
   const handleUnfollow = (accountId: string, accountName?: string) => {
     unfollowAccount(accountId);
     toast({
-      title: "Unfollowed Account", 
-      description: `You are no longer following ${accountName || accountId}`,
+      title: "Notifications Disabled", 
+      description: `You will no longer receive transaction notifications from ${accountName || accountId}`,
     });
   };
 
@@ -47,9 +47,9 @@ export const FollowedAccountsDropdown: React.FC = () => {
       
       <PopoverContent className="w-80 p-0" align="end">
         <div className="p-4 border-b">
-          <h3 className="font-semibold">Followed Accounts</h3>
+          <h3 className="font-semibold">Transaction Notifications</h3>
           <p className="text-sm text-muted-foreground">
-            {followedAccounts.length} account{followedAccounts.length !== 1 ? 's' : ''} followed
+            Receiving notifications from {followedAccounts.length} account{followedAccounts.length !== 1 ? 's' : ''}
           </p>
         </div>
 
@@ -58,10 +58,10 @@ export const FollowedAccountsDropdown: React.FC = () => {
             <div className="p-8 text-center">
               <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-sm text-muted-foreground">
-                No accounts followed yet
+                No notification subscriptions yet
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Follow accounts to track their activity
+                Follow accounts to get transaction notifications
               </p>
             </div>
           ) : (
@@ -80,7 +80,7 @@ export const FollowedAccountsDropdown: React.FC = () => {
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
-                          Followed {new Date(account.followedAt).toLocaleDateString()}
+                          Notifications enabled {new Date(account.followedAt).toLocaleDateString()}
                         </p>
                       </div>
                       

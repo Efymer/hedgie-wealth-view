@@ -25,13 +25,13 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
     
     if (following) {
       toast({
-        title: "Unfollowed Account",
-        description: `You are no longer following ${accountName || accountId}`,
+        title: "Notifications Disabled",
+        description: `You will no longer receive transaction notifications from ${accountName || accountId}`,
       });
     } else {
       toast({
-        title: "Following Account",
-        description: `You are now following ${accountName || accountId}. You'll receive notifications for their transactions.`,
+        title: "Notifications Enabled",
+        description: `You will now receive notifications when ${accountName || accountId} makes transactions`,
       });
     }
   };
@@ -50,12 +50,12 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
       {following ? (
         <>
           <Check className="h-4 w-4" />
-          <span>Following</span>
+          <span>Notifications On</span>
         </>
       ) : (
         <>
           <UserPlus className="h-4 w-4" />
-          <span>Follow</span>
+          <span>Get Notifications</span>
         </>
       )}
     </Button>
