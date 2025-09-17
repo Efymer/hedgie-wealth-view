@@ -6,6 +6,7 @@ import { TransactionHistory, Transaction } from "./TransactionHistory";
 import { Breadcrumb } from "./Breadcrumb";
 import { PortfolioDiversificationChart } from "./PortfolioDiversificationChart";
 import { NFTList } from "./NFTList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -301,58 +302,71 @@ export const HederaExplorer: React.FC = () => {
         </div> */}
 
         {!accountId ? null : (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AccountBalance
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="transactions">Transactions</TabsTrigger>
+              <TabsTrigger value="nfts">NFTs</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AccountBalance
+                  accountId={accountId}
+                  usdValue={usdValue}
+                  createdAt={createdAt}
+                />
+                <NetWorthChart data={networthData} />
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <TokenList
+                    tokens={tokens}
+                    isLoading={
+                      isBalanceLoading || isPriceLoading || isTokensLoading
+                    }
+                    hideZeroUsd={hideZeroUsd}
+                    onHideZeroUsdChange={setHideZeroUsd}
+                    currentAccountId={accountId}
+                  />
+                </div>
+
+                <div className="space-y-6">
+                  <PortfolioDiversificationChart
+                    tokens={tokens}
+                    isLoading={
+                      isBalanceLoading || isPriceLoading || isTokensLoading
+                    }
+                  />
+                </div>
+              </div>
+
+              {(isBalanceError || isPriceError) && (
+                <div className="text-sm text-destructive">
+                  Failed to load live data. Please try again.
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="transactions">
+              <TransactionHistory
                 accountId={accountId}
-                usdValue={usdValue}
-                createdAt={createdAt}
+                transactions={mappedTransactions}
+                hasMore={!!txInfinite.hasNextPage}
+                onLoadMore={() => txInfinite.fetchNextPage()}
+                isLoadingMore={txInfinite.isFetchingNextPage}
               />
-              <NetWorthChart data={networthData} />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-6">
-                <TokenList
-                  tokens={tokens}
-                  isLoading={
-                    isBalanceLoading || isPriceLoading || isTokensLoading
-                  }
-                  hideZeroUsd={hideZeroUsd}
-                  onHideZeroUsdChange={setHideZeroUsd}
-                  currentAccountId={accountId}
-                />
-              </div>
-
-              <div className="space-y-6">
-                <PortfolioDiversificationChart
-                  tokens={tokens}
-                  isLoading={
-                    isBalanceLoading || isPriceLoading || isTokensLoading
-                  }
-                />
-              </div>
-            </div>
-
-            <TransactionHistory
-              accountId={accountId}
-              transactions={mappedTransactions}
-              hasMore={!!txInfinite.hasNextPage}
-              onLoadMore={() => txInfinite.fetchNextPage()}
-              isLoadingMore={txInfinite.isFetchingNextPage}
-            />
-
-            <NFTList
-              nfts={nfts}
-              isLoading={isTokensLoading}
-              accountId={accountId}
-            />
-
-            {(isBalanceError || isPriceError) && (
-              <div className="text-sm text-destructive">
-                Failed to load live data. Please try again.
-              </div>
-            )}
-          </div>
+            </TabsContent>
+            
+            <TabsContent value="nfts">
+              <NFTList
+                nfts={nfts}
+                isLoading={isTokensLoading}
+                accountId={accountId}
+              />
+            </TabsContent>
+          </Tabs>
         )}
 
         {/* Footer */}
