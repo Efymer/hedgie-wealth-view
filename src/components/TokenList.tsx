@@ -11,7 +11,7 @@ import {
   formatUSDWithDecimals,
 } from "@/lib/format";
 import { useWhaleDetection } from "@/lib/whale-detection";
-import { TopHoldersModal } from "./TopHoldersModal";
+// import { TopHoldersModal } from "./TopHoldersModal";
 
 interface Token {
   id: string;
@@ -199,7 +199,7 @@ export const TokenList: React.FC<TokenListProps> = ({
           );
         })}
       </div>
-      
+{/*       
       {selectedToken && (
         <TopHoldersModal
           isOpen={!!selectedToken}
@@ -209,7 +209,7 @@ export const TokenList: React.FC<TokenListProps> = ({
           decimals={selectedToken.decimals}
           currentAccountId={currentAccountId}
         />
-      )}
+      )} */}
     </div>
   );
 };

@@ -32,6 +32,13 @@ export const TopHoldersPage: React.FC = () => {
   const { data: topHoldersResponse, isLoading, error } = useTopHolders(selectedToken);
   const { data: allTokens = [], isLoading: isTokensLoading } = useAllTokensForAutocomplete();
   const { data: tokenInfo } = useTokenInfo(selectedToken, !!selectedToken);
+
+  const normalizedTotalSupply = useMemo(() => {
+    if (!tokenInfo) return null;
+    const decimals = tokenInfo.decimals ?? 0;
+    const totalSupply = tokenInfo.total_supply ?? 0;
+    return totalSupply / Math.pow(10, decimals);
+  }, [tokenInfo]);
   
   const topHolders = useMemo(() => {
     if (!topHoldersResponse?.data) return [];
@@ -244,9 +251,16 @@ export const TopHoldersPage: React.FC = () => {
                   Top 100 Holders - {selectedTokenInfo ? `${selectedTokenInfo.symbol} (${selectedToken})` : selectedToken}
                 </h2>
               </div>
-              <Badge variant="secondary" className="px-3 py-1">
-                {isLoading ? "Loading..." : `${topHolders.length} holders`}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="px-3 py-1">
+                  {isLoading ? "Loading..." : `${topHolders.length} holders`}
+                </Badge>
+                {normalizedTotalSupply !== null && (
+                  <Badge variant="outline" className="px-3 py-1">
+                    Total supply: {formatAmount(normalizedTotalSupply, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                  </Badge>
+                )}
+              </div>
             </div>
 
             {isLoading ? (
