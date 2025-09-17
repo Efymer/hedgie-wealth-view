@@ -56,9 +56,9 @@ export const TopHoldersPage: React.FC = () => {
 
   // Popular tokens for quick access
   const popularTokens = [
-    { id: "HBAR", name: "Hedera" },
-    { id: "0.0.456858", name: "USDC" },
-    { id: "0.0.731861", name: "KARATE" },
+    // { id: "HBAR", name: "Hedera" },
+    // { id: "0.0.456858", name: "USDC" },
+    // { id: "0.0.731861", name: "KARATE" },
   ];
 
   return (
@@ -84,7 +84,7 @@ export const TopHoldersPage: React.FC = () => {
           <div className="space-y-4">
             <div className="flex gap-2">
               <Input
-                placeholder="Enter token ID (e.g., 0.0.456858 or HBAR)"
+                placeholder="Enter token ID (e.g., 0.0.456858)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -100,7 +100,7 @@ export const TopHoldersPage: React.FC = () => {
             </div>
             
             {/* Popular tokens */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Popular tokens:</p>
               <div className="flex flex-wrap gap-2">
                 {popularTokens.map((token) => (
@@ -117,7 +117,7 @@ export const TopHoldersPage: React.FC = () => {
                   </Button>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 

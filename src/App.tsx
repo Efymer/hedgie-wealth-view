@@ -10,6 +10,7 @@ import { Navigation } from "@/components/Navigation";
 import NotFound from "./pages/NotFound";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -19,11 +20,12 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <div className="min-h-screen bg-background">
           <Navigation />
           <Routes>
             <Route path="/" element={<Landing />} />
-            <Route path="/explorer" element={<HederaExplorer />} />
+            <Route path="/explorer" element={<Landing />} />
             <Route path="/explorer/:accountId" element={<HederaExplorer />} />
             <Route path="/account/:accountId" element={<HederaExplorer />} />
             <Route path="/top-holders" element={<TopHoldersPage />} />
