@@ -1,19 +1,36 @@
 import React, { useState, useMemo } from "react";
-import { Search, Loader2, Crown, ExternalLink, Users } from "lucide-react";
+import { Search, Loader2, Crown, ExternalLink, Users, Check, ChevronsUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useTopHolders } from "@/hooks/useTopHolders";
+import { useAllTokensForAutocomplete } from "@/queries";
 import { formatAmount, formatPercent } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const TopHoldersPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedToken, setSelectedToken] = useState<string>("");
+  const [open, setOpen] = useState(false);
   
   const { data: topHoldersResponse, isLoading, error } = useTopHolders(selectedToken);
+  const { data: allTokens = [], isLoading: isTokensLoading } = useAllTokensForAutocomplete();
   
   const topHolders = useMemo(() => {
     if (!topHoldersResponse?.data) return [];
@@ -54,6 +71,23 @@ export const TopHoldersPage: React.FC = () => {
     }
   };
 
+  const filteredTokens = useMemo(() => {
+    if (!searchTerm) return allTokens.slice(0, 50); // Show first 50 by default
+    
+    const lower = searchTerm.toLowerCase();
+    return allTokens
+      .filter(token => 
+        token.symbol.toLowerCase().includes(lower) ||
+        token.name.toLowerCase().includes(lower) ||
+        token.token_id.toLowerCase().includes(lower)
+      )
+      .slice(0, 50); // Limit to 50 results for performance
+  }, [allTokens, searchTerm]);
+
+  const selectedTokenInfo = useMemo(() => {
+    return allTokens.find(token => token.token_id === selectedToken);
+  }, [allTokens, selectedToken]);
+
   // Popular tokens for quick access
   const popularTokens = [
     // { id: "HBAR", name: "Hedera" },
@@ -83,13 +117,86 @@ export const TopHoldersPage: React.FC = () => {
           
           <div className="space-y-4">
             <div className="flex gap-2">
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="flex-1 justify-between"
+                  >
+                    {selectedTokenInfo ? (
+                      <span className="flex items-center gap-2">
+                        <span className="font-mono text-xs">{selectedTokenInfo.token_id}</span>
+                        <span>•</span>
+                        <span>{selectedTokenInfo.symbol}</span>
+                      </span>
+                    ) : (
+                      "Select a token or enter token ID..."
+                    )}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0 max-w-2xl">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Search tokens by name, symbol, or ID..."
+                      value={searchTerm}
+                      onValueChange={setSearchTerm}
+                    />
+                    <CommandList>
+                      <CommandEmpty>
+                        {isTokensLoading ? "Loading tokens..." : "No tokens found."}
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {filteredTokens.map((token) => (
+                          <CommandItem
+                            key={token.token_id}
+                            value={`${token.symbol} ${token.name} ${token.token_id}`}
+                            onSelect={() => {
+                              setSelectedToken(token.token_id);
+                              setSearchTerm(token.token_id);
+                              setOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedToken === token.token_id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex items-center justify-between w-full">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold">{token.symbol}</span>
+                                  <span className="text-muted-foreground">•</span>
+                                  <span className="text-sm text-muted-foreground">{token.name}</span>
+                                </div>
+                                <span className="font-mono text-xs text-muted-foreground">{token.token_id}</span>
+                              </div>
+                              {token.priceUsd && token.priceUsd > 0 && (
+                                <span className="text-sm text-muted-foreground">
+                                  ${token.priceUsd.toFixed(6)}
+                                </span>
+                              )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              
+              {/* Manual input fallback */}
               <Input
-                placeholder="Enter token ID (e.g., 0.0.456858)"
+                placeholder="Or enter token ID manually"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1"
+                className="max-w-xs"
               />
+              
               <Button onClick={handleSearch} disabled={!searchTerm.trim() || isLoading}>
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -127,7 +234,9 @@ export const TopHoldersPage: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">Top 100 Holders - {selectedToken}</h2>
+                <h2 className="text-xl font-semibold">
+                  Top 100 Holders - {selectedTokenInfo ? `${selectedTokenInfo.symbol} (${selectedToken})` : selectedToken}
+                </h2>
               </div>
               <Badge variant="secondary" className="px-3 py-1">
                 {isLoading ? "Loading..." : `${topHolders.length} holders`}

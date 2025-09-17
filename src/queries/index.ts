@@ -361,6 +361,64 @@ export const useTokenPrices = (accountId: string) => {
 };
 
 /**
+ * All Tokens for Autocomplete (HashPack API)
+ */
+export type TokenOption = {
+  token_id: string;
+  symbol: string;
+  name: string;
+  priceUsd?: number;
+};
+
+type HashPackTokenData = {
+  id?: string;
+  token_id?: string;
+  symbol?: string;
+  name?: string;
+  priceUsd?: number;
+  price?: number;
+  [k: string]: unknown;
+};
+
+const getAllTokensForAutocomplete = async (): Promise<TokenOption[]> => {
+  try {
+    const res = await fetch(HASHPACK_PRICES, { method: "POST" });
+    if (!res.ok) return [];
+    
+    const data = (await res.json()) as TokenPricesResponse;
+    
+    if (Array.isArray(data)) {
+      return data.map((token: HashPackTokenData) => ({
+        token_id: (token.id || token.token_id || '') as string,
+        symbol: (token.symbol || token.token_id || token.id || '') as string,
+        name: (token.name || token.symbol || token.token_id || token.id || '') as string,
+        priceUsd: token.priceUsd || token.price || 0,
+      })).filter(token => token.token_id && token.symbol);
+    } else {
+      // If it's a Record format, we can't get names without additional API calls
+      return Object.keys(data).map(tokenId => ({
+        token_id: tokenId,
+        symbol: tokenId,
+        name: tokenId,
+        priceUsd: data[tokenId],
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch tokens for autocomplete:', error);
+    return [];
+  }
+};
+
+export const useAllTokensForAutocomplete = () => {
+  return useQuery({
+    queryKey: ["tokens", "autocomplete"],
+    queryFn: getAllTokensForAutocomplete,
+    staleTime: 5 * 60_000, // 5 minutes
+    gcTime: 10 * 60_000, // 10 minutes
+  });
+};
+
+/**
  * Token 24h Price Changes (HashPack API)
  * Returns a map of token_id => percent change (e.g., -15.08). Some entries can be null.
  */
