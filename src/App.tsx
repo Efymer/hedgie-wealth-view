@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import { HederaExplorer } from "@/components/HederaExplorer";
 import { TopHoldersPage } from "@/pages/TopHoldersPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import { Navigation } from "@/components/Navigation";
 import NotFound from "./pages/NotFound";
 import { Analytics } from "@vercel/analytics/react";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/explorer/:accountId" element={<HederaExplorer />} />
             <Route path="/account/:accountId" element={<HederaExplorer />} />
             <Route path="/top-holders" element={<TopHoldersPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

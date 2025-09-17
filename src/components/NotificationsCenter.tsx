@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Bell, User, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -77,6 +78,7 @@ const DUMMY_NOTIFICATIONS: NotificationData[] = [
 export const NotificationsCenter: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationData[]>(DUMMY_NOTIFICATIONS);
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -211,7 +213,10 @@ export const NotificationsCenter: React.FC = () => {
               variant="ghost"
               size="sm"
               className="w-full text-sm"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/notifications');
+              }}
             >
               View all notifications
             </Button>
