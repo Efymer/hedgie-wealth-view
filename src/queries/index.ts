@@ -682,3 +682,38 @@ export const useTokenInfo = (tokenId: string, enabled: boolean = true) => {
     staleTime: 10 * 60_000,
   });
 };
+
+/**
+ * Counterparty Map (Serverless API)
+ */
+export type CounterpartyMapItem = {
+  account: string;
+  label: string;
+  transactionCount: number;
+  type: "exchange" | "dapp" | "wallet" | "treasury";
+};
+
+export type CounterpartyMapResponse = {
+  data: CounterpartyMapItem[];
+  meta?: {
+    accountId: string;
+    transactionsProcessed: number;
+    counterparties: number;
+  };
+};
+
+export const useCounterpartyMap = (accountId: string, limit: number = 1000) => {
+  return useQuery<CounterpartyMapResponse>({
+    queryKey: ["counterparty-map", accountId, { limit }],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/counterparty-map?accountId=${encodeURIComponent(accountId)}&limit=${limit}`,
+        { headers: { Accept: "application/json" } }
+      );
+      if (!res.ok) throw new Error("Failed to fetch counterparty map");
+      return (await res.json()) as CounterpartyMapResponse;
+    },
+    enabled: !!accountId,
+    staleTime: 60_000,
+  });
+};

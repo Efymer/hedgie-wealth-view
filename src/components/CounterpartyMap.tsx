@@ -2,43 +2,32 @@ import React, { useMemo } from "react";
 import { Treemap, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useCounterpartyMap, type CounterpartyMapItem } from "@/queries";
 
 interface CounterpartyMapProps {
   accountId: string;
 }
 
-interface CounterpartyData {
-  account: string;
-  label: string;
-  transactionCount: number;
-  type: "exchange" | "dapp" | "wallet" | "treasury";
-}
-
-type ApiResponse = {
-  data: CounterpartyData[];
-  meta?: {
-    accountId: string;
-    transactionsProcessed: number;
-    counterparties: number;
-  };
-};
+// Data shape imported from queries as CounterpartyMapItem
 
 export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) => {
-  const { data, isLoading, isError } = useQuery<ApiResponse>({
-    queryKey: ["counterparty-map", accountId],
-    queryFn: async () => {
-      const res = await fetch(`/api/counterparty-map?accountId=${encodeURIComponent(accountId)}&limit=1000`, {
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) throw new Error("Failed to fetch counterparty map");
-      return (await res.json()) as ApiResponse;
-    },
-    enabled: !!accountId,
-    staleTime: 60_000,
-  });
+  const { data, isLoading, isError } = useCounterpartyMap(accountId, 1000);
 
-  const counterparties: CounterpartyData[] = data?.data ?? [];
+  const counterparties: CounterpartyMapItem[] = useMemo(
+    () => data?.data ?? [],
+    [data?.data]
+  );
+
+  // Transform data for Recharts Treemap
+  const treemapData = useMemo(() => {
+    return counterparties.map((counterparty) => ({
+      name: counterparty.label,
+      size: counterparty.transactionCount, // use transaction count to size rectangles
+      fill: getColorByType(counterparty.type),
+      account: counterparty.account,
+      type: counterparty.type,
+    }));
+  }, [counterparties]);
 
   if (isLoading) {
     return (
@@ -47,7 +36,9 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
           <CardTitle>Counterparty Network Map</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-40 flex items-center justify-center text-muted-foreground">Loading...</div>
+          <div className="h-40 flex items-center justify-center text-muted-foreground">
+            Loading...
+          </div>
         </CardContent>
       </Card>
     );
@@ -60,22 +51,13 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
           <CardTitle>Counterparty Network Map</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-40 flex items-center justify-center text-destructive">Failed to load data</div>
+          <div className="h-40 flex items-center justify-center text-destructive">
+            Failed to load data
+          </div>
         </CardContent>
       </Card>
     );
   }
-
-  // Transform data for Recharts Treemap
-  const treemapData = useMemo(() => {
-    return counterparties.map((counterparty) => ({
-      name: counterparty.label,
-      size: counterparty.transactionCount, // use transaction count to size rectangles
-      fill: getColorByType(counterparty.type),
-      account: counterparty.account,
-      type: counterparty.type,
-    }));
-  }, [counterparties]);
 
   function getColorByType(type: string): string {
     switch (type) {
@@ -133,10 +115,22 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
         />
         {width > minLabelWidth && height > minLabelHeight && (
           <>
-            <text x={x + 8} y={y + 18} fill="#ffffff" fontSize={12} fontWeight={600}>
+            <text
+              x={x + 8}
+              y={y + 18}
+              fill="#ffffff"
+              fontSize={12}
+              fontWeight={600}
+            >
               {name}
             </text>
-            <text x={x + 8} y={y + 36} fill="#ffffff" fontSize={11} opacity={0.9}>
+            <text
+              x={x + 8}
+              y={y + 36}
+              fill="#ffffff"
+              fontSize={11}
+              opacity={0.9}
+            >
               {size} txns
             </text>
           </>
@@ -151,10 +145,13 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             Counterparty Network Map
-            <Badge variant="secondary">{counterparties.length} connections</Badge>
+            <Badge variant="secondary">
+              {counterparties.length} connections
+            </Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Accounts that {accountId} interacts with most frequently. Rectangle size represents transaction frequency.
+            Accounts that {accountId} interacts with most frequently. Rectangle
+            size represents transaction frequency.
           </p>
         </CardHeader>
         <CardContent>
@@ -183,23 +180,33 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
         <CardContent>
           <div className="space-y-3">
             {counterparties.slice(0, 5).map((counterparty, index) => (
-              <div key={counterparty.account} className="flex items-center justify-between p-3 rounded-lg bg-secondary/10">
+              <div
+                key={counterparty.account}
+                className="flex items-center justify-between p-3 rounded-lg bg-secondary/10"
+              >
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-medium text-sm">
                     {index + 1}
                   </div>
                   <div>
                     <div className="font-medium">{counterparty.label}</div>
-                    <div className="text-sm text-muted-foreground">{counterparty.account}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {counterparty.account}
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-medium">{counterparty.transactionCount} txns</div>
+                  <div className="font-medium">
+                    {counterparty.transactionCount} txns
+                  </div>
                 </div>
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className="ml-2"
-                  style={{ backgroundColor: `${getColorByType(counterparty.type)}20`, color: getColorByType(counterparty.type) }}
+                  style={{
+                    backgroundColor: `${getColorByType(counterparty.type)}20`,
+                    color: getColorByType(counterparty.type),
+                  }}
                 >
                   {counterparty.type}
                 </Badge>
