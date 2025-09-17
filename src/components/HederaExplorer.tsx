@@ -7,6 +7,7 @@ import { Breadcrumb } from "./Breadcrumb";
 import { PortfolioDiversificationChart } from "./PortfolioDiversificationChart";
 import { NFTList } from "./NFTList";
 import { CounterpartyMap } from "./CounterpartyMap";
+import { FollowButton } from "./FollowButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useToast } from "@/hooks/use-toast";
@@ -303,13 +304,24 @@ export const HederaExplorer: React.FC = () => {
         </div> */}
 
         {!accountId ? null : (
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="transactions">Transactions</TabsTrigger>
-              <TabsTrigger value="nfts">NFTs</TabsTrigger>
-              <TabsTrigger value="network">Network</TabsTrigger>
-            </TabsList>
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Account {accountId}</h2>
+                <p className="text-muted-foreground">
+                  Track activity and portfolio for this account
+                </p>
+              </div>
+              <FollowButton accountId={accountId} accountName={`Account ${accountId}`} />
+            </div>
+            
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                <TabsTrigger value="nfts">NFTs</TabsTrigger>
+                <TabsTrigger value="network">Network</TabsTrigger>
+              </TabsList>
             
             <TabsContent value="overview" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -372,7 +384,8 @@ export const HederaExplorer: React.FC = () => {
             <TabsContent value="network">
               <CounterpartyMap accountId={accountId} />
             </TabsContent>
-          </Tabs>
+            </Tabs>
+          </>
         )}
 
         {/* Footer */}
