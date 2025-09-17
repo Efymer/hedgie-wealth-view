@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useTopHolders } from "@/hooks/useTopHolders";
-import { useAllTokensForAutocomplete } from "@/queries";
+import { useAllTokensForAutocomplete, useTokenInfo } from "@/queries";
 import { formatAmount, formatPercent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -31,21 +31,32 @@ export const TopHoldersPage: React.FC = () => {
   
   const { data: topHoldersResponse, isLoading, error } = useTopHolders(selectedToken);
   const { data: allTokens = [], isLoading: isTokensLoading } = useAllTokensForAutocomplete();
+  const { data: tokenInfo } = useTokenInfo(selectedToken, !!selectedToken);
   
   const topHolders = useMemo(() => {
     if (!topHoldersResponse?.data) return [];
+    const decimals = tokenInfo?.decimals ?? 0;
+    const divisor = Math.pow(10, decimals);
+    // Prefer mirror node's total_supply if available, otherwise derive from balances
+    const totalSupplyNormalized = (() => {
+      if (typeof tokenInfo?.total_supply === 'number') {
+        return (tokenInfo.total_supply ?? 0) / divisor;
+      }
+      const sumSmallest = topHoldersResponse.data.reduce((sum, h) => sum + h.balance, 0);
+      return sumSmallest / divisor;
+    })();
     
-    // Calculate total supply for percentage calculation
-    const totalSupply = topHoldersResponse.data.reduce((sum, holder) => sum + holder.balance, 0);
-    
-    return topHoldersResponse.data.map((holder, index) => ({
-      rank: index + 1,
-      accountId: holder.account,
-      balance: holder.balance,
-      percentageOfSupply: totalSupply > 0 ? (holder.balance / totalSupply) * 100 : 0,
-      isCurrentAccount: false, // We don't have current account context here
-    }));
-  }, [topHoldersResponse]);
+    return topHoldersResponse.data.map((holder, index) => {
+      const normalizedBalance = holder.balance / divisor;
+      return {
+        rank: index + 1,
+        accountId: holder.account,
+        balance: normalizedBalance,
+        percentageOfSupply: totalSupplyNormalized > 0 ? (normalizedBalance / totalSupplyNormalized) * 100 : 0,
+        isCurrentAccount: false,
+      };
+    });
+  }, [topHoldersResponse, tokenInfo]);
 
   const getRankBadgeVariant = (rank: number) => {
     if (rank === 1) return "default";
@@ -304,7 +315,7 @@ export const TopHoldersPage: React.FC = () => {
                           <div className="flex items-center gap-4">
                             <div>
                               <p className="font-semibold">
-                                {formatAmount(holder.balance)} tokens
+                                {formatAmount(holder.balance, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} tokens
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {formatPercent(holder.percentageOfSupply)} of supply

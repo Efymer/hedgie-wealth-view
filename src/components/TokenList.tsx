@@ -113,9 +113,13 @@ export const TokenList: React.FC<TokenListProps> = ({
           const whaleData = whaleMap?.[token.id] ?? { tokenId: token.id, isWhale: false };
 
           return (
-            <div
+            <a
               key={token.id}
-              className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group"
+              href={`https://www.saucerswap.finance/swap/HBAR/${token.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group block"
+              title={`Swap ${token.symbol} on SaucerSwap`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -191,7 +195,7 @@ export const TokenList: React.FC<TokenListProps> = ({
                   </div>
                 </div>
               </div>
-            </div>
+            </a>
           );
         })}
       </div>
