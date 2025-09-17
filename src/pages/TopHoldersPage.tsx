@@ -174,11 +174,6 @@ export const TopHoldersPage: React.FC = () => {
                                 </div>
                                 <span className="font-mono text-xs text-muted-foreground">{token.token_id}</span>
                               </div>
-                              {token.priceUsd && token.priceUsd > 0 && (
-                                <span className="text-sm text-muted-foreground">
-                                  ${token.priceUsd.toFixed(6)}
-                                </span>
-                              )}
                             </div>
                           </CommandItem>
                         ))}
