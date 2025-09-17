@@ -93,10 +93,10 @@ export const NFTDetailsModal: React.FC<NFTDetailsModalProps> = ({
             </div>
           )}
 
-          <Separator />
+          {/* <Separator /> */}
 
           {/* Pricing Info */}
-          {(nft.isForSale || nft.lastSalePrice) && (
+          {/* {(nft.isForSale || nft.lastSalePrice) && (
             <div className="space-y-4">
               <h3 className="text-sm font-medium">Market Info</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -122,10 +122,10 @@ export const NFTDetailsModal: React.FC<NFTDetailsModalProps> = ({
               </div>
               <Separator />
             </div>
-          )}
+          )} */}
 
           {/* Attributes */}
-          {nft.attributes && nft.attributes.length > 0 && (
+          {/* {nft.attributes && nft.attributes.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-sm font-medium">Attributes</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -139,10 +139,10 @@ export const NFTDetailsModal: React.FC<NFTDetailsModalProps> = ({
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Actions */}
-          <div className="flex gap-2 pt-4">
+          {/* <div className="flex gap-2 pt-4">
             <Button onClick={handleViewOnSentX} className="flex-1">
               <ExternalLink className="h-4 w-4 mr-2" />
               View on SentX
@@ -153,7 +153,7 @@ export const NFTDetailsModal: React.FC<NFTDetailsModalProps> = ({
                 Buy Now
               </Button>
             )}
-          </div>
+          </div> */}
         </div>
       </DialogContent>
     </Dialog>
