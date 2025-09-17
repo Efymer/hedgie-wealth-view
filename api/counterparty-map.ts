@@ -80,6 +80,10 @@ export default async function handler(req: Req, res: Res) {
     const agg: Record<string, CounterAgg> = {};
 
     for (const tx of transactions) {
+      // Exclude contract calls from aggregation
+      if ((tx?.name ?? "").toUpperCase() === "CONTRACTCALL") {
+        continue;
+      }
       const transfers: MirrorNodeTransfer[] = tx?.transfers || [];
       const tokenTransfers: MirrorNodeTokenTransfer[] = tx?.token_transfers || [];
 
@@ -89,15 +93,34 @@ export default async function handler(req: Req, res: Res) {
         hbarByAccount[t.account] = (hbarByAccount[t.account] || 0) + (t.amount || 0);
       }
 
-      // For each counterparty involved (excluding the source account), record a transaction occurrence
-      const involvedAccounts = new Set<string>([
-        ...Object.keys(hbarByAccount),
-        ...tokenTransfers.map((t) => t.account),
-      ]);
+      // Determine if the user is a sender in this transaction (HBAR or tokens)
+      const isHBARSender = (hbarByAccount[accountId] ?? 0) < 0;
+      const isTokenSender = tokenTransfers.some((t) => t.account === accountId && (t.amount ?? 0) < 0);
 
-      involvedAccounts.delete(accountId);
+      // Only include transactions initiated by the user (outgoing)
+      if (!(isHBARSender || isTokenSender)) {
+        continue;
+      }
 
-      for (const cp of involvedAccounts) {
+      // Collect counterparties that received value from the user
+      const recipients = new Set<string>();
+
+      // HBAR recipients: positive net amount (exclude the user)
+      for (const [acct, amt] of Object.entries(hbarByAccount)) {
+        if (acct !== accountId && (amt ?? 0) > 0) {
+          recipients.add(acct);
+        }
+      }
+
+      // Token recipients: positive amount entries (exclude the user)
+      for (const tt of tokenTransfers) {
+        if (tt.account !== accountId && (tt.amount ?? 0) > 0) {
+          recipients.add(tt.account);
+        }
+      }
+
+      // Increment counts for recipients only
+      for (const cp of recipients) {
         if (!agg[cp]) agg[cp] = { account: cp, transactionCount: 0 };
         agg[cp].transactionCount += 1;
       }
