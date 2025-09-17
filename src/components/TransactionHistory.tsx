@@ -103,7 +103,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   });
 
   return (
-    <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
+    <div className="glass-card rounded-xl p-6 w-full  mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />

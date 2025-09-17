@@ -291,22 +291,25 @@ export const HederaExplorer: React.FC = () => {
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <Breadcrumb items={breadcrumbItems} onHomeClick={() => navigate("/")} />
-        <div className="text-center space-y-4">
+        {/* <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-            Hedera Explorer
+            hbarwatch.io
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Real-time account balances and token holdings on the Hedera network
           </p>
-        </div>
+        </div> */}
 
         {!accountId ? null : (
           <div className="space-y-6">
-            <AccountBalance
-              accountId={accountId}
-              usdValue={usdValue}
-              createdAt={createdAt}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <AccountBalance
+                accountId={accountId}
+                usdValue={usdValue}
+                createdAt={createdAt}
+              />
+              <NetWorthChart data={networthData} />
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-6">
                 <TokenList
@@ -318,8 +321,9 @@ export const HederaExplorer: React.FC = () => {
                   onHideZeroUsdChange={setHideZeroUsd}
                   currentAccountId={accountId}
                 />
-                <NetWorthChart data={networthData} />
+              </div>
 
+              <div className="space-y-6">
                 <PortfolioDiversificationChart
                   tokens={tokens}
                   isLoading={
@@ -327,15 +331,15 @@ export const HederaExplorer: React.FC = () => {
                   }
                 />
               </div>
-
-              <TransactionHistory
-                accountId={accountId}
-                transactions={mappedTransactions}
-                hasMore={!!txInfinite.hasNextPage}
-                onLoadMore={() => txInfinite.fetchNextPage()}
-                isLoadingMore={txInfinite.isFetchingNextPage}
-              />
             </div>
+
+            <TransactionHistory
+              accountId={accountId}
+              transactions={mappedTransactions}
+              hasMore={!!txInfinite.hasNextPage}
+              onLoadMore={() => txInfinite.fetchNextPage()}
+              isLoadingMore={txInfinite.isFetchingNextPage}
+            />
 
             <NFTList
               nfts={nfts}
