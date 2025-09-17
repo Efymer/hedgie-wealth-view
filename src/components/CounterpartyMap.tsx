@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { BubbleChart } from "react-bubble-chart";
+import { Treemap, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -16,85 +16,103 @@ interface CounterpartyData {
 }
 
 export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) => {
+
   // Mock data for counterparty relationships
   const mockCounterparties: CounterpartyData[] = useMemo(() => [
+    // Exchanges / DEXs (tags)
     {
       account: "0.0.456858",
       label: "Binance",
-      transactionCount: 156,
-      totalValue: 2450000,
-      type: "exchange"
+      transactionCount: 120,
+      totalValue: 2100000,
+      type: "exchange",
     },
     {
       account: "0.0.731861",
       label: "SaucerSwap",
-      transactionCount: 89,
-      totalValue: 890000,
-      type: "dapp"
+      transactionCount: 95,
+      totalValue: 820000,
+      type: "dapp",
     },
+    {
+      account: "0.0.882001",
+      label: "HeliSwap",
+      transactionCount: 52,
+      totalValue: 360000,
+      type: "dapp",
+    },
+    {
+      account: "0.0.990077",
+      label: "Pangolin",
+      transactionCount: 38,
+      totalValue: 245000,
+      type: "dapp",
+    },
+    // User wallets (majority of items)
     {
       account: "0.0.123789",
-      label: "HashPack Wallet",
-      transactionCount: 67,
+      label: "0.0.123789",
+      transactionCount: 80,
       totalValue: 340000,
-      type: "wallet"
-    },
-    {
-      account: "0.0.800001",
-      label: "Hedera Treasury",
-      transactionCount: 45,
-      totalValue: 1200000,
-      type: "treasury"
-    },
-    {
-      account: "0.0.999888",
-      label: "DeFi Protocol",
-      transactionCount: 34,
-      totalValue: 567000,
-      type: "dapp"
+      type: "wallet",
     },
     {
       account: "0.0.555777",
-      label: "Trading Bot",
-      transactionCount: 28,
-      totalValue: 234000,
-      type: "wallet"
-    },
-    {
-      account: "0.0.333444",
-      label: "Staking Pool",
-      transactionCount: 22,
-      totalValue: 189000,
-      type: "dapp"
+      label: "0.0.555777",
+      transactionCount: 72,
+      totalValue: 295000,
+      type: "wallet",
     },
     {
       account: "0.0.111222",
-      label: "OTC Trader",
-      transactionCount: 18,
-      totalValue: 156000,
-      type: "wallet"
+      label: "0.0.111222",
+      transactionCount: 61,
+      totalValue: 210000,
+      type: "wallet",
+    },
+    {
+      account: "0.0.333444",
+      label: "0.0.333444",
+      transactionCount: 47,
+      totalValue: 178000,
+      type: "wallet",
     },
     {
       account: "0.0.777666",
-      label: "Liquidity Pool",
-      transactionCount: 15,
-      totalValue: 123000,
-      type: "dapp"
+      label: "0.0.777666",
+      transactionCount: 39,
+      totalValue: 152000,
+      type: "wallet",
     },
     {
       account: "0.0.444555",
-      label: "Corporate Account",
-      transactionCount: 12,
-      totalValue: 89000,
-      type: "treasury"
+      label: "0.0.444555",
+      transactionCount: 33,
+      totalValue: 98000,
+      type: "wallet",
+    },
+    {
+      account: "0.0.248001",
+      label: "0.0.248001",
+      transactionCount: 27,
+      totalValue: 76000,
+      type: "wallet",
+    },
+    {
+      account: "0.0.910010",
+      label: "0.0.910010",
+      transactionCount: 19,
+      totalValue: 52000,
+      type: "wallet",
     },
   ], []);
 
-  const bubbleData = useMemo(() => {
-    return mockCounterparties.map((counterparty, index) => ({
-      label: counterparty.label,
-      value: counterparty.transactionCount,
-      color: getColorByType(counterparty.type),
+  // Transform data for Recharts Treemap
+  const treemapData = useMemo(() => {
+    return mockCounterparties.map((counterparty) => ({
+      name: counterparty.label,
+      size: counterparty.transactionCount, // use transaction count to size rectangles
+      fill: getColorByType(counterparty.type),
       account: counterparty.account,
       totalValue: counterparty.totalValue,
       type: counterparty.type,
@@ -125,6 +143,57 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
     return `$${value}`;
   };
 
+  interface CustomNodeProps {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    name?: string;
+    size?: number;
+    fill?: string;
+  }
+
+  const CustomizedNode = (props: CustomNodeProps) => {
+    const {
+      x = 0,
+      y = 0,
+      width = 0,
+      height = 0,
+      name = "",
+      size = 0,
+      fill = "#64748b",
+    } = props;
+    const minLabelWidth = 80;
+    const minLabelHeight = 28;
+
+    return (
+      <g>
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          fill={fill}
+          stroke="#ffffff"
+          strokeWidth={2}
+          opacity={0.9}
+          rx={6}
+          ry={6}
+        />
+        {width > minLabelWidth && height > minLabelHeight && (
+          <>
+            <text x={x + 8} y={y + 18} fill="#ffffff" fontSize={12} fontWeight={600}>
+              {name}
+            </text>
+            <text x={x + 8} y={y + 36} fill="#ffffff" fontSize={11} opacity={0.9}>
+              {size} txns
+            </text>
+          </>
+        )}
+      </g>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <Card className="glass-card">
@@ -134,32 +203,23 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
             <Badge variant="secondary">{mockCounterparties.length} connections</Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Accounts that {accountId} interacts with most frequently. Bubble size represents transaction frequency.
+            Accounts that {accountId} interacts with most frequently. Rectangle size represents transaction frequency.
           </p>
         </CardHeader>
         <CardContent>
-          <div className="h-96 flex items-center justify-center">
-            <BubbleChart
-              data={bubbleData}
-              width={600}
-              height={350}
-              bubbleClickFun={(data: any) => {
-                console.log("Clicked bubble:", data);
-                // Could navigate to that account or show more details
-              }}
-              valueFont={{
-                family: 'Arial',
-                size: 12,
-                color: '#fff',
-                weight: 'bold',
-              }}
-              labelFont={{
-                family: 'Arial',
-                size: 10,
-                color: '#fff',
-                weight: 'normal',
-              }}
-            />
+          <div className="h-96">
+            <ResponsiveContainer width="100%" height="100%">
+              <Treemap
+                data={treemapData}
+                dataKey="size"
+                nameKey="name"
+                stroke="#ffffff"
+                fill="#8884d8"
+                content={<CustomizedNode />}
+              >
+                <Tooltip />
+              </Treemap>
+            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
