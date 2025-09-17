@@ -19,7 +19,7 @@ import {
 
 export interface Transaction {
   id: string;
-  type: "transfer" | "contract_call";
+  type: string;
   timestamp: string;
   amount: number;
   token: string;
@@ -44,8 +44,6 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   onLoadMore,
   isLoadingMore = false,
 }) => {
-  const [filter, setFilter] = useState<string>("all");
-
   const getIcon = (type: string, amount?: number) => {
     switch (type) {
       case "transfer":
@@ -97,11 +95,6 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     return `${sign}${formatted}`;
   };
 
-  const filteredTransactions = transactions.filter((tx) => {
-    const typeMatch = filter === "all" || tx.type === filter;
-    return typeMatch;
-  });
-
   return (
     <div className="glass-card rounded-xl p-6 w-full  mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -110,7 +103,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           <h2 className="text-xl font-semibold">Transaction History</h2>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Type" />
@@ -120,11 +113,11 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               <SelectItem value="transfer">Transfer</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
       </div>
 
       <div className="space-y-3">
-        {filteredTransactions.length === 0 ? (
+        {transactions.length === 0 ? (
           <div className="text-center py-8">
             <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
@@ -132,7 +125,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             </p>
           </div>
         ) : (
-          filteredTransactions.map((tx) => (
+          transactions.map((tx) => (
             <div
               key={tx.id}
               className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group"

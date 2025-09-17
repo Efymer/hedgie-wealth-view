@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Treemap, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
 
 interface CounterpartyMapProps {
   accountId: string;
@@ -11,113 +12,70 @@ interface CounterpartyData {
   account: string;
   label: string;
   transactionCount: number;
-  totalValue: number;
   type: "exchange" | "dapp" | "wallet" | "treasury";
 }
 
-export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) => {
+type ApiResponse = {
+  data: CounterpartyData[];
+  meta?: {
+    accountId: string;
+    transactionsProcessed: number;
+    counterparties: number;
+  };
+};
 
-  // Mock data for counterparty relationships
-  const mockCounterparties: CounterpartyData[] = useMemo(() => [
-    // Exchanges / DEXs (tags)
-    {
-      account: "0.0.456858",
-      label: "Binance",
-      transactionCount: 120,
-      totalValue: 2100000,
-      type: "exchange",
+export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) => {
+  const { data, isLoading, isError } = useQuery<ApiResponse>({
+    queryKey: ["counterparty-map", accountId],
+    queryFn: async () => {
+      const res = await fetch(`/api/counterparty-map?accountId=${encodeURIComponent(accountId)}&limit=1000`, {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) throw new Error("Failed to fetch counterparty map");
+      return (await res.json()) as ApiResponse;
     },
-    {
-      account: "0.0.731861",
-      label: "SaucerSwap",
-      transactionCount: 95,
-      totalValue: 820000,
-      type: "dapp",
-    },
-    {
-      account: "0.0.882001",
-      label: "HeliSwap",
-      transactionCount: 52,
-      totalValue: 360000,
-      type: "dapp",
-    },
-    {
-      account: "0.0.990077",
-      label: "Pangolin",
-      transactionCount: 38,
-      totalValue: 245000,
-      type: "dapp",
-    },
-    // User wallets (majority of items)
-    {
-      account: "0.0.123789",
-      label: "0.0.123789",
-      transactionCount: 80,
-      totalValue: 340000,
-      type: "wallet",
-    },
-    {
-      account: "0.0.555777",
-      label: "0.0.555777",
-      transactionCount: 72,
-      totalValue: 295000,
-      type: "wallet",
-    },
-    {
-      account: "0.0.111222",
-      label: "0.0.111222",
-      transactionCount: 61,
-      totalValue: 210000,
-      type: "wallet",
-    },
-    {
-      account: "0.0.333444",
-      label: "0.0.333444",
-      transactionCount: 47,
-      totalValue: 178000,
-      type: "wallet",
-    },
-    {
-      account: "0.0.777666",
-      label: "0.0.777666",
-      transactionCount: 39,
-      totalValue: 152000,
-      type: "wallet",
-    },
-    {
-      account: "0.0.444555",
-      label: "0.0.444555",
-      transactionCount: 33,
-      totalValue: 98000,
-      type: "wallet",
-    },
-    {
-      account: "0.0.248001",
-      label: "0.0.248001",
-      transactionCount: 27,
-      totalValue: 76000,
-      type: "wallet",
-    },
-    {
-      account: "0.0.910010",
-      label: "0.0.910010",
-      transactionCount: 19,
-      totalValue: 52000,
-      type: "wallet",
-    },
-  ], []);
+    enabled: !!accountId,
+    staleTime: 60_000,
+  });
+
+  const counterparties: CounterpartyData[] = data?.data ?? [];
+
+  if (isLoading) {
+    return (
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle>Counterparty Network Map</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-40 flex items-center justify-center text-muted-foreground">Loading...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle>Counterparty Network Map</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-40 flex items-center justify-center text-destructive">Failed to load data</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Transform data for Recharts Treemap
   const treemapData = useMemo(() => {
-    return mockCounterparties.map((counterparty) => ({
+    return counterparties.map((counterparty) => ({
       name: counterparty.label,
       size: counterparty.transactionCount, // use transaction count to size rectangles
       fill: getColorByType(counterparty.type),
       account: counterparty.account,
-      totalValue: counterparty.totalValue,
       type: counterparty.type,
     }));
-  }, [mockCounterparties]);
+  }, [counterparties]);
 
   function getColorByType(type: string): string {
     switch (type) {
@@ -134,14 +92,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
     }
   }
 
-  const formatValue = (value: number) => {
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`;
-    } else if (value >= 1000) {
-      return `$${(value / 1000).toFixed(0)}K`;
-    }
-    return `$${value}`;
-  };
+  // No pricing/amount formatting needed anymore; we only display transaction counts.
 
   interface CustomNodeProps {
     x?: number;
@@ -200,7 +151,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             Counterparty Network Map
-            <Badge variant="secondary">{mockCounterparties.length} connections</Badge>
+            <Badge variant="secondary">{counterparties.length} connections</Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             Accounts that {accountId} interacts with most frequently. Rectangle size represents transaction frequency.
@@ -231,7 +182,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {mockCounterparties.slice(0, 5).map((counterparty, index) => (
+            {counterparties.slice(0, 5).map((counterparty, index) => (
               <div key={counterparty.account} className="flex items-center justify-between p-3 rounded-lg bg-secondary/10">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-medium text-sm">
@@ -244,7 +195,6 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
                 </div>
                 <div className="text-right">
                   <div className="font-medium">{counterparty.transactionCount} txns</div>
-                  <div className="text-sm text-muted-foreground">{formatValue(counterparty.totalValue)}</div>
                 </div>
                 <Badge 
                   variant="secondary" 
@@ -285,5 +235,4 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
         </CardContent>
       </Card>
     </div>
-  );
-};
+  );  

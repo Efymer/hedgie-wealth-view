@@ -27,7 +27,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, onHomeClick }) =>
                 : "text-muted-foreground hover:text-foreground cursor-pointer"
             }`}
             onClick={() => {
-              if (item.label === "Home" && onHomeClick && !item.active) {
+              if (item.label === "Account Explorer" && onHomeClick && !item.active) {
                 onHomeClick();
               }
             }}

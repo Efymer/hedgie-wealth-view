@@ -208,12 +208,12 @@ export const HederaExplorer: React.FC = () => {
       (p: { transactions?: MirrorNodeTransaction[] }) => p.transactions || []
     );
     // Only use CRYPTOTRANSFER transactions and exclude child records (those with parent_consensus_timestamp)
-    const onlyTransfers = flat.filter(
-      (tx) => tx.name === "CRYPTOTRANSFER" && !tx.parent_consensus_timestamp
-    );
-    const list: Transaction[] = onlyTransfers.map(
+    // const onlyTransfers = flat.filter(
+    //   (tx) => tx.name === "CRYPTOTRANSFER" && !tx.parent_consensus_timestamp
+    // );
+    const list: Transaction[] = flat.map(
       (tx: MirrorNodeTransaction) => {
-        const type = "transfer";
+        // const type = "transfer";
 
         // Find token transfer involving this account
         const tokenEntry = (tx.token_transfers || []).find(
@@ -269,7 +269,7 @@ export const HederaExplorer: React.FC = () => {
 
         return {
           id: tx.transaction_id || tx.consensus_timestamp,
-          type,
+          type: tx.name,
           timestamp,
           amount,
           token: token || "HBAR",

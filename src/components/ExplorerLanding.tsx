@@ -21,7 +21,6 @@ export const ExplorerLanding: React.FC<ExplorerLandingProps> = ({
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <Breadcrumb items={breadcrumbItems} onHomeClick={onHomeClick} />
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold gradient-text">Hedera Explorer</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
