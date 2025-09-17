@@ -6,6 +6,7 @@ import { TransactionHistory, Transaction } from "./TransactionHistory";
 import { Breadcrumb } from "./Breadcrumb";
 import { PortfolioDiversificationChart } from "./PortfolioDiversificationChart";
 import { NFTList } from "./NFTList";
+import { CounterpartyMap } from "./CounterpartyMap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useToast } from "@/hooks/use-toast";
@@ -303,10 +304,11 @@ export const HederaExplorer: React.FC = () => {
 
         {!accountId ? null : (
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="transactions">Transactions</TabsTrigger>
               <TabsTrigger value="nfts">NFTs</TabsTrigger>
+              <TabsTrigger value="network">Network</TabsTrigger>
             </TabsList>
             
             <TabsContent value="overview" className="space-y-6">
@@ -365,6 +367,10 @@ export const HederaExplorer: React.FC = () => {
                 isLoading={isTokensLoading}
                 accountId={accountId}
               />
+            </TabsContent>
+            
+            <TabsContent value="network">
+              <CounterpartyMap accountId={accountId} />
             </TabsContent>
           </Tabs>
         )}
