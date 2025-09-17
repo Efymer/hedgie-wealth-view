@@ -284,13 +284,13 @@ export const HederaExplorer: React.FC = () => {
   }, [txInfinite.data?.pages, accountId, tokenSymbolMap, tokenDecimalsMap]);
 
   const breadcrumbItems = !accountId
-    ? [{ label: "Home", active: true }]
-    : [{ label: "Home" }, { label: `Account ${accountId}`, active: true }];
+    ? [{ label: "Account Explorer", active: true }]
+    : [{ label: "Account Explorer" }, { label: `Account ${accountId}`, active: true }];
 
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <Breadcrumb items={breadcrumbItems} onHomeClick={() => navigate("/")} />
+        <Breadcrumb items={breadcrumbItems} onHomeClick={() => navigate("/explorer")} />
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold gradient-text">
             Hedera Explorer
