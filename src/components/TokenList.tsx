@@ -127,14 +127,14 @@ export const TokenList: React.FC<TokenListProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{token.symbol}</span>
-                      {whaleData.isWhale && (
+                      {/* {whaleData.isWhale && (
                         <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30 flex items-center gap-1">
                           <Crown className="h-3 w-3" />
                           <span className="text-xs">
                             Whale #{whaleData.rank}
                           </span>
                         </Badge>
-                      )}
+                      )} */}
                     </div>
                     {typeof token.priceUsd === "number" && (
                       <p className="text-sm text-muted-foreground mt-0.5">

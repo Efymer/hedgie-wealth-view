@@ -210,6 +210,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
           <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
               <Treemap
+                isAnimationActive={false}
                 data={treemapData}
                 dataKey="size"
                 nameKey="name"
