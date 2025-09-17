@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { Search, TrendingUp, Home, Sparkles } from "lucide-react";
+import { NotificationsCenter } from "./NotificationsCenter";
 
 export const Navigation: React.FC = () => {
   return (
@@ -48,6 +49,10 @@ export const Navigation: React.FC = () => {
                 <span>Top Holders</span>
               </NavLink>
             </div>
+          </div>
+          
+          <div className="flex items-center">
+            <NotificationsCenter />
           </div>
         </div>
       </div>
