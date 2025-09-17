@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { Search, TrendingUp, Home, Sparkles } from "lucide-react";
 import { NotificationsCenter } from "./NotificationsCenter";
+import { WalletConnect } from "./WalletConnect";
 
 export const Navigation: React.FC = () => {
   return (
@@ -51,8 +52,9 @@ export const Navigation: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex items-center">
+          <div className="flex items-center space-x-3">
             <NotificationsCenter />
+            <WalletConnect />
           </div>
         </div>
       </div>
