@@ -16,13 +16,13 @@ const Landing: React.FC = () => {
       });
       return;
     }
-    navigate(`/account/${id}`);
+    navigate(`/explorer/${id}`);
   };
 
   return (
     <ExplorerLanding
       onSearch={handleSearch}
-      onSelect={(address) => navigate(`/account/${address}`)}
+      onSelect={(address) => navigate(`/explorer/${address}`)}
       isSearchLoading={false}
     />
   );

@@ -284,8 +284,8 @@ export const HederaExplorer: React.FC = () => {
   }, [txInfinite.data?.pages, accountId, tokenSymbolMap, tokenDecimalsMap]);
 
   const breadcrumbItems = !accountId
-    ? [{ label: "Home", active: true }]
-    : [{ label: "Home" }, { label: `Account ${accountId}`, active: true }];
+    ? [{ label: "Account Explorer", active: true }]
+    : [{ label: "Account Explorer" }, { label: `Account ${accountId}`, active: true }];
 
   return (
     <div className="min-h-screen p-4 md:p-8">
