@@ -143,6 +143,14 @@ export const TopHoldersPage: React.FC = () => {
               <div className="text-center py-12 text-destructive">
                 <p>Failed to load top holders. Please try again.</p>
               </div>
+            ) : topHolders.length === 0 ? (
+              <div className="glass-card rounded-lg p-8 border border-border/30 text-center">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Holders Found</h3>
+                <p className="text-sm text-muted-foreground">
+                  This token doesn't have any holders or the data is not available.
+                </p>
+              </div>
             ) : (
               <ScrollArea className="h-[60vh] w-full">
                 <div className="space-y-2">
