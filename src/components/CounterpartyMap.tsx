@@ -235,4 +235,5 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
         </CardContent>
       </Card>
     </div>
-  );  
+  );
+};
