@@ -485,6 +485,7 @@ export const useNetworkNodes = () => {
  */
 export type AccountNFT = {
   token_id: string; // e.g. "0.0.12345"
+  name: string;
   serial_number: number;
   metadata?: string; // base64-encoded
   [k: string]: unknown;

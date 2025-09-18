@@ -164,7 +164,6 @@ export const HederaExplorer: React.FC = () => {
   ]);
 
   const nfts = useMemo(() => {
-    // Map NFT tokens from account details
     return (tokenDetails ?? [])
       .filter((t: { type?: string }) => t.type === "NON_FUNGIBLE_UNIQUE")
       .map((t) => ({
