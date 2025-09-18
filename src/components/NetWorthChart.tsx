@@ -1,6 +1,7 @@
 import React from "react";
 import { TrendingUp, DollarSign } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Button } from "@/components/ui/button";
 
 interface NetWorthData {
   date: string;
@@ -83,7 +84,12 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
             <p className="text-muted-foreground">Net worth tracking is in development</p>
           </div>
           <div className="space-y-2">
-            <p className="text-sm font-medium">Join the Beta</p>
+            <Button 
+              onClick={() => window.open('https://twitter.com', '_blank')}
+              className="px-4 py-2"
+            >
+              Join the Beta
+            </Button>
             <p className="text-xs text-muted-foreground">Be the first to access this feature</p>
           </div>
         </div>
