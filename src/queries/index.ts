@@ -173,7 +173,7 @@ const getAccountTransactionsPage = async (
   } else {
     url = `${MIRROR_NODE}/api/v1/transactions/?account.id=${encodeURIComponent(
       walletId
-    )}&limit=10&order=desc`;
+    )}&limit=25&order=desc`;
   }
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) return { transactions: [], links: { next: null } };

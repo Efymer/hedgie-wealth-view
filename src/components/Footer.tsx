@@ -12,7 +12,7 @@ export const Footer: React.FC = () => {
               <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-sm">H</span>
               </div>
-              <span className="text-lg font-semibold text-foreground">Hedera Explorer</span>
+              <span className="text-lg font-semibold text-foreground">hbarwatch.io</span>
             </div>
             <p className="text-muted-foreground text-sm max-w-md leading-relaxed">
               Professional analytics and portfolio tracking for the Hedera network. 
@@ -34,11 +34,11 @@ export const Footer: React.FC = () => {
                   Top Holders
                 </a>
               </li>
-              <li>
+              {/* <li>
                 <a href="/notifications" className="text-muted-foreground hover:text-primary transition-colors">
                   Notifications
                 </a>
-              </li>
+              </li> */}
             </ul>
           </div>
 
@@ -55,7 +55,7 @@ export const Footer: React.FC = () => {
               >
                 <Twitter className="h-4 w-4" />
               </a>
-              <a 
+              {/* <a 
                 href="https://github.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
@@ -72,7 +72,7 @@ export const Footer: React.FC = () => {
                 aria-label="Learn about Hedera"
               >
                 <Globe className="h-4 w-4" />
-              </a>
+              </a> */}
             </div>
           </div>
         </div>
@@ -80,13 +80,13 @@ export const Footer: React.FC = () => {
         {/* Bottom Section */}
         <div className="mt-8 pt-8 border-t border-border/20 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Hedera Explorer. Built for the community.
+            © {new Date().getFullYear()} hbarwatch.io - Built for the community.
           </div>
-          <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+          {/* <div className="flex items-center space-x-6 text-sm text-muted-foreground">
             <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
             <a href="#" className="hover:text-primary transition-colors">Contact</a>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>
