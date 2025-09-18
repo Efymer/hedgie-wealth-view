@@ -95,6 +95,15 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     return `${sign}${formatted}`;
   };
 
+  const openOnHashscan = (txId?: string) => {
+    if (!txId) return;
+    const url = `https://hashscan.io/mainnet/transaction/${encodeURIComponent(txId)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  // Hide transactions where counterparty is "—"
+  const visibleTransactions = transactions.filter((t) => t.counterparty !== "—");
+
   return (
     <div className="glass-card rounded-xl p-6 w-full  mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -117,7 +126,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       </div>
 
       <div className="space-y-3">
-        {transactions.length === 0 ? (
+        {visibleTransactions.length === 0 ? (
           <div className="text-center py-8">
             <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
@@ -125,10 +134,20 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             </p>
           </div>
         ) : (
-          transactions.map((tx) => (
+          visibleTransactions.map((tx) => (
             <div
               key={tx.id}
-              className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group"
+              className="glass-card rounded-lg p-4 border border-border/30 hover:border-primary/30 transition-all group cursor-pointer"
+              role="button"
+              tabIndex={0}
+              title="View on HashScan"
+              onClick={() => openOnHashscan(tx.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openOnHashscan(tx.id);
+                }
+              }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
