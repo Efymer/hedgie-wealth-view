@@ -39,18 +39,12 @@ export const TokenList: React.FC<TokenListProps> = ({
   onHideZeroUsdChange,
   currentAccountId,
 }) => {
-  const [selectedToken, setSelectedToken] = useState<{
-    id: string;
-    symbol: string;
-    decimals: number;
-  } | null>(null);
-
   const tokenIds = useMemo(() => tokens.map((t) => t.id), [tokens]);
-  const { data: whaleMap } = useWhaleDetection(
-    currentAccountId,
-    tokenIds,
-    100
-  );
+  // const { data: whaleMap } = useWhaleDetection(
+  //   currentAccountId,
+  //   tokenIds,
+  //   100
+  // );
 
   if (isLoading) {
     return (
@@ -110,7 +104,7 @@ export const TokenList: React.FC<TokenListProps> = ({
 
       <div className="space-y-3">
         {tokens.map((token) => {
-          const whaleData = whaleMap?.[token.id] ?? { tokenId: token.id, isWhale: false };
+          // const whaleData = whaleMap?.[token.id] ?? { tokenId: token.id, isWhale: false };
 
           return (
             <a

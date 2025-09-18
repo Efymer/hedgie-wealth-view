@@ -288,11 +288,11 @@ export const HederaExplorer: React.FC = () => {
             </div> */}
 
             <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="transactions">Transactions</TabsTrigger>
                 <TabsTrigger value="nfts">NFTs</TabsTrigger>
-                <TabsTrigger value="network">Network</TabsTrigger>
+                {/* <TabsTrigger value="network">Network</TabsTrigger> */}
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
@@ -353,9 +353,9 @@ export const HederaExplorer: React.FC = () => {
                 />
               </TabsContent>
 
-              <TabsContent value="network">
+              {/* <TabsContent value="network">
                 <CounterpartyMap accountId={accountId} />
-              </TabsContent>
+              </TabsContent> */}
             </Tabs>
           </>
         )}
