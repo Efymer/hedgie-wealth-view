@@ -285,7 +285,7 @@ export const TopHoldersPage: React.FC = () => {
                 </Badge>
                 {normalizedTotalSupply !== null && (
                   <Badge variant="outline" className="px-3 py-1">
-                    Total supply: {formatAmount(normalizedTotalSupply, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                    Current supply: {formatAmount(normalizedTotalSupply, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
                   </Badge>
                 )}
               </div>
