@@ -729,7 +729,7 @@ const getNetworth = async (
   limit: number = 90
 ): Promise<NetWorthData[]> => {
   if (!accountId) return [];
-  const base = import.meta.env.MODE === "development" ? "https://hbarwatch.vercel.app" : "";
+  const base = "https://hbarwatch.vercel.app";
   const url = `${base}/api/networth?accountId=${encodeURIComponent(accountId)}&limit=${limit}`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) return [];
