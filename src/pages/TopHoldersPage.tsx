@@ -116,13 +116,43 @@ export const TopHoldersPage: React.FC = () => {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-            Top Token Holders
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover the top 100 holders for any token on the Hedera network
-          </p>
+        {/* Hero Banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20">
+          <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+          <div className="relative px-8 py-16 md:py-20 text-center">
+            <div className="mx-auto max-w-4xl space-y-6">
+              <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+                <Crown className="h-4 w-4 mr-2" />
+                Token Ownership Analytics
+              </div>
+              
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
+                <span className="gradient-text">Token Holder</span>
+                <br />
+                <span className="text-foreground">Rankings</span>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                Analyze token distribution and discover the top 100 holders for any token 
+                on the Hedera network with detailed ownership percentages
+              </p>
+              
+              <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
+                  <span>Top 100 Rankings</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                  <span>Ownership Percentages</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                  <span>Supply Distribution</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search Section */}
