@@ -17,8 +17,8 @@ export const Navigation: React.FC = () => {
             >
               <Activity className="h-6 w-6 text-primary" />
               <div className="flex flex-col">
-                <span className="leading-none">Hedera Explorer</span>
-                <span className="text-xs text-muted-foreground font-normal">Professional Analytics</span>
+                <span className="leading-none">hbarwatch.io</span>
+                <span className="text-xs text-muted-foreground font-normal">The smart explorer for Hedera</span>
               </div>
             </NavLink>
             
@@ -53,11 +53,11 @@ export const Navigation: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex items-center space-x-3">
+          {/* <div className="flex items-center space-x-3">
             <FollowedAccountsDropdown />
             <NotificationsCenter />
             <WalletConnect />
-          </div>
+          </div> */}
         </div>
       </div>
     </nav>

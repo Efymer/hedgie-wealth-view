@@ -718,3 +718,30 @@ export const useCounterpartyMap = (accountId: string, limit: number = 1000) => {
     staleTime: 60_000,
   });
 };
+
+/**
+ * Net worth history (Serverless API)
+ */
+export type NetWorthData = { date: string; value: number; change: number };
+
+const getNetworth = async (
+  accountId: string,
+  limit: number = 90
+): Promise<NetWorthData[]> => {
+  if (!accountId) return [];
+  const base = import.meta.env.MODE === "development" ? "https://hbarwatch.vercel.app" : "";
+  const url = `${base}/api/networth?accountId=${encodeURIComponent(accountId)}&limit=${limit}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return [];
+  const j = (await res.json()) as { data?: NetWorthData[] };
+  return j?.data || [];
+};
+
+export const useNetworth = (accountId: string, limit: number = 90) => {
+  return useQuery<NetWorthData[]>({
+    queryKey: ["networth", accountId, { limit }],
+    queryFn: () => getNetworth(accountId, limit),
+    enabled: !!accountId,
+    staleTime: 5 * 60_000,
+  });
+};

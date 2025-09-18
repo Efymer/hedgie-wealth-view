@@ -62,11 +62,6 @@ export const ExplorerLanding: React.FC<ExplorerLandingProps> = ({
         </div>
         <AccountSearch onSearch={onSearch} isLoading={isSearchLoading} />
         <Watchlist onSelect={onSelect} />
-
-        {/* Footer */}
-        <div className="text-center text-sm text-muted-foreground mt-16">
-          <p>Built for the Hedera community • Real-time data powered by Hedera APIs</p>
-        </div>
       </div>
     </div>
   );

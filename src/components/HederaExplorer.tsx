@@ -10,7 +10,6 @@ import { CounterpartyMap } from "./CounterpartyMap";
 import { FollowButton } from "./FollowButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { useToast } from "@/hooks/use-toast";
 import {
   tinybarToHBAR,
   useHBARBalance,
@@ -22,33 +21,17 @@ import {
   useAccountInfo,
   useAccountTransactionsInfinite,
   MirrorNodeTransaction,
+  useNetworth,
 } from "@/queries";
 import { NetWorthChart } from "./NetWorthChart";
-const base =
-  import.meta.env.MODE === "development" ? "https://hbarwatch.vercel.app" : "";
-
-type NetWorthData = { date: string; value: number; change: number };
 
 export const HederaExplorer: React.FC = () => {
   const navigate = useNavigate();
   const params = useParams();
   const [accountId, setAccountId] = useState<string>("");
   const [hideZeroUsd, setHideZeroUsd] = useState<boolean>(true);
-  const { toast } = useToast();
-  const [networthData, setNetworthData] = useState<NetWorthData[] | undefined>(
-    undefined
-  );
-  useEffect(() => {
-    if (!accountId) return;
-    const url = `${base}/api/networth?accountId=${encodeURIComponent(
-      accountId
-    )}&limit=90`;
-    fetch(url, { headers: { Accept: "application/json" } })
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
-      .then((j) => setNetworthData(j?.data || []))
-      .catch(() => setNetworthData(undefined));
-  }, [accountId]);
-  // Initialize accountId from route params and react to changes
+  const { data: networthData } = useNetworth(accountId, 90);
+
   useEffect(() => {
     const id = (params?.accountId as string) || "";
     setAccountId(id);
@@ -75,7 +58,7 @@ export const HederaExplorer: React.FC = () => {
     () => tinybarToHBAR(balanceEntry?.balance ?? 0),
     [balanceEntry]
   );
-  const hbarPrice = priceData?.usd ?? 0.063;
+  const hbarPrice = priceData?.usd;
   const hbarChange24h = priceData?.usdChange24h ?? 0;
 
   const createdAt = useMemo(() => {
@@ -206,114 +189,104 @@ export const HederaExplorer: React.FC = () => {
     ).flatMap(
       (p: { transactions?: MirrorNodeTransaction[] }) => p.transactions || []
     );
-    // Only use CRYPTOTRANSFER transactions and exclude child records (those with parent_consensus_timestamp)
-    // const onlyTransfers = flat.filter(
-    //   (tx) => tx.name === "CRYPTOTRANSFER" && !tx.parent_consensus_timestamp
-    // );
-    const list: Transaction[] = flat.map(
-      (tx: MirrorNodeTransaction) => {
-        // const type = "transfer";
+    const list: Transaction[] = flat.map((tx: MirrorNodeTransaction) => {
+      // const type = "transfer";
 
-        // Find token transfer involving this account
-        const tokenEntry = (tx.token_transfers || []).find(
-          (t) => t.account === accountId
-        );
-        // Find HBAR transfer involving this account
-        const hbarEntry = (tx.transfers || []).find(
-          (t) => t.account === accountId
-        );
+      // Find token transfer involving this account
+      const tokenEntry = (tx.token_transfers || []).find(
+        (t) => t.account === accountId
+      );
+      // Find HBAR transfer involving this account
+      const hbarEntry = (tx.transfers || []).find(
+        (t) => t.account === accountId
+      );
 
-        // Amount and token label
-        let amount = 0;
-        let token = "";
-        if (tokenEntry) {
-          const dec = tokenEntry.token_id
-            ? tokenDecimalsMap.get(tokenEntry.token_id) ?? 0
-            : 0;
-          amount = dec
-            ? tokenEntry.amount / Math.pow(10, dec)
-            : tokenEntry.amount;
-          const sym = tokenEntry.token_id
-            ? tokenSymbolMap.get(tokenEntry.token_id)
-            : undefined;
-          token = sym || tokenEntry.token_id || "TOKEN";
-        } else if (hbarEntry) {
-          amount = tinybarToHBAR(hbarEntry.amount);
-          token = "HBAR";
-        }
-
-        // Counterparty: pick the other side of the first relevant transfer
-        let counterparty = "";
-        if (tokenEntry) {
-          const other = (tx.token_transfers || []).find(
-            (t) => t.token_id === tokenEntry.token_id && t.account !== accountId
-          );
-          counterparty = other?.account || "";
-        } else if (hbarEntry) {
-          const other = (tx.transfers || []).find(
-            (t) => t.account !== accountId
-          );
-          counterparty = other?.account || "";
-        }
-
-        // Timestamp to ISO
-        const sec = parseInt(
-          (tx.consensus_timestamp || "0").split(".")[0] || "0",
-          10
-        );
-        const timestamp = new Date(sec * 1000).toISOString();
-
-        const status: "success" | "failed" =
-          tx.result === "SUCCESS" ? "success" : "failed";
-
-        return {
-          id: tx.transaction_id || tx.consensus_timestamp,
-          type: tx.name,
-          timestamp,
-          amount,
-          token: token || "HBAR",
-          counterparty: counterparty || "—",
-          fee:
-            typeof tx.charged_tx_fee === "number"
-              ? tinybarToHBAR(tx.charged_tx_fee)
-              : 0,
-          hash: tx.transaction_hash || "",
-          status,
-        };
+      // Amount and token label
+      let amount = 0;
+      let token = "";
+      if (tokenEntry) {
+        const dec = tokenEntry.token_id
+          ? tokenDecimalsMap.get(tokenEntry.token_id) ?? 0
+          : 0;
+        amount = dec
+          ? tokenEntry.amount / Math.pow(10, dec)
+          : tokenEntry.amount;
+        const sym = tokenEntry.token_id
+          ? tokenSymbolMap.get(tokenEntry.token_id)
+          : undefined;
+        token = sym || tokenEntry.token_id || "TOKEN";
+      } else if (hbarEntry) {
+        amount = tinybarToHBAR(hbarEntry.amount);
+        token = "HBAR";
       }
-    );
+
+      // Counterparty: pick the other side of the first relevant transfer
+      let counterparty = "";
+      if (tokenEntry) {
+        const other = (tx.token_transfers || []).find(
+          (t) => t.token_id === tokenEntry.token_id && t.account !== accountId
+        );
+        counterparty = other?.account || "";
+      } else if (hbarEntry) {
+        const other = (tx.transfers || []).find((t) => t.account !== accountId);
+        counterparty = other?.account || "";
+      }
+
+      // Timestamp to ISO
+      const sec = parseInt(
+        (tx.consensus_timestamp || "0").split(".")[0] || "0",
+        10
+      );
+      const timestamp = new Date(sec * 1000).toISOString();
+
+      const status: "success" | "failed" =
+        tx.result === "SUCCESS" ? "success" : "failed";
+
+      return {
+        id: tx.transaction_id || tx.consensus_timestamp,
+        type: tx.name,
+        timestamp,
+        amount,
+        token: token || "HBAR",
+        counterparty: counterparty || "—",
+        fee:
+          typeof tx.charged_tx_fee === "number"
+            ? tinybarToHBAR(tx.charged_tx_fee)
+            : 0,
+        hash: tx.transaction_hash || "",
+        status,
+      };
+    });
     return list;
   }, [txInfinite.data?.pages, accountId, tokenSymbolMap, tokenDecimalsMap]);
 
   const breadcrumbItems = !accountId
     ? [{ label: "Account Explorer", active: true }]
-    : [{ label: "Account Explorer" }, { label: `Account ${accountId}`, active: true }];
+    : [
+        { label: "Account Explorer" },
+        { label: `Account ${accountId}`, active: true },
+      ];
 
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <Breadcrumb items={breadcrumbItems} onHomeClick={() => navigate("/")} />
-        {/* <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-            hbarwatch.io
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Real-time account balances and token holdings on the Hedera network
-          </p>
-        </div> */}
 
         {!accountId ? null : (
           <>
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">Account {accountId}</h2>
                 <p className="text-muted-foreground">
                   Track activity and portfolio for this account
                 </p>
               </div>
-              <FollowButton accountId={accountId} accountName={`Account ${accountId}`} />
-            </div>
-            
+              <FollowButton
+                accountId={accountId}
+                accountName={`Account ${accountId}`}
+              />
+            </div> */}
+
             <Tabs defaultValue="overview" className="space-y-6">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -321,79 +294,71 @@ export const HederaExplorer: React.FC = () => {
                 <TabsTrigger value="nfts">NFTs</TabsTrigger>
                 <TabsTrigger value="network">Network</TabsTrigger>
               </TabsList>
-            
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <AccountBalance
+
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <AccountBalance
+                    accountId={accountId}
+                    usdValue={usdValue}
+                    createdAt={createdAt}
+                  />
+                  <NetWorthChart data={networthData} />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-6">
+                    <TokenList
+                      tokens={tokens}
+                      isLoading={
+                        isBalanceLoading || isPriceLoading || isTokensLoading
+                      }
+                      hideZeroUsd={hideZeroUsd}
+                      onHideZeroUsdChange={setHideZeroUsd}
+                      currentAccountId={accountId}
+                    />
+                  </div>
+
+                  <div className="space-y-6">
+                    <PortfolioDiversificationChart
+                      tokens={tokens}
+                      isLoading={
+                        isBalanceLoading || isPriceLoading || isTokensLoading
+                      }
+                    />
+                  </div>
+                </div>
+
+                {(isBalanceError || isPriceError) && (
+                  <div className="text-sm text-destructive">
+                    Failed to load live data. Please try again.
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="transactions">
+                <TransactionHistory
                   accountId={accountId}
-                  usdValue={usdValue}
-                  createdAt={createdAt}
+                  transactions={mappedTransactions}
+                  hasMore={!!txInfinite.hasNextPage}
+                  onLoadMore={() => txInfinite.fetchNextPage()}
+                  isLoadingMore={txInfinite.isFetchingNextPage}
                 />
-                <NetWorthChart data={networthData} />
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  <TokenList
-                    tokens={tokens}
-                    isLoading={
-                      isBalanceLoading || isPriceLoading || isTokensLoading
-                    }
-                    hideZeroUsd={hideZeroUsd}
-                    onHideZeroUsdChange={setHideZeroUsd}
-                    currentAccountId={accountId}
-                  />
-                </div>
+              </TabsContent>
 
-                <div className="space-y-6">
-                  <PortfolioDiversificationChart
-                    tokens={tokens}
-                    isLoading={
-                      isBalanceLoading || isPriceLoading || isTokensLoading
-                    }
-                  />
-                </div>
-              </div>
+              <TabsContent value="nfts">
+                <NFTList
+                  nfts={nfts}
+                  isLoading={isTokensLoading}
+                  accountId={accountId}
+                />
+              </TabsContent>
 
-              {(isBalanceError || isPriceError) && (
-                <div className="text-sm text-destructive">
-                  Failed to load live data. Please try again.
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="transactions">
-              <TransactionHistory
-                accountId={accountId}
-                transactions={mappedTransactions}
-                hasMore={!!txInfinite.hasNextPage}
-                onLoadMore={() => txInfinite.fetchNextPage()}
-                isLoadingMore={txInfinite.isFetchingNextPage}
-              />
-            </TabsContent>
-            
-            <TabsContent value="nfts">
-              <NFTList
-                nfts={nfts}
-                isLoading={isTokensLoading}
-                accountId={accountId}
-              />
-            </TabsContent>
-            
-            <TabsContent value="network">
-              <CounterpartyMap accountId={accountId} />
-            </TabsContent>
+              <TabsContent value="network">
+                <CounterpartyMap accountId={accountId} />
+              </TabsContent>
             </Tabs>
           </>
         )}
-
-        {/* Footer */}
-        <div className="text-center text-sm text-muted-foreground mt-16">
-          <p>
-            Built for the Hedera community • Real-time data powered by Hedera
-            APIs
-          </p>
-        </div>
       </div>
     </div>
   );
