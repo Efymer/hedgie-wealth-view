@@ -27,7 +27,8 @@ interface NFTListProps {
 // Mock data for SentX marketplace status
 const getMockSaleStatus = (tokenId: string) => {
   const hash = tokenId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-  const isForSale = hash % 3 === 0; // ~33% chance of being for sale
+  // const isForSale = hash % 3 === 0; // ~33% chance of being for sale
+  const isForSale = false;
   const price = isForSale ? (50 + (hash % 500)).toString() : undefined;
   return { isForSale, price };
 };
