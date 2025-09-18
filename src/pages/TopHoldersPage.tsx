@@ -116,13 +116,41 @@ export const TopHoldersPage: React.FC = () => {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-            Top Token Holders
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover the top 100 holders for any token on the Hedera network
-          </p>
+        {/* Hero Banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20">
+          <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+          <div className="relative px-6 py-8 md:py-10 text-center">
+            <div className="mx-auto max-w-4xl space-y-4">
+              <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                <Crown className="h-3 w-3 mr-2" />
+                Token Ownership Analytics
+              </div>
+              
+              <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tight">
+                <span className="gradient-text">Token Holder</span>
+                <span className="text-foreground"> Rankings</span>
+              </h1>
+              
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                Analyze token distribution and discover the top 100 holders for any token
+              </p>
+              
+              <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-yellow-500"></div>
+                  <span>Top 100 Rankings</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+                  <span>Ownership %</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
+                  <span>Supply Distribution</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search Section */}

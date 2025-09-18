@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Search, TrendingUp, Home, Sparkles } from "lucide-react";
+import { Search, TrendingUp, Activity } from "lucide-react";
 import { NotificationsCenter } from "./NotificationsCenter";
 import { WalletConnect } from "./WalletConnect";
 import { FollowedAccountsDropdown } from "./FollowedAccountsDropdown";
@@ -13,41 +13,41 @@ export const Navigation: React.FC = () => {
           <div className="flex items-center space-x-8">
             <NavLink 
               to="/" 
-              className="flex items-center space-x-2 text-lg font-bold group"
+              className="flex items-center space-x-3 text-xl font-semibold text-foreground hover:text-primary transition-colors group"
             >
-              <div className="relative">
-                <Home className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                <Sparkles className="h-2 w-2 text-primary/60 absolute -top-1 -right-1 group-hover:text-primary transition-colors" />
+              <Activity className="h-6 w-6 text-primary" />
+              <div className="flex flex-col">
+                <span className="leading-none">Hedera Explorer</span>
+                <span className="text-xs text-muted-foreground font-normal">Professional Analytics</span>
               </div>
-              <span className="gradient-text">Hedera Explorer</span>
             </NavLink>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               <NavLink
                 to="/explorer"
                 className={({ isActive }) =>
-                  `group flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/80 hover:shadow-md"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                   }`
                 }
               >
-                <Search className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                <Search className="h-4 w-4" />
                 <span>Account Explorer</span>
               </NavLink>
               
               <NavLink
                 to="/top-holders"
                 className={({ isActive }) =>
-                  `group flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                  `flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/80 hover:shadow-md"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                   }`
                 }
               >
-                <TrendingUp className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                <TrendingUp className="h-4 w-4" />
                 <span>Top Holders</span>
               </NavLink>
             </div>
