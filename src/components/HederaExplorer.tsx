@@ -294,25 +294,53 @@ export const HederaExplorer: React.FC = () => {
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <Breadcrumb items={breadcrumbItems} onHomeClick={() => navigate("/")} />
-        {/* <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-            hbarwatch.io
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Real-time account balances and token holdings on the Hedera network
-          </p>
-        </div> */}
-
-        {!accountId ? null : (
+        
+        {/* Professional Page Header */}
+        {!accountId ? (
+          <div className="text-center space-y-6 py-12">
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground">
+                Account Explorer
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Professional account analysis and portfolio tracking for the Hedera network
+              </p>
+            </div>
+            <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
+              <span>Real-time data</span>
+              <span>•</span>
+              <span>Comprehensive analytics</span>
+              <span>•</span>
+              <span>Professional grade</span>
+            </div>
+          </div>
+        ) : (
           <>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">Account {accountId}</h2>
-                <p className="text-muted-foreground">
-                  Track activity and portfolio for this account
-                </p>
+            <div className="space-y-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                    Account Analytics
+                  </h1>
+                  <div className="flex items-center space-x-3">
+                    <p className="text-lg text-muted-foreground">
+                      {accountId}
+                    </p>
+                    {createdAt && (
+                      <>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-sm text-muted-foreground">
+                          Created {createdAt}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Professional portfolio tracking and transaction analysis
+                  </p>
+                </div>
+                <FollowButton accountId={accountId} accountName={`Account ${accountId}`} />
               </div>
-              <FollowButton accountId={accountId} accountName={`Account ${accountId}`} />
             </div>
             
             <Tabs defaultValue="overview" className="space-y-6">

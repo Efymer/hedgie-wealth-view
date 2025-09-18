@@ -116,13 +116,22 @@ export const TopHoldersPage: React.FC = () => {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-            Top Token Holders
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover the top 100 holders for any token on the Hedera network
-          </p>
+        <div className="space-y-6">
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground">
+              Top Token Holders
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Professional analysis of token distribution and holder rankings on the Hedera network
+            </p>
+          </div>
+          <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
+            <span>Real-time data</span>
+            <span>•</span>
+            <span>Top 100 rankings</span>
+            <span>•</span>
+            <span>Distribution analysis</span>
+          </div>
         </div>
 
         {/* Search Section */}
