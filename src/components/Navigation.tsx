@@ -11,18 +11,20 @@ export const Navigation: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <NavLink 
-              to="/" 
+            <NavLink
+              to="/"
               className="flex items-center space-x-3 text-xl font-semibold text-foreground hover:text-primary transition-colors group"
             >
               <Activity className="h-6 w-6 text-primary" />
               <div className="flex flex-col">
                 <span className="leading-none">hbarwatch.io</span>
-                <span className="text-xs text-muted-foreground font-normal">The smart explorer for Hedera</span>
+                <span className="text-xs text-muted-foreground font-normal">
+                  The smart explorer for Hedera
+                </span>
               </div>
             </NavLink>
-            
-            <div className="flex items-center space-x-1">
+
+            <div className="flex items-center space-x-2">
               <NavLink
                 to="/explorer"
                 className={({ isActive }) =>
@@ -36,7 +38,7 @@ export const Navigation: React.FC = () => {
                 <Search className="h-4 w-4" />
                 <span>Account Explorer</span>
               </NavLink>
-              
+
               <NavLink
                 to="/top-holders"
                 className={({ isActive }) =>
@@ -52,7 +54,7 @@ export const Navigation: React.FC = () => {
               </NavLink>
             </div>
           </div>
-          
+
           {/* <div className="flex items-center space-x-3">
             <FollowedAccountsDropdown />
             <NotificationsCenter />

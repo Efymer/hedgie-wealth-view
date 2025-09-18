@@ -302,7 +302,7 @@ export const HederaExplorer: React.FC = () => {
                     usdValue={usdValue}
                     createdAt={createdAt}
                   />
-                  <NetWorthChart data={networthData} />
+                  <NetWorthChart data={networthData} accountId={accountId} />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

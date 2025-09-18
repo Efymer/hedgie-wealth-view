@@ -10,6 +10,7 @@ interface NetWorthData {
 
 interface NetWorthChartProps {
   data?: NetWorthData[];
+  accountId?: string;
 }
 
 const mockNetWorthData: NetWorthData[] = [
@@ -31,7 +32,8 @@ const mockNetWorthData: NetWorthData[] = [
 ];
 
 export const NetWorthChart: React.FC<NetWorthChartProps> = ({ 
-  data = mockNetWorthData 
+  data = mockNetWorthData,
+  accountId,
 }) => {
   const currentValue = data[data.length - 1]?.value || 0;
   const previousValue = data.length >= 2 ? (data[data.length - 2]?.value || 0) : 0;
@@ -73,21 +75,26 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
     return null;
   };
 
+  const hideOverlayAccounts = new Set(["0.0.756953", "0.0.1050322"]);
+  const showOverlay = !(accountId && hideOverlayAccounts.has(accountId));
+
   return (
     <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto relative">
       {/* Coming Soon Overlay */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
-        <div className="text-center space-y-4">
-          <div className="space-y-2">
-            <h3 className="text-2xl font-bold gradient-text">Coming Soon</h3>
-            <p className="text-muted-foreground">Net worth tracking is in development</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Join the Beta</p>
-            <p className="text-xs text-muted-foreground">Be the first to access this feature</p>
+      {showOverlay && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+          <div className="text-center space-y-4">
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold gradient-text">Coming Soon</h3>
+              <p className="text-muted-foreground">Net worth tracking is in development</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Join the Beta</p>
+              <p className="text-xs text-muted-foreground">Be the first to access this feature</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
