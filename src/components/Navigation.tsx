@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Search, TrendingUp, Activity, Menu, X } from "lucide-react";
+import { Search, TrendingUp, Activity, Menu, X, Crown } from "lucide-react";
 import { NotificationsCenter } from "./NotificationsCenter";
 import { WalletConnect } from "./WalletConnect";
 import { FollowedAccountsDropdown } from "./FollowedAccountsDropdown";
@@ -46,6 +46,21 @@ export const Navigation: React.FC = () => {
       >
         <TrendingUp className="h-4 w-4" />
         <span>Top Holders</span>
+      </NavLink>
+
+      <NavLink
+        to="/premium"
+        className={({ isActive }) =>
+          `flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+            isActive
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+          }`
+        }
+        onClick={() => setIsOpen(false)}
+      >
+        <Crown className="h-4 w-4" />
+        <span>Premium</span>
       </NavLink>
     </>
   );

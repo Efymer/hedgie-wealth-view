@@ -7,6 +7,7 @@ import Landing from "./pages/Landing";
 import { HederaExplorer } from "@/components/HederaExplorer";
 import { TopHoldersPage } from "@/pages/TopHoldersPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import PremiumPage from "./pages/PremiumPage";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/account/:accountId" element={<HederaExplorer />} />
               <Route path="/top-holders" element={<TopHoldersPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/premium" element={<PremiumPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
