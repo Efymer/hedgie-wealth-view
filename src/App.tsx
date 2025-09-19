@@ -36,7 +36,7 @@ const App = () => (
               <Route path="/top-holders" element={<TopHoldersPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/premium" element={<PremiumPage />} />
-              <Route path="/admin" element={<AdminPage />} />
+              {/* <Route path="/admin" element={<AdminPage />} /> */}
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
