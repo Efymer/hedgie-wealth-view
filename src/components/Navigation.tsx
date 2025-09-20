@@ -79,7 +79,7 @@ export const Navigation: React.FC = () => {
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <span className="leading-none">hbarwatch.io</span>
-                  <Badge variant="secondary" className="text-xs">BETA</Badge>
+                  <Badge className="text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0">BETA</Badge>
                 </div>
                 <span className="text-xs text-muted-foreground font-normal">
                   The smart explorer for Hedera
