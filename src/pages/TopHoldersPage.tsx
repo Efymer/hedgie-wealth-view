@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Search, Loader2, Crown, ExternalLink, Users, Check, ChevronsUpDown } from "lucide-react";
+import { Search, Loader2, Crown, ExternalLink, Users, Check, ChevronsUpDown, AlertTriangle, Shield, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,44 @@ export const TopHoldersPage: React.FC = () => {
       };
     });
   }, [topHoldersResponse, tokenInfo]);
+
+  // Calculate supply concentration for top 10 holders
+  const supplyConcentration = useMemo(() => {
+    if (topHolders.length === 0) return null;
+    
+    const top10Holders = topHolders.slice(0, 10);
+    const top10Percentage = top10Holders.reduce((sum, holder) => sum + holder.percentageOfSupply, 0);
+    
+    let riskLevel: 'low' | 'medium' | 'high';
+    let riskColor: string;
+    let riskIcon: React.ReactNode;
+    let riskText: string;
+    
+    if (top10Percentage >= 80) {
+      riskLevel = 'high';
+      riskColor = 'text-red-500';
+      riskIcon = <AlertTriangle className="h-4 w-4 text-red-500" />;
+      riskText = 'High concentration risk';
+    } else if (top10Percentage >= 50) {
+      riskLevel = 'medium';
+      riskColor = 'text-yellow-500';
+      riskIcon = <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      riskText = 'Medium concentration risk';
+    } else {
+      riskLevel = 'low';
+      riskColor = 'text-green-500';
+      riskIcon = <Shield className="h-4 w-4 text-green-500" />;
+      riskText = 'Low concentration risk';
+    }
+    
+    return {
+      percentage: top10Percentage,
+      riskLevel,
+      riskColor,
+      riskIcon,
+      riskText
+    };
+  }, [topHolders]);
 
   const getRankBadgeVariant = (rank: number) => {
     if (rank === 1) return "default";
@@ -309,8 +347,39 @@ export const TopHoldersPage: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <ScrollArea className="h-[60vh] w-full">
-                <div className="space-y-2">
+              <>
+                {/* Supply Concentration Insight */}
+                {supplyConcentration && (
+                  <div className="mb-6 p-4 rounded-lg border border-border/30 bg-background/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {supplyConcentration.riskIcon}
+                        <div>
+                          <p className="font-medium">Supply Concentration Insight</p>
+                          <p className="text-sm text-muted-foreground">
+                            Top 10 wallets hold{' '}
+                            <span className="font-semibold">
+                              {formatPercent(supplyConcentration.percentage)}
+                            </span>
+                            {' '}of supply → {' '}
+                            <span className={`font-medium ${supplyConcentration.riskColor}`}>
+                              {supplyConcentration.riskText}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <Badge 
+                        variant={supplyConcentration.riskLevel === 'high' ? 'destructive' : supplyConcentration.riskLevel === 'medium' ? 'secondary' : 'outline'}
+                        className="px-3 py-1"
+                      >
+                        {formatPercent(supplyConcentration.percentage)} concentration
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+
+                <ScrollArea className="h-[60vh] w-full">
+                  <div className="space-y-2">
                   {topHolders.map((holder) => (
                     <div
                       key={holder.accountId}
@@ -381,6 +450,7 @@ export const TopHoldersPage: React.FC = () => {
                   ))}
                 </div>
               </ScrollArea>
+              </>
             )}
 
             <div className="flex justify-between items-center pt-4 mt-4 border-t border-border/30">
