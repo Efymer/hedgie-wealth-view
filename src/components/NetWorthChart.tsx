@@ -1,7 +1,8 @@
 import React from "react";
-import { TrendingUp, DollarSign } from "lucide-react";
+import { TrendingUp, DollarSign, Clock } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface NetWorthData {
   date: string;
@@ -36,6 +37,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
   data = mockNetWorthData,
   accountId,
 }) => {
+  const navigate = useNavigate();
   const currentValue = data[data.length - 1]?.value || 0;
   const previousValue = data.length >= 2 ? (data[data.length - 2]?.value || 0) : 0;
   const hasBaseline = data.length >= 2 && previousValue !== 0;
@@ -81,22 +83,25 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
 
   return (
     <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto relative">
-      {/* Coming Soon Overlay */}
+      {/* Waitlist Feature Overlay */}
       {showOverlay && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
           <div className="text-center space-y-4">
             <div className="space-y-2">
-              <h3 className="text-2xl font-bold gradient-text">Coming Soon</h3>
-              <p className="text-muted-foreground">Net worth tracking is in development</p>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Clock className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-2xl font-bold gradient-text">Waitlist Feature</h3>
+              <p className="text-muted-foreground">Net worth tracking is available for waitlist members</p>
             </div>
             <div className="space-y-2">
               <Button 
-                onClick={() => window.open('https://twitter.com', '_blank')}
-                className="px-4 py-2"
+                onClick={() => navigate('/waitlist')}
+                className="px-6 py-2"
               >
-                Join the Beta
+                Join Waitlist
               </Button>
-              <p className="text-xs text-muted-foreground">Be the first to access this feature</p>
+              <p className="text-xs text-muted-foreground">Get exclusive access to premium features</p>
             </div>
           </div>
         </div>
