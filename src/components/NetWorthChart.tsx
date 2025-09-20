@@ -137,19 +137,19 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
       </div>
 
       <div className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* 24h Change */}
-          <div className="glass-card rounded-lg p-4 border border-border/30">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className={`h-4 w-4 ${
+          <div className="glass-card rounded-lg p-3 border border-border/30">
+            <div className="flex items-center gap-1 mb-1">
+              <TrendingUp className={`h-3 w-3 ${
                 hasBaseline ? (totalChange >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground'
               }`} />
-              <span className="text-sm font-medium text-muted-foreground">24h Change</span>
+              <span className="text-xs font-medium text-muted-foreground">24h</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="space-y-1">
               {hasBaseline ? (
                 <>
-                  <p className={`text-xl font-bold ${
+                  <p className={`text-lg font-bold ${
                     totalChange >= 0 ? 'text-success' : 'text-destructive'
                   }`}>
                     {totalChange >= 0 ? '+' : ''}{totalChange.toFixed(2)}%
@@ -157,30 +157,30 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
                   <p className={`text-xs ${
                     totalChange >= 0 ? 'text-success' : 'text-destructive'
                   }`}>
-                    ({totalChange >= 0 ? '+' : ''}{formatValue(totalChangeAmount)})
+                    {totalChange >= 0 ? '+' : ''}{formatValue(totalChangeAmount)}
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-xl font-bold text-muted-foreground">—</p>
-                  <p className="text-xs text-muted-foreground">(no data)</p>
+                  <p className="text-lg font-bold text-muted-foreground">—</p>
+                  <p className="text-xs text-muted-foreground">No data</p>
                 </>
               )}
             </div>
           </div>
 
           {/* 7-day Change */}
-          <div className="glass-card rounded-lg p-4 border border-border/30">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className={`h-4 w-4 ${
+          <div className="glass-card rounded-lg p-3 border border-border/30">
+            <div className="flex items-center gap-1 mb-1">
+              <TrendingUp className={`h-3 w-3 ${
                 sevenDayChange.hasData ? (sevenDayChange.change >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground'
               }`} />
-              <span className="text-sm font-medium text-muted-foreground">7d Change</span>
+              <span className="text-xs font-medium text-muted-foreground">7d</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="space-y-1">
               {sevenDayChange.hasData ? (
                 <>
-                  <p className={`text-xl font-bold ${
+                  <p className={`text-lg font-bold ${
                     sevenDayChange.change >= 0 ? 'text-success' : 'text-destructive'
                   }`}>
                     {sevenDayChange.change >= 0 ? '+' : ''}{sevenDayChange.change.toFixed(2)}%
@@ -188,30 +188,30 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
                   <p className={`text-xs ${
                     sevenDayChange.change >= 0 ? 'text-success' : 'text-destructive'
                   }`}>
-                    ({sevenDayChange.change >= 0 ? '+' : ''}{formatValue(sevenDayChange.amount)})
+                    {sevenDayChange.change >= 0 ? '+' : ''}{formatValue(sevenDayChange.amount)}
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-xl font-bold text-muted-foreground">—</p>
-                  <p className="text-xs text-muted-foreground">(no data)</p>
+                  <p className="text-lg font-bold text-muted-foreground">—</p>
+                  <p className="text-xs text-muted-foreground">No data</p>
                 </>
               )}
             </div>
           </div>
 
           {/* 30-day Change */}
-          <div className="glass-card rounded-lg p-4 border border-border/30">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className={`h-4 w-4 ${
+          <div className="glass-card rounded-lg p-3 border border-border/30">
+            <div className="flex items-center gap-1 mb-1">
+              <TrendingUp className={`h-3 w-3 ${
                 thirtyDayChange.hasData ? (thirtyDayChange.change >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground'
               }`} />
-              <span className="text-sm font-medium text-muted-foreground">30d Change</span>
+              <span className="text-xs font-medium text-muted-foreground">30d</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="space-y-1">
               {thirtyDayChange.hasData ? (
                 <>
-                  <p className={`text-xl font-bold ${
+                  <p className={`text-lg font-bold ${
                     thirtyDayChange.change >= 0 ? 'text-success' : 'text-destructive'
                   }`}>
                     {thirtyDayChange.change >= 0 ? '+' : ''}{thirtyDayChange.change.toFixed(2)}%
@@ -219,13 +219,13 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
                   <p className={`text-xs ${
                     thirtyDayChange.change >= 0 ? 'text-success' : 'text-destructive'
                   }`}>
-                    ({thirtyDayChange.change >= 0 ? '+' : ''}{formatValue(thirtyDayChange.amount)})
+                    {thirtyDayChange.change >= 0 ? '+' : ''}{formatValue(thirtyDayChange.amount)}
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-xl font-bold text-muted-foreground">—</p>
-                  <p className="text-xs text-muted-foreground">(no data)</p>
+                  <p className="text-lg font-bold text-muted-foreground">—</p>
+                  <p className="text-xs text-muted-foreground">No data</p>
                 </>
               )}
             </div>
