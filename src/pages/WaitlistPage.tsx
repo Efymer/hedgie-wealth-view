@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const WaitlistPage = () => {
   const [accountId, setAccountId] = useState('');
+  const [twitterHandle, setTwitterHandle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasFollowed, setHasFollowed] = useState(false);
   const { toast } = useToast();
@@ -20,6 +21,15 @@ const WaitlistPage = () => {
       toast({
         title: "Account ID Required",
         description: "Please enter your Hedera account ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!twitterHandle.trim()) {
+      toast({
+        title: "Twitter Handle Required",
+        description: "Please enter your Twitter handle for verification",
         variant: "destructive",
       });
       return;
@@ -44,6 +54,7 @@ const WaitlistPage = () => {
       });
       setIsSubmitting(false);
       setAccountId('');
+      setTwitterHandle('');
     }, 1500);
   };
 
@@ -95,6 +106,21 @@ const WaitlistPage = () => {
                   />
                   <p className="text-sm text-muted-foreground">
                     Enter your Hedera account ID (format: 0.0.123456)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="twitterHandle">Twitter Handle</Label>
+                  <Input
+                    id="twitterHandle"
+                    type="text"
+                    placeholder="@yourusername"
+                    value={twitterHandle}
+                    onChange={(e) => setTwitterHandle(e.target.value)}
+                    className="w-full"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Enter your Twitter handle so we can verify you're following us
                   </p>
                 </div>
 
