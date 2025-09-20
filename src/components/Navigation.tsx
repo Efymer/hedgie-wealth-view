@@ -4,6 +4,7 @@ import { Search, TrendingUp, Activity, Menu, X, Crown, Clock } from "lucide-reac
 import { NotificationsCenter } from "./NotificationsCenter";
 import { WalletConnect } from "./WalletConnect";
 import { FollowedAccountsDropdown } from "./FollowedAccountsDropdown";
+import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,7 +77,10 @@ export const Navigation: React.FC = () => {
             >
               <Activity className="h-6 w-6 text-primary" />
               <div className="flex flex-col">
-                <span className="leading-none">hbarwatch.io</span>
+                <div className="flex items-center gap-2">
+                  <span className="leading-none">hbarwatch.io</span>
+                  <Badge variant="secondary" className="text-xs">BETA</Badge>
+                </div>
                 <span className="text-xs text-muted-foreground font-normal">
                   The smart explorer for Hedera
                 </span>
