@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Search, TrendingUp, Activity, Menu, X, Crown } from "lucide-react";
+import { Search, TrendingUp, Activity, Menu, X, Crown, Clock } from "lucide-react";
 import { NotificationsCenter } from "./NotificationsCenter";
 import { WalletConnect } from "./WalletConnect";
 import { FollowedAccountsDropdown } from "./FollowedAccountsDropdown";
@@ -48,8 +48,8 @@ export const Navigation: React.FC = () => {
         <span>Top Holders</span>
       </NavLink>
 
-      {/* <NavLink
-        to="/premium"
+      <NavLink
+        to="/waitlist"
         className={({ isActive }) =>
           `flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
             isActive
@@ -59,9 +59,9 @@ export const Navigation: React.FC = () => {
         }
         onClick={() => setIsOpen(false)}
       >
-        <Crown className="h-4 w-4" />
-        <span>Premium</span>
-      </NavLink> */}
+        <Clock className="h-4 w-4" />
+        <span>Waitlist</span>
+      </NavLink>
     </>
   );
 
