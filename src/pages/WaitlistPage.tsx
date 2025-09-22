@@ -1,22 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Twitter, TrendingUp, Users, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const WaitlistPage = () => {
-  const [accountId, setAccountId] = useState('');
-  const [twitterHandle, setTwitterHandle] = useState('');
+  const [accountId, setAccountId] = useState("");
+  const [twitterHandle, setTwitterHandle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasFollowed, setHasFollowed] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!accountId.trim()) {
       toast({
         title: "Account ID Required",
@@ -45,21 +51,22 @@ const WaitlistPage = () => {
     }
 
     setIsSubmitting(true);
-    
+
     // Mock submission
     setTimeout(() => {
       toast({
         title: "Welcome to the Waitlist!",
-        description: "You've been added to our exclusive waitlist. We'll notify you when features are available!",
+        description:
+          "You've been added to our exclusive waitlist. We'll notify you when features are available!",
       });
       setIsSubmitting(false);
-      setAccountId('');
-      setTwitterHandle('');
+      setAccountId("");
+      setTwitterHandle("");
     }, 1500);
   };
 
   const handleFollowClick = () => {
-    window.open('https://twitter.com/hbarwatch', '_blank');
+    window.open("https://x.com/intent/follow?screen_name=hbarwatchio", "_blank");
     setHasFollowed(true);
   };
 
@@ -76,7 +83,8 @@ const WaitlistPage = () => {
             Join the Waitlist
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Get early access to exclusive features and advanced analytics for your Hedera portfolio
+            Get early access to exclusive features and advanced analytics for
+            your Hedera portfolio
           </p>
         </div>
 
@@ -120,7 +128,8 @@ const WaitlistPage = () => {
                     className="w-full"
                   />
                   <p className="text-sm text-muted-foreground">
-                    Enter your Twitter handle so we can verify you're following us
+                    Enter your Twitter handle so we can verify you're following
+                    us
                   </p>
                 </div>
 
@@ -130,7 +139,9 @@ const WaitlistPage = () => {
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <Twitter className="h-5 w-5 text-blue-500" />
-                      <span className="text-sm">Follow @hbarwatch on Twitter</span>
+                      <span className="text-sm">
+                        Follow @hbarwatch on Twitter
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       {hasFollowed ? (
@@ -149,9 +160,9 @@ const WaitlistPage = () => {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Joining..." : "Join Waitlist"}
@@ -178,7 +189,8 @@ const WaitlistPage = () => {
                   <div>
                     <h3 className="font-semibold">Net Worth Over Time</h3>
                     <p className="text-sm text-muted-foreground">
-                      Track your portfolio's historical performance with detailed charts and analytics
+                      Track your portfolio's historical performance with
+                      detailed charts and analytics
                     </p>
                   </div>
                 </div>
@@ -186,9 +198,12 @@ const WaitlistPage = () => {
                 <div className="flex items-start gap-3 p-3 border rounded-lg">
                   <Users className="h-5 w-5 text-primary mt-0.5" />
                   <div>
-                    <h3 className="font-semibold">Advanced Portfolio Analytics</h3>
+                    <h3 className="font-semibold">
+                      Advanced Portfolio Analytics
+                    </h3>
                     <p className="text-sm text-muted-foreground">
-                      Deep insights into your holdings, performance metrics, and investment patterns
+                      Deep insights into your holdings, performance metrics, and
+                      investment patterns
                     </p>
                   </div>
                 </div>
@@ -198,7 +213,8 @@ const WaitlistPage = () => {
                   <div>
                     <h3 className="font-semibold">Priority Support</h3>
                     <p className="text-sm text-muted-foreground">
-                      Get priority access to new features and dedicated customer support
+                      Get priority access to new features and dedicated customer
+                      support
                     </p>
                   </div>
                 </div>
@@ -206,7 +222,8 @@ const WaitlistPage = () => {
 
               <div className="pt-4 border-t">
                 <p className="text-sm text-muted-foreground text-center">
-                  Join now and be among the first to experience premium portfolio tracking
+                  Join now and be among the first to experience premium
+                  portfolio tracking
                 </p>
               </div>
             </CardContent>
@@ -216,7 +233,10 @@ const WaitlistPage = () => {
         {/* Footer */}
         <div className="text-center mt-12">
           <p className="text-sm text-muted-foreground">
-            Already have an account? <a href="/explorer" className="text-primary hover:underline">Explore now</a>
+            Already have an account?{" "}
+            <a href="/explorer" className="text-primary hover:underline">
+              Explore now
+            </a>
           </p>
         </div>
       </div>
