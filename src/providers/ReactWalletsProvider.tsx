@@ -11,7 +11,9 @@ const metadata = {
 };
 
 export const ReactWalletsProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const isTestnet = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_HEDERA_NETWORK) === "testnet";
+  type Env = { VITE_HEDERA_NETWORK?: string };
+  const env: Env | undefined = typeof import.meta !== 'undefined' ? (import.meta as unknown as { env?: Env }).env : undefined;
+  const isTestnet = (env?.VITE_HEDERA_NETWORK || "mainnet") === "testnet";
 
   return (
     <HWBridgeProvider
