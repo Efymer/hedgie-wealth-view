@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useGQLQuery, useGQLMutation } from "@/lib/graphql";
 
 export interface FollowedAccount {
   accountId: string;
@@ -6,91 +7,114 @@ export interface FollowedAccount {
   followedAt: string;
 }
 
-const getDummyAccounts = (): FollowedAccount[] => [
-  {
-    accountId: "0.0.800",
-    accountName: "Hedera Treasury",
-    followedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-  },
-  {
-    accountId: "0.0.98",
-    accountName: "Hedera Fee Collection",
-    followedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-  },
-  {
-    accountId: "0.0.1234567",
-    accountName: "Whale Investor",
-    followedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-  },
-  {
-    accountId: "0.0.987654",
-    followedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
-  },
-  {
-    accountId: "0.0.555888",
-    accountName: "DeFi Protocol",
-    followedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-  },
-];
+type GqlFollow = {
+  account_id: string;
+  followed_at: string;
+  account?: { display_name?: string | null } | null;
+};
+
+const Q_FOLLOWS = /* GraphQL */ `
+  query MyFollows {
+    follows(order_by: { followed_at: desc }) {
+      account_id
+      followed_at
+      account { display_name }
+    }
+  }
+`;
+
+const M_UPSERT_ACCOUNT = /* GraphQL */ `
+  mutation UpsertAccount($id: String!, $display_name: String) {
+    insert_accounts_one(
+      object: { id: $id, display_name: $display_name }
+      on_conflict: { constraint: accounts_pkey, update_columns: [display_name] }
+    ) { id }
+  }
+`;
+
+const M_FOLLOW = /* GraphQL */ `
+  mutation Follow($account_id: String!) {
+    insert_follows_one(
+      object: { account_id: $account_id }
+      on_conflict: { constraint: follows_user_id_account_id_key, update_columns: [] }
+    ) { id followed_at }
+  }
+`;
+
+const M_UNFOLLOW = /* GraphQL */ `
+  mutation Unfollow($account_id: String!) {
+    delete_follows(where: { account_id: { _eq: $account_id } }) { affected_rows }
+  }
+`;
 
 export const useFollowedAccounts = () => {
   const [followedAccounts, setFollowedAccounts] = useState<FollowedAccount[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Load from localStorage on mount
+  // Load follows via React Query helper
+  const { data, isLoading } = useGQLQuery<{ follows: GqlFollow[] }>([
+    "follows",
+  ], Q_FOLLOWS);
+
   useEffect(() => {
-    const stored = localStorage.getItem("followedAccounts");
-    if (stored) {
-      try {
-        setFollowedAccounts(JSON.parse(stored));
-      } catch (error) {
-        console.error("Failed to parse followed accounts from localStorage", error);
-        // Fallback to dummy data if parsing fails
-        setFollowedAccounts(getDummyAccounts());
-      }
-    } else {
-      // No data in localStorage, use dummy data
-      setFollowedAccounts(getDummyAccounts());
+    setLoading(isLoading);
+    if (data?.follows) {
+      const mapped: FollowedAccount[] = data.follows.map((f) => ({
+        accountId: f.account_id,
+        accountName: f.account?.display_name || undefined,
+        followedAt: f.followed_at,
+      }));
+      setFollowedAccounts(mapped);
     }
-  }, []);
+  }, [data, isLoading]);
 
-  // Save to localStorage whenever followedAccounts changes
-  useEffect(() => {
-    localStorage.setItem("followedAccounts", JSON.stringify(followedAccounts));
-  }, [followedAccounts]);
+  const isFollowing = (accountId: string): boolean =>
+    followedAccounts.some((a) => a.accountId === accountId);
 
-  const isFollowing = (accountId: string): boolean => {
-    return followedAccounts.some(account => account.accountId === accountId);
-  };
+  // Mutations
+  const upsertAccount = useGQLMutation(M_UPSERT_ACCOUNT);
+  const followMut = useGQLMutation(M_FOLLOW);
+  const unfollowMut = useGQLMutation(M_UNFOLLOW);
 
-  const followAccount = (accountId: string, accountName?: string) => {
+  const followAccount = async (accountId: string, accountName?: string) => {
     if (isFollowing(accountId)) return;
-
-    const newAccount: FollowedAccount = {
-      accountId,
-      accountName,
-      followedAt: new Date().toISOString(),
-    };
-
-    setFollowedAccounts(prev => [...prev, newAccount]);
-  };
-
-  const unfollowAccount = (accountId: string) => {
-    setFollowedAccounts(prev => prev.filter(account => account.accountId !== accountId));
-  };
-
-  const toggleFollow = (accountId: string, accountName?: string) => {
-    if (isFollowing(accountId)) {
-      unfollowAccount(accountId);
-    } else {
-      followAccount(accountId, accountName);
+    // Optimistic update
+    setFollowedAccounts((prev) => [
+      ...prev,
+      { accountId, accountName, followedAt: new Date().toISOString() },
+    ]);
+    try {
+      await upsertAccount.mutateAsync({ id: accountId, display_name: accountName });
+      await followMut.mutateAsync({ account_id: accountId });
+    } catch (e) {
+      console.error("follow failed", e);
+      // Revert
+      setFollowedAccounts((prev) => prev.filter((a) => a.accountId !== accountId));
+      throw e;
     }
   };
 
-  return {
-    followedAccounts,
-    isFollowing,
-    followAccount,
-    unfollowAccount,
-    toggleFollow,
+  const unfollowAccount = async (accountId: string) => {
+    if (!isFollowing(accountId)) return;
+    const prevState = followedAccounts;
+    setFollowedAccounts((prev) => prev.filter((a) => a.accountId !== accountId));
+    try {
+      await unfollowMut.mutateAsync({ account_id: accountId });
+    } catch (e) {
+      console.error("unfollow failed", e);
+      // Revert
+      setFollowedAccounts(prevState);
+      throw e;
+    }
   };
+
+  const toggleFollow = async (accountId: string, accountName?: string) => {
+    if (isFollowing(accountId)) {
+      await unfollowAccount(accountId);
+    } else {
+      await followAccount(accountId, accountName);
+    }
+  };
+
+  return { followedAccounts, loading, isFollowing, followAccount, unfollowAccount, toggleFollow };
 };
