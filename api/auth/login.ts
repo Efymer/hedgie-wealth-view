@@ -145,6 +145,11 @@ async function verifyWalletSignature(
     console.log("Challenge:", challenge);
     console.log("Signature type:", typeof signature);
     console.log("Signature:", signature);
+    
+    // Let's also check what the frontend actually sent vs what we expect
+    console.log("Frontend sent challenge length:", challenge.length);
+    console.log("Challenge starts with:", challenge.substring(0, 50));
+    console.log("Challenge ends with:", challenge.substring(challenge.length - 50));
 
     const keyInfo = await fetchAccountPrimaryKey(accountId);
     console.log("Key info:", keyInfo);
@@ -189,16 +194,16 @@ async function verifyWalletSignature(
     console.log("Signature hex:", signatureBuffer.toString('hex'));
 
     // Try different message formats that HashPack might be signing
-    // Based on HashPack docs, they might be using different message formats
+    // The challenge is now a JSON string, let's try different approaches
     const formats = [
       { name: "UTF-8 challenge", buffer: Buffer.from(challenge, "utf8") },
       { name: "Challenge as raw bytes", buffer: Buffer.from(challenge) },
-      { name: "Challenge as Uint8Array equivalent", buffer: new Uint8Array(Buffer.from(challenge, 'utf8')) },
+      { name: "Parsed and re-stringified", buffer: Buffer.from(JSON.stringify(JSON.parse(challenge)), 'utf8') },
       { name: "SHA256 hash of challenge", buffer: createHash('sha256').update(challenge, 'utf8').digest() },
-      { name: "Just the nonce part", buffer: Buffer.from(challenge.split('#')[1]?.split(' ')[0] || challenge, 'utf8') },
-      { name: "Account ID only", buffer: Buffer.from(accountId, 'utf8') },
-      { name: "Simple message", buffer: Buffer.from("test message", 'utf8') },
-      { name: "Empty buffer", buffer: Buffer.alloc(0) },
+      { name: "Just the nonce from JSON", buffer: Buffer.from(JSON.parse(challenge).data.nonce, 'utf8') },
+      { name: "Account ID from JSON", buffer: Buffer.from(JSON.parse(challenge).data.accountId, 'utf8') },
+      { name: "Timestamp from JSON", buffer: Buffer.from(JSON.parse(challenge).data.ts.toString(), 'utf8') },
+      { name: "URL from JSON", buffer: Buffer.from(JSON.parse(challenge).url, 'utf8') },
     ];
 
     for (const format of formats) {
@@ -334,6 +339,10 @@ export default async function handler(req: Req, res: Res) {
 
     // The wallet signs the JSON.stringify(payload)
     const payloadToVerify = JSON.stringify(payload);
+    console.log("Backend generated payload to verify:", payloadToVerify);
+    console.log("Stored payload from nonce:", JSON.stringify(nonceData.payload));
+    console.log("Payloads match:", payloadToVerify === JSON.stringify(nonceData.payload));
+    
     const isValidSignature = await verifyWalletSignature(
       accountId,
       payloadToVerify,
