@@ -128,9 +128,8 @@ async function fetchAccountPrimaryKey(
 }
 
 async function verifySignature(
-  accountId: string,
   publicKeyString: string,
-  messageBytes: Uint8Array,
+  messageBytes: string,
   signatureBase64: string
 ): Promise<boolean> {
   // Enable dev auth in development mode
@@ -146,9 +145,9 @@ async function verifySignature(
     // Create Hedera PublicKey from string (handles DER & raw hex forms)
     const pk = PublicKey.fromString(publicKeyString);
     const sigBytes = base64ToBytes(signatureBase64);
-
+    const msgBytes = utf8ToBytes(messageBytes);
     // Verify Ed25519 signature
-    const isValid = pk.verify(messageBytes, sigBytes);
+    const isValid = pk.verify(msgBytes, sigBytes);
     console.log("Signature verification result:", isValid);
 
     return isValid;
@@ -255,7 +254,7 @@ export default async function handler(req: Req, res: Res) {
     const nonceData = JSON.parse(nonceDataStr) as {
       accountId: string;
       publicKey: string;
-      msgBytes: number[];
+      msgBytes: string;
       expiresAt: number;
       used: boolean;
     };
@@ -276,11 +275,9 @@ export default async function handler(req: Req, res: Res) {
     }
 
     // Verify signature
-    const msgBytes = new Uint8Array(nonceData.msgBytes);
     const isValid = await verifySignature(
-      accountId,
       publicKey,
-      msgBytes,
+      nonceData.msgBytes,
       signatureBase64
     );
 

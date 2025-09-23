@@ -68,7 +68,7 @@ export const WalletConnect: React.FC = () => {
         throw new Error(error?.error || "Failed to get challenge");
       }
 
-      const { nonceId, message, messageBase64 } = await challengeResp.json();
+      const { nonceId, message } = await challengeResp.json();
 
       // Step 2: Sign the challenge message
       const authResult = await signAuth(message);

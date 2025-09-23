@@ -51,31 +51,36 @@ export default async function handler(req: Req, res: Res) {
     if (req.method !== "POST")
       return res.status(405).json({ error: "Method Not Allowed" });
 
-    const body = (req.body || {}) as Partial<{ 
-      accountId: string; 
-      publicKey: string; 
-      domain?: string; 
-      uri?: string; 
+    const body = (req.body || {}) as Partial<{
+      accountId: string;
+      publicKey: string;
+      domain?: string;
+      uri?: string;
     }>;
-    
+
     const { accountId, publicKey, domain, uri } = body;
 
     if (!accountId || !publicKey) {
-      return res.status(400).json({ error: "accountId and publicKey are required" });
+      return res
+        .status(400)
+        .json({ error: "accountId and publicKey are required" });
     }
 
     // Generate nonce and build challenge message
     const nonce = randomUUID(); // cryptographically random
     const issuedAt = new Date().toISOString();
     const message = buildChallengeMessage({
-      domain: domain || 'hedgie-wealth-view.vercel.app',
-      uri: uri || process.env.FRONTEND_URL || 'https://hedgie-wealth-view.vercel.app/login',
+      domain: domain || "hedgie-wealth-view.vercel.app",
+      uri:
+        uri ||
+        process.env.FRONTEND_URL ||
+        "https://hedgie-wealth-view.vercel.app/login",
       accountId,
       nonce,
       issuedAt,
     });
 
-    const msgBytes = utf8ToBytes(message);
+    const msgBytes = message;
     const nonceId = randomUUID();
     const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
 
@@ -87,15 +92,15 @@ export default async function handler(req: Req, res: Res) {
       publicKey,
       msgBytes,
       expiresAt,
-      used: false
+      used: false,
     };
-    
+
     await redisClient.setex(nonceKey, 5 * 60, JSON.stringify(nonceData)); // 5 minutes TTL
 
     return res.status(200).json({
       nonceId,
       message, // human-readable (display to user)
-      messageBase64: Buffer.from(msgBytes).toString('base64'), // wallets often want bytes
+      messageBase64: Buffer.from(msgBytes).toString("base64"), // wallets often want bytes
       expiresAt,
     });
   } catch (err) {
