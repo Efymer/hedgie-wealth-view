@@ -185,23 +185,32 @@ async function verifyWalletSignature(
     const hederaPublicKey = PublicKey.fromBytes(keyInfo.pubKey);
     console.log("Hedera public key created:", hederaPublicKey.toString());
 
-    // Verify using Hedera SDK - pass signature bytes directly
-    const messageBytes = Buffer.from(challenge, "utf8");
-    console.log("Message to verify:", challenge);
+    // HashConnect prefixes messages before signing to prevent transaction confusion
+    // Format: '\x19Hedera Signed Message:\n' + message.length + message
+    const prefixedMessage = '\x19Hedera Signed Message:\n' + challenge.length + challenge;
+    const messageBytes = Buffer.from(prefixedMessage, "utf8");
+    
+    console.log("Original message:", challenge);
+    console.log("Prefixed message:", prefixedMessage);
     console.log("Message bytes length:", messageBytes.length);
     
     const isValid = hederaPublicKey.verify(messageBytes, signatureBuffer);
     
-    // Also try alternative message formats if primary verification fails
+    // If primary verification fails, let's try a completely different approach
     if (!isValid) {
-      console.log("Primary verification failed, trying alternative message formats...");
+      console.log("Primary verification failed, trying alternative approaches...");
+      
+      // Maybe we need to verify against the public key that's embedded in the SignerSignature
+      // Let's check if the signature was created with a different message or approach
+      console.log("Trying different message formats...");
       
       const messageFormats = [
         { name: "TextEncoder bytes", bytes: new TextEncoder().encode(challenge) },
-        { name: "UTF-8 with BOM", bytes: Buffer.concat([Buffer.from([0xEF, 0xBB, 0xBF]), Buffer.from(challenge, 'utf8')]) },
         { name: "Just payload part", bytes: Buffer.from(JSON.stringify(JSON.parse(challenge).payload), 'utf8') },
         { name: "Challenge without spaces", bytes: Buffer.from(challenge.replace(/\s/g, ''), 'utf8') },
-        { name: "Challenge as hex then utf8", bytes: Buffer.from(Buffer.from(challenge, 'utf8').toString('hex'), 'utf8') },
+        { name: "Empty message", bytes: Buffer.alloc(0) },
+        { name: "Account ID only", bytes: Buffer.from(accountId, 'utf8') },
+        { name: "Nonce only", bytes: Buffer.from(JSON.parse(challenge).payload.data.nonce, 'utf8') },
       ];
       
       for (const format of messageFormats) {
@@ -217,20 +226,9 @@ async function verifyWalletSignature(
         }
       }
       
-      // Also try alternative public key creation
-      try {
-        const altPublicKey = PublicKey.fromString(keyInfo.pubKey.toString('hex'));
-        console.log("Alternative public key from hex:", altPublicKey.toString());
-        
-        const altIsValid = altPublicKey.verify(messageBytes, signatureBuffer);
-        console.log("Alternative key verification result:", altIsValid);
-        if (altIsValid) {
-          console.log("✅ SUCCESS with alternative public key!");
-          return true;
-        }
-      } catch (e) {
-        console.log("Alternative public key creation failed:", e.message);
-      }
+      console.log("All Hedera SDK verification attempts failed.");
+      console.log("This might indicate that signAuth() is not the correct method for HashConnect authentication.");
+      console.log("Consider using hashconnect.authenticate() instead of signAuth() in the frontend.");
     }
     
     console.log("✅ Hedera SDK verification result:", isValid);
