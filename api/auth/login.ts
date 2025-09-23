@@ -116,19 +116,23 @@ async function fetchAccountPrimaryKey(accountId: string): Promise<{ algo: "ED255
   return null;
 }
 
-async function verifyWalletSignature(accountId: string, challenge: string, signatureB64: string): Promise<boolean> {
+async function verifyWalletSignature(accountId: string, challenge: string, signature: Buffer | string): Promise<boolean> {
   if (process.env.ALLOW_DEV_AUTH === "true") return true;
   
   try {
     const keyInfo = await fetchAccountPrimaryKey(accountId);
     if (!keyInfo || keyInfo.algo !== "ED25519") return false;
     
-    const signature = Buffer.from(signatureB64, "base64");
+    // Handle signature as Buffer or base64 string
+    const signatureBuffer = Buffer.isBuffer(signature) 
+      ? signature 
+      : Buffer.from(signature, "base64");
+    
     const spki = ed25519SpkiFromRaw(keyInfo.pubKey);
     const publicKey = createPublicKey({ key: spki, format: "der", type: "spki" });
     
     // Verify signature over UTF-8 encoded challenge
-    return cryptoVerify(null, Buffer.from(challenge, "utf8"), publicKey, signature);
+    return cryptoVerify(null, Buffer.from(challenge, "utf8"), publicKey, signatureBuffer);
   } catch (e) {
     console.error("Signature verification error:", e);
     return false;
@@ -155,14 +159,14 @@ export default async function handler(req: Req, res: Res) {
     
     const body = (req.body || {}) as Partial<{ 
       accountId: string; 
-      signature: string; 
+      signature: string | { type: 'Buffer'; data: number[] }; 
       nonce: string;
       challenge: string;
     }>;
     
     const { accountId, signature, nonce, challenge } = body;
     
-    if (typeof accountId !== "string" || typeof signature !== "string" || 
+    if (typeof accountId !== "string" || !signature || 
         typeof nonce !== "string" || typeof challenge !== "string") {
       return res.status(400).json({ error: "accountId, signature, nonce, and challenge required" });
     }
@@ -194,7 +198,17 @@ export default async function handler(req: Req, res: Res) {
     await redisClient.del(nonceKey);
 
     // Step 4b: Verify the signature
-    const isValidSignature = await verifyWalletSignature(accountId, challenge, signature);
+    // Handle signature as Buffer (from JSON parsing) or string
+    let signatureToVerify: Buffer | string;
+    if (typeof signature === 'object' && signature.type === 'Buffer' && Array.isArray(signature.data)) {
+      // Signature came as Buffer serialized to JSON: { type: 'Buffer', data: [1,2,3...] }
+      signatureToVerify = Buffer.from(signature.data);
+    } else {
+      // Signature is a string (base64 or hex)
+      signatureToVerify = signature as string;
+    }
+    
+    const isValidSignature = await verifyWalletSignature(accountId, challenge, signatureToVerify);
     if (!isValidSignature) {
       return res.status(401).json({ error: "Invalid signature" });
     }
