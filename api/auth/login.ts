@@ -420,11 +420,15 @@ export default async function handler(req: Req, res: Res) {
       console.log("Using signature as string");
     }
 
-    // The wallet signs the JSON.stringify(payload)
-    const payloadToVerify = JSON.stringify(payload);
-    console.log("Backend generated payload to verify:", payloadToVerify);
-    console.log("Stored payload from nonce:", JSON.stringify(nonceData.payload));
-    console.log("Payloads match:", payloadToVerify === JSON.stringify(nonceData.payload));
+    // The wallet actually signs the signedPayload structure (server + original)
+    const signedPayload = {
+      serverSignature: serverSignature,
+      originalPayload: payload
+    };
+    const payloadToVerify = JSON.stringify(signedPayload);
+    console.log("Backend generated signedPayload to verify:", payloadToVerify);
+    console.log("Original payload from nonce:", JSON.stringify(nonceData.payload));
+    console.log("Payloads match:", JSON.stringify(payload) === JSON.stringify(nonceData.payload));
     
     const isValidSignature = await verifyWalletSignature(
       accountId,
