@@ -135,7 +135,8 @@ async function fetchAccountPrimaryKey(
 async function verifyWalletSignature(
   accountId: string,
   challenge: string,
-  signature: Buffer | string
+  signature: Buffer | string,
+  serverSignature?: string
 ): Promise<boolean> {
   if (process.env.ALLOW_DEV_AUTH === "true") return true;
 
@@ -236,17 +237,30 @@ async function verifyWalletSignature(
       console.log("Test verification error:", e.message);
     }
 
-    // Based on hashgraph-react-wallets source code, HashPack uses TextEncoder().encode(message)
-    // Let's also try some basic test messages to verify our setup
+    // Since public keys match perfectly, HashPack must be signing a different message format
+    // Let's try some variations based on common wallet patterns
     const textEncoder = new TextEncoder();
+    const challengeBytes = textEncoder.encode(challenge);
+    
+    // Based on HashConnect docs, the user signs the "signedPayload" which includes server signature!
+    // The signedPayload structure is: { serverSignature, originalPayload }
+    const signedPayload = {
+      serverSignature: serverSignature,
+      originalPayload: JSON.parse(challenge)
+    };
+    const signedPayloadString = JSON.stringify(signedPayload);
+    
     const formats = [
-      { name: "TextEncoder().encode() - EXACT MATCH", buffer: Buffer.from(textEncoder.encode(challenge)) },
+      { name: "SignedPayload (server + original) - HASHCONNECT PATTERN", buffer: Buffer.from(textEncoder.encode(signedPayloadString)) },
+      { name: "SignedPayload UTF-8", buffer: Buffer.from(signedPayloadString, "utf8") },
+      { name: "TextEncoder().encode() - EXACT MATCH", buffer: Buffer.from(challengeBytes) },
       { name: "UTF-8 challenge", buffer: Buffer.from(challenge, "utf8") },
-      { name: "Simple test message", buffer: Buffer.from("hello", "utf8") },
-      { name: "Empty message", buffer: Buffer.alloc(0) },
-      { name: "Challenge as Uint8Array", buffer: new Uint8Array(Buffer.from(challenge, 'utf8')) },
+      { name: "Just the payload data", buffer: Buffer.from(JSON.stringify(JSON.parse(challenge).data), "utf8") },
       { name: "SHA256 hash of challenge", buffer: createHash('sha256').update(challenge, 'utf8').digest() },
+      { name: "Challenge with newline", buffer: Buffer.from(challenge + '\n', "utf8") },
     ];
+    
+    console.log("Testing signedPayload structure:", signedPayloadString);
     
     // Also let's check if the signature might be in a different format
     console.log("Signature analysis:");
@@ -415,7 +429,8 @@ export default async function handler(req: Req, res: Res) {
     const isValidSignature = await verifyWalletSignature(
       accountId,
       payloadToVerify,
-      signatureToVerify
+      signatureToVerify,
+      serverSignature
     );
     if (!isValidSignature) {
       return res.status(401).json({ error: "Invalid signature" });
