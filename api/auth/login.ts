@@ -34,7 +34,7 @@ function utf8ToBytes(str: string): Uint8Array {
 }
 
 function base64ToBytes(base64: string): Uint8Array {
-  return new Uint8Array(Buffer.from(base64, 'base64'));
+  return new Uint8Array(Buffer.from(base64, "base64"));
 }
 
 function buildChallengeMessage(params: {
@@ -96,7 +96,6 @@ function hexToBuffer(hex: string): Buffer {
   return Buffer.from(hex.replace(/^0x/, ""), "hex");
 }
 
-
 async function fetchAccountPrimaryKey(
   accountId: string
 ): Promise<{ algo: "ED25519"; pubKey: Buffer } | null> {
@@ -135,7 +134,10 @@ async function verifySignature(
   signatureBase64: string
 ): Promise<boolean> {
   // Enable dev auth in development mode
-  if (process.env.ALLOW_DEV_AUTH === "true" || process.env.NODE_ENV === "development") {
+  if (
+    process.env.ALLOW_DEV_AUTH === "true" ||
+    process.env.NODE_ENV === "development"
+  ) {
     console.log("🚧 DEV AUTH: Bypassing signature verification");
     return true;
   }
@@ -148,9 +150,8 @@ async function verifySignature(
     // Verify Ed25519 signature
     const isValid = pk.verify(messageBytes, sigBytes);
     console.log("Signature verification result:", isValid);
-    
-    return isValid;
 
+    return isValid;
   } catch (e) {
     console.error("Signature verification error:", e);
     return false;
@@ -160,12 +161,15 @@ async function verifySignature(
 // User management
 async function upsertUserByWallet(accountId: string): Promise<string | null> {
   console.log("upsertUserByWallet called with accountId:", accountId);
-  
+
   const mutation = /* GraphQL */ `
     mutation UpsertUser($wallet: String!) {
       insert_users_one(
         object: { wallet_account_id: $wallet }
-        on_conflict: { constraint: users_wallet_account_id_key, update_columns: [] }
+        on_conflict: {
+          constraint: users_wallet_account_id_key
+          update_columns: []
+        }
       ) {
         id
       }
@@ -189,9 +193,13 @@ async function upsertUserByWallet(accountId: string): Promise<string | null> {
     });
 
     console.log("Hasura response status:", response.status);
-    
+
     if (!response.ok) {
-      console.error("Hasura response not ok:", response.status, response.statusText);
+      console.error(
+        "Hasura response not ok:",
+        response.status,
+        response.statusText
+      );
       const errorText = await response.text();
       console.error("Hasura error response:", errorText);
       return null;
@@ -199,15 +207,15 @@ async function upsertUserByWallet(accountId: string): Promise<string | null> {
 
     const result = await response.json();
     console.log("Hasura response:", JSON.stringify(result, null, 2));
-    
+
     if (result.errors) {
       console.error("Hasura GraphQL errors:", result.errors);
       return null;
     }
-    
+
     const userId = result.data?.insert_users_one?.id;
     console.log("Extracted user ID:", userId);
-    
+
     return userId;
   } catch (error) {
     console.error("upsertUserByWallet error:", error);
@@ -228,10 +236,10 @@ export default async function handler(req: Req, res: Res) {
     }>;
 
     const { nonceId, accountId, publicKey, signatureBase64 } = body;
-    
+
     if (!nonceId || !accountId || !publicKey || !signatureBase64) {
-      return res.status(400).json({ 
-        error: "nonceId, accountId, publicKey, signatureBase64 required" 
+      return res.status(400).json({
+        error: "nonceId, accountId, publicKey, signatureBase64 required",
       });
     }
 
@@ -269,8 +277,13 @@ export default async function handler(req: Req, res: Res) {
 
     // Verify signature
     const msgBytes = new Uint8Array(nonceData.msgBytes);
-    const isValid = await verifySignature(accountId, publicKey, msgBytes, signatureBase64);
-    
+    const isValid = await verifySignature(
+      accountId,
+      publicKey,
+      msgBytes,
+      signatureBase64
+    );
+
     if (!isValid) {
       return res.status(401).json({ error: "Invalid signature" });
     }
@@ -284,7 +297,7 @@ export default async function handler(req: Req, res: Res) {
     if (!userId) {
       return res.status(500).json({ error: "Failed to create or find user" });
     }
-    
+
     const token = createHasuraJWT(userId);
 
     return res.status(200).json({

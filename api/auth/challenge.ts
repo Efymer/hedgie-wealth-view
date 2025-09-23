@@ -85,7 +85,7 @@ export default async function handler(req: Req, res: Res) {
     const nonceData = {
       accountId,
       publicKey,
-      msgBytes: Array.from(msgBytes), // Convert Uint8Array to regular array for JSON
+      msgBytes,
       expiresAt,
       used: false
     };
