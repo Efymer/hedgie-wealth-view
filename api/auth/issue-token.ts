@@ -1,5 +1,14 @@
 // Issues a Hasura-compatible JWT after verifying a wallet signature
 // POST /api/auth/issue-token { accountId: string, nonce: string, signature: string }
+
+// Basic logger (avoid logging secrets)
+function slog(message: string, meta?: Record<string, unknown>) {
+  try {
+    console.log("[auth:issue-token]", message, meta ? JSON.stringify(meta) : "");
+  } catch {
+    // noop
+  }
+}
 // Env:
 // - HASURA_GRAPHQL_ENDPOINT
 // - HASURA_ADMIN_SECRET
@@ -88,6 +97,7 @@ function ed25519SpkiFromRaw(raw32: Buffer): Buffer {
 }
 
 async function fetchAccountPrimaryKey(accountId: string): Promise<{ algo: "ED25519"; pubKey: Buffer } | null> {
+  slog("fetchAccountPrimaryKey:start", { accountId });
   const url = `${MIRROR}/api/v1/accounts/${encodeURIComponent(accountId)}`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) return null;
@@ -101,20 +111,24 @@ async function fetchAccountPrimaryKey(accountId: string): Promise<{ algo: "ED255
   if (typeof keyObj === "object" && typeof keyObj.key === "string" && (keyObj._type === "ED25519" || keyObj.type === "ED25519")) {
     const raw = hexToBuffer(keyObj.key);
     if (raw.length !== 32) return null;
+    slog("fetchAccountPrimaryKey:found-ed25519-object", { len: raw.length });
     return { algo: "ED25519", pubKey: raw };
   }
   // Some mirror responses expose the hex directly
   if (typeof keyObj === "string" && /^[0-9a-fA-F]{64}$/.test(keyObj)) {
     const raw = hexToBuffer(keyObj);
+    slog("fetchAccountPrimaryKey:found-ed25519-hex", { len: raw.length });
     return { algo: "ED25519", pubKey: raw };
   }
   // Unhandled key types (e.g., ECDSA/secp256k1, keylists, threshold keys)
+  slog("fetchAccountPrimaryKey:unhandled-key-type");
   return null;
 }
 
 async function verifyWalletSignature(accountId: string, nonce: string, signatureB64: string) {
   if (process.env.ALLOW_DEV_AUTH === "true") return true;
   try {
+    slog("verify:start", { accountId, nonceLen: nonce?.length || 0, sigLen: signatureB64?.length || 0 });
     const info = await fetchAccountPrimaryKey(accountId);
     if (!info || info.algo !== "ED25519") return false;
     const message = `hedgie-auth:${nonce}`;
@@ -123,8 +137,10 @@ async function verifyWalletSignature(accountId: string, nonce: string, signature
     const pubKey = createPublicKey({ key: spki, format: "der", type: "spki" });
     // For Ed25519, Node uses null algorithm parameter
     const ok = cryptoVerify(null, Buffer.from(message, "utf8"), pubKey, sig);
+    slog("verify:done", { ok });
     return ok;
   } catch (e) {
+    slog("verify:error", { message: e instanceof Error ? e.message : String(e) });
     return false;
   }
 }
@@ -148,22 +164,31 @@ export type Res = { status: (c: number) => Res; json: (b: unknown) => void };
 
 export default async function handler(req: Req, res: Res) {
   try {
+    slog("handler:start", { method: req.method });
     if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
     const body = (req.body || {}) as Partial<{ accountId: string; nonce: string; signature: string }>;
     const { accountId, nonce, signature } = body;
     if (typeof accountId !== "string" || typeof nonce !== "string" || typeof signature !== "string") {
+      slog("handler:bad-request", { hasAccountId: !!accountId, hasNonce: !!nonce, hasSignature: !!signature });
       return res.status(400).json({ error: "accountId, nonce, signature required" });
     }
 
     const ok = await verifyWalletSignature(accountId, nonce, signature);
-    if (!ok) return res.status(501).json({ error: "Signature verification not implemented" });
+    if (!ok) {
+      slog("handler:invalid-signature", { accountId });
+      return res.status(401).json({ error: "Invalid signature" });
+    }
 
+    slog("handler:upsert-user", { accountId });
     const userId = await upsertUserByWallet(accountId);
+    slog("handler:user-upserted", { userId });
     const token = createHasuraJWT(userId);
+    slog("handler:token-issued", { userId, tokenPreview: token.slice(0, 16) + "..." });
 
     return res.status(200).json({ token, userId });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    slog("handler:error", { message });
     return res.status(500).json({ error: message });
   }
 }
