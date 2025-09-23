@@ -93,15 +93,41 @@ async function verifySignature(
     console.log("- Public Key:", publicKeyString);
     console.log("- Message Bytes (base64):", messageBytesBase64);
     console.log("- Signature (base64):", signatureBase64);
-    
-    // Create Hedera PublicKey from string (handles DER & raw hex forms)
-    const pk = PublicKey.fromString(publicKeyString);
+
+    // Try different public key formats
+    let pk: PublicKey;
+    try {
+      // First try as-is (might be DER encoded)
+      pk = PublicKey.fromString(publicKeyString);
+      console.log("✓ Public key parsed successfully as-is");
+    } catch (e1) {
+      console.log("✗ Failed to parse public key as-is:", e1.message);
+      try {
+        // Try with '0x' prefix for hex
+        pk = PublicKey.fromString('0x' + publicKeyString);
+        console.log("✓ Public key parsed successfully with 0x prefix");
+      } catch (e2) {
+        console.log("✗ Failed to parse public key with 0x prefix:", e2.message);
+        try {
+          // Try as raw hex bytes
+          const keyBytes = Buffer.from(publicKeyString, 'hex');
+          pk = PublicKey.fromBytes(keyBytes);
+          console.log("✓ Public key parsed successfully from hex bytes");
+        } catch (e3) {
+          console.log("✗ Failed to parse public key from hex bytes:", e3.message);
+          throw new Error(`Unable to parse public key in any format: ${publicKeyString}`);
+        }
+      }
+    }
+
     const sigBytes = base64ToBytes(signatureBase64);
     const msgBytes = base64ToBytes(messageBytesBase64);
-    
+
     console.log("- Message bytes length:", msgBytes.length);
     console.log("- Signature bytes length:", sigBytes.length);
-    
+    console.log("- Public key type:", pk.constructor.name);
+    console.log("- Public key toString:", pk.toString());
+
     // Verify Ed25519 signature
     const isValid = pk.verify(msgBytes, sigBytes);
     console.log("Signature verification result:", isValid);
@@ -231,6 +257,12 @@ export default async function handler(req: Req, res: Res) {
       return res.status(400).json({ error: "Public key mismatch" });
     }
 
+    console.log("About to verify signature with nonce data:");
+    console.log("- Stored message:", nonceData.message);
+    console.log("- Stored msgBytes:", nonceData.msgBytes);
+    console.log("- Provided publicKey:", publicKey);
+    console.log("- Stored publicKey:", nonceData.publicKey);
+    
     // Verify signature
     const isValid = await verifySignature(
       publicKey,

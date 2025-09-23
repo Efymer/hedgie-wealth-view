@@ -53,13 +53,22 @@ export const WalletConnect: React.FC = () => {
     try {
       if (!accountId) throw new Error("No account ID available");
 
+      // Try to get public key in different ways
+      const publicKey = accountInfo?.key?.key || accountInfo?.publicKey || accountInfo?.key;
+      
+      console.log("Starting authentication:");
+      console.log("- Account Info:", accountInfo);
+      console.log("- Public Key:", accountInfo?.key?.key);
+      console.log("- Public Key Type:", typeof accountInfo?.key?.key);
+      console.log("- Using Public Key:", publicKey);
+
       // Step 1: Get challenge from server
       const challengeResp = await fetch("/api/auth/challenge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           accountId,
-          publicKey: accountInfo?.key?.key,
+          publicKey: publicKey,
         }),
       });
 
@@ -73,7 +82,6 @@ export const WalletConnect: React.FC = () => {
       console.log("Challenge received:");
       console.log("- Message:", message);
       console.log("- Message Base64:", messageBase64);
-      console.log("- Public Key:", accountInfo?.key?.key);
 
       // Step 2: Sign the challenge message
       // Use the plain text message for signing (wallets expect human-readable text)
@@ -87,21 +95,35 @@ export const WalletConnect: React.FC = () => {
 
       // Convert signature to base64 format
       let signatureBase64: string;
+      console.log("Raw signature type:", typeof authResult.signature);
+      console.log("Raw signature:", authResult.signature);
+      
       if (typeof authResult.signature === 'string') {
-        // If signature is already a string, assume it's hex and convert
-        signatureBase64 = Buffer.from(authResult.signature, 'hex').toString('base64');
+        // If signature is already a string, it might be hex or base64
+        const sigStr = authResult.signature as string;
+        if (sigStr.length === 128) {
+          // Likely hex (64 bytes * 2 chars per byte)
+          signatureBase64 = Buffer.from(sigStr, 'hex').toString('base64');
+          console.log("Converted hex signature to base64");
+        } else {
+          // Might already be base64 or some other format
+          signatureBase64 = sigStr;
+          console.log("Using signature as-is (assuming base64)");
+        }
       } else {
         // If signature is Uint8Array or Buffer
         signatureBase64 = Buffer.from(authResult.signature).toString('base64');
+        console.log("Converted bytes signature to base64");
       }
 
-      console.log("Signature base64:", signatureBase64);
+      console.log("Final signature base64:", signatureBase64);
+      console.log("Signature base64 length:", signatureBase64.length);
 
       // Step 3: Verify signature with server
       const loginPayload = {
         nonceId,
         accountId,
-        publicKey: accountInfo?.key?.key,
+        publicKey: publicKey,
         signatureBase64,
       };
       
@@ -140,7 +162,7 @@ export const WalletConnect: React.FC = () => {
           e instanceof Error ? e.message : "Unknown authentication error",
       });
     }
-  }, [accountId, disconnect, signAuth]);
+  }, [accountId, disconnect, signAuth, accountInfo]);
 
   // Trigger authentication after wallet connects and accountId is available
   useEffect(() => {
