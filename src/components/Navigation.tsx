@@ -110,8 +110,8 @@ export const Navigation: React.FC = () => {
             </Sheet>
           ) : (
             <div className="flex items-center space-x-3">
-              {/* <FollowedAccountsDropdown />
-              <NotificationsCenter />*/}
+              <FollowedAccountsDropdown />
+              {/* <NotificationsCenter />*/}
               <WalletConnect /> 
             </div>
           )}
