@@ -237,6 +237,34 @@ async function verifyWalletSignature(
       console.log("Test verification error:", e.message);
     }
 
+    // Let's also try to verify the signature with different public key formats
+    console.log("Testing different public key approaches...");
+    try {
+      // Try raw 32-byte key directly
+      const rawKey = keyInfo.pubKey;
+      console.log("Raw key length:", rawKey.length);
+      
+      // Try creating public key from raw bytes in different ways
+      const keyFormats = [
+        { name: "Raw 32 bytes as Ed25519", key: createPublicKey({ key: rawKey, format: 'der', type: 'spki' }) },
+      ];
+      
+      for (const keyFormat of keyFormats) {
+        try {
+          const testResult = cryptoVerify(null, Buffer.from(challenge, 'utf8'), keyFormat.key, signatureBuffer);
+          console.log(`${keyFormat.name} verification:`, testResult);
+          if (testResult) {
+            console.log(`✅ SUCCESS with ${keyFormat.name}!`);
+            return true;
+          }
+        } catch (e) {
+          console.log(`${keyFormat.name} error:`, e.message);
+        }
+      }
+    } catch (e) {
+      console.log("Alternative key format error:", e.message);
+    }
+
     // Since public keys match perfectly, HashPack must be signing a different message format
     // Let's try some variations based on common wallet patterns
     const textEncoder = new TextEncoder();
@@ -244,6 +272,28 @@ async function verifyWalletSignature(
     
     // The challenge parameter now contains the full signedPayload structure already!
     // So we should test the challenge directly since it's the signedPayload JSON
+    // Also try different signature interpretations
+    console.log("Testing different signature formats...");
+    const sigFormats = [
+      { name: "Original signature", sig: signatureBuffer },
+      { name: "Signature reversed", sig: Buffer.from(signatureBuffer).reverse() },
+      { name: "First 32 bytes only", sig: signatureBuffer.subarray(0, 32) },
+      { name: "Last 32 bytes only", sig: signatureBuffer.subarray(32) },
+    ];
+    
+    for (const sigFormat of sigFormats) {
+      try {
+        const testResult = cryptoVerify(null, Buffer.from(challenge, 'utf8'), publicKey, sigFormat.sig);
+        console.log(`${sigFormat.name} verification:`, testResult);
+        if (testResult) {
+          console.log(`✅ SUCCESS with ${sigFormat.name}!`);
+          return true;
+        }
+      } catch (e) {
+        console.log(`${sigFormat.name} error:`, e.message);
+      }
+    }
+
     const formats = [
       { name: "Challenge as signedPayload - HASHCONNECT PATTERN", buffer: Buffer.from(textEncoder.encode(challenge)) },
       { name: "Challenge UTF-8", buffer: Buffer.from(challenge, "utf8") },
