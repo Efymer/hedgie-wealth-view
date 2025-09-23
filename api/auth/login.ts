@@ -95,30 +95,8 @@ async function verifySignature(
     console.log("- Signature (base64):", signatureBase64);
 
     // Try different public key formats
-    let pk: PublicKey;
-    try {
-      // First try as-is (might be DER encoded)
-      pk = PublicKey.fromString(publicKeyString);
-      console.log("✓ Public key parsed successfully as-is");
-    } catch (e1) {
-      console.log("✗ Failed to parse public key as-is:", e1.message);
-      try {
-        // Try with '0x' prefix for hex
-        pk = PublicKey.fromString('0x' + publicKeyString);
-        console.log("✓ Public key parsed successfully with 0x prefix");
-      } catch (e2) {
-        console.log("✗ Failed to parse public key with 0x prefix:", e2.message);
-        try {
-          // Try as raw hex bytes
-          const keyBytes = Buffer.from(publicKeyString, 'hex');
-          pk = PublicKey.fromBytes(keyBytes);
-          console.log("✓ Public key parsed successfully from hex bytes");
-        } catch (e3) {
-          console.log("✗ Failed to parse public key from hex bytes:", e3.message);
-          throw new Error(`Unable to parse public key in any format: ${publicKeyString}`);
-        }
-      }
-    }
+    const pk = PublicKey.fromString(publicKeyString);
+    console.log("✓ Public key parsed successfully as-is", pk);
 
     const sigBytes = base64ToBytes(signatureBase64);
     const msgBytes = base64ToBytes(messageBytesBase64);
