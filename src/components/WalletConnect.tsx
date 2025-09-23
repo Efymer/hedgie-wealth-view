@@ -1,51 +1,89 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Wallet, LogOut, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
-import { useAuthSignature, UserRefusedToSignAuthError, useWallet } from "@buidlerlabs/hashgraph-react-wallets";
+import {
+  useAuthSignature,
+  UserRefusedToSignAuthError,
+  useWallet,
+} from "@buidlerlabs/hashgraph-react-wallets";
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
 import { useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
 
 export const WalletConnect: React.FC = () => {
   const [connecting, setConnecting] = useState(false);
-  const { connect: connectHashpack, isConnected, disconnect } = useWallet(HashpackConnector);
+  const {
+    connect: connectHashpack,
+    isConnected,
+    disconnect,
+  } = useWallet(HashpackConnector);
   const { data: accountId } = useAccountId();
   const { signAuth } = useAuthSignature(HashpackConnector);
-
 
   const handleConnectHashpack = async (e) => {
     e.stopPropagation();
     e.preventDefault();
     setConnecting(true);
     await connectHashpack();
-    toast({ title: "Wallet Connected", description: "Successfully connected to your wallet" });
+    toast({
+      title: "Wallet Connected",
+      description: "Successfully connected to your wallet",
+    });
   };
 
   console.log(connecting);
 
-useEffect(() => {
-  if (accountId && connecting) {
-    handleAuthenticate();
-  }
-}, [accountId, connecting])
+  useEffect(() => {
+    if (accountId && connecting) {
+      handleAuthenticate();
+    }
+  }, [accountId, connecting]);
 
   const handleAuthenticate = async () => {
     try {
-      const a = await signAuth("some message to sign");
-      console.log(a);
-      setConnecting(false);
-    } catch (e) {
-      disconnect();
-      setConnecting(false);
-      toast({ title: "Wallet Disconnected", description: "Your wallet has been disconnected" });    }
-  }
+      // Create a one-time nonce and sign the expected message
+      const nonce = crypto.getRandomValues(new Uint8Array(16)).reduce((s, b) => s + b.toString(16).padStart(2, "0"), "");
+      const message = `hedgie-auth:${nonce}`;
+      const sigResult = await signAuth(message);
+      type SigShape = { accountId?: string; signature?: string };
+      const r = sigResult as unknown as SigShape;
+      const acc = r.accountId;
+      const signature = r.signature;
+      if (!acc || !signature) throw new Error("Wallet did not return accountId/signature");
 
+      // Exchange for JWT
+      const resp = await fetch("/api/auth/issue-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accountId: acc, nonce, signature }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error((data && data.error) || "Auth failed");
+      if (data?.token) localStorage.setItem("hasura_jwt", data.token);
+      toast({ title: "Authenticated", description: "Your wallet has been authenticated" });
+    } catch (e) {
+      try { disconnect(); } catch (_err) { /* noop */ }
+      localStorage.removeItem("hasura_jwt");
+      setConnecting(false);
+      toast({
+        title: "Authentication Failed",
+        description: e instanceof Error ? e.message : "Unable to authenticate wallet",
+      });
+    }
+  };
 
   const handleDisconnect = useCallback(() => {
     disconnect();
     localStorage.removeItem("hasura_jwt");
-    toast({ title: "Wallet Disconnected", description: "Your wallet has been disconnected" });
+    toast({
+      title: "Wallet Disconnected",
+      description: "Your wallet has been disconnected",
+    });
   }, []);
 
   // const displayAddress = useMemo(() => {
@@ -67,7 +105,12 @@ useEffect(() => {
 
   if (!isConnected || connecting) {
     return (
-      <Button onClick={handleConnectHashpack} className="flex items-center space-x-2" size="sm" disabled={connecting}>
+      <Button
+        onClick={handleConnectHashpack}
+        className="flex items-center space-x-2"
+        size="sm"
+        disabled={connecting}
+      >
         <Wallet className="h-4 w-4" />
         <span>{connecting ? "Connecting..." : "Connect Wallet"}</span>
       </Button>
@@ -77,7 +120,11 @@ useEffect(() => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="flex items-center space-x-2 hover:bg-muted/80" size="sm">
+        <Button
+          variant="outline"
+          className="flex items-center space-x-2 hover:bg-muted/80"
+          size="sm"
+        >
           <div className="w-2 h-2 bg-green-500 rounded-full" />
           <Wallet className="h-4 w-4" />
           {/* <span className="hidden sm:inline">{displayAddress}</span> */}
@@ -93,16 +140,18 @@ useEffect(() => {
           {/* <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Address</span> */}
-              {/* <Button variant="ghost" size="sm" onClick={copyAddress} className="h-6 px-2">
+          {/* <Button variant="ghost" size="sm" onClick={copyAddress} className="h-6 px-2">
                 {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
               </Button> */}
-            {/* </div> */}
-            {/* <p className="text-sm font-mono bg-muted p-2 rounded truncate">{wallet?.evmAddress || wallet?.accountId}</p> */}
+          {/* </div> */}
+          {/* <p className="text-sm font-mono bg-muted p-2 rounded truncate">{wallet?.evmAddress || wallet?.accountId}</p> */}
           {/* </div> */}
 
           <div className="space-y-2">
             <span className="text-sm text-muted-foreground">Account ID</span>
-            <p className="text-sm font-mono bg-muted p-2 rounded">{accountId}</p>
+            <p className="text-sm font-mono bg-muted p-2 rounded">
+              {accountId}
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -110,7 +159,11 @@ useEffect(() => {
             {/* <p className="text-sm font-medium">{wallet?.balanceHBAR ?? "-"} HBAR</p> */}
           </div>
 
-          <Button variant="outline" onClick={handleDisconnect} className="w-full flex items-center space-x-2 text-destructive hover:text-destructive">
+          <Button
+            variant="outline"
+            onClick={handleDisconnect}
+            className="w-full flex items-center space-x-2 text-destructive hover:text-destructive"
+          >
             <LogOut className="h-4 w-4" />
             <span>Disconnect</span>
           </Button>
