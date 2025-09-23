@@ -3,8 +3,9 @@
 // Verifies the wallet signature against the challenge and issues JWT
 
 import type { IncomingHttpHeaders } from "http";
-import { createHmac, createPublicKey, verify as cryptoVerify, createHash } from "crypto";
+import { createHmac, createHash } from "crypto";
 import { Redis } from "ioredis";
+import { PublicKey } from "@hashgraph/sdk";
 
 export type Req = {
   method?: string;
@@ -141,196 +142,59 @@ async function verifyWalletSignature(
   if (process.env.ALLOW_DEV_AUTH === "true") return true;
 
   try {
-    console.log("=== Signature Verification Debug ===");
+    console.log("=== Hedera SDK Signature Verification ===");
     console.log("Account ID:", accountId);
     console.log("Challenge:", challenge);
     console.log("Signature type:", typeof signature);
     console.log("Signature:", signature);
     
-    // Let's also check what the frontend actually sent vs what we expect
-    console.log("Frontend sent challenge length:", challenge.length);
-    console.log("Challenge starts with:", challenge.substring(0, 50));
-    console.log("Challenge ends with:", challenge.substring(challenge.length - 50));
-
     const keyInfo = await fetchAccountPrimaryKey(accountId);
     console.log("Key info:", keyInfo);
-    console.log("Raw public key hex:", keyInfo?.pubKey?.toString('hex'));
     
-    // Let's also check if we can get the public key from the signature object
-    if (typeof signature === "object" && signature !== null && !Array.isArray(signature)) {
-      const sigObj = signature as any;
-      if (sigObj.publicKey) {
-        console.log("Public key from signature object:", sigObj.publicKey);
-      }
-    }
-
     if (!keyInfo || keyInfo.algo !== "ED25519") {
       console.log("No ED25519 key found for account");
       return false;
     }
 
-    // Handle signature as Buffer or base64 string
+    // Create Hedera PublicKey from raw bytes
+    const hederaPublicKey = PublicKey.fromBytes(keyInfo.pubKey);
+    console.log("Hedera public key:", hederaPublicKey.toString());
+
+    // Handle signature as Buffer
     let signatureBuffer: Buffer;
     if (Buffer.isBuffer(signature)) {
       signatureBuffer = signature;
       console.log("Using signature as Buffer, length:", signatureBuffer.length);
     } else {
-      // Try different encodings
-      try {
-        signatureBuffer = Buffer.from(signature, "base64");
-        console.log("Decoded as base64, length:", signatureBuffer.length);
-      } catch (e1) {
-        try {
-          signatureBuffer = Buffer.from(signature, "hex");
-          console.log("Decoded as hex, length:", signatureBuffer.length);
-        } catch (e2) {
-          console.log("Failed to decode signature as base64 or hex");
-          return false;
-        }
+      // Convert from serialized format
+      if (typeof signature === "object" && signature !== null && (signature as any).type === "Buffer" && Array.isArray((signature as any).data)) {
+        signatureBuffer = Buffer.from((signature as any).data);
+        console.log("Converted from Buffer serialization, length:", signatureBuffer.length);
+      } else if (Array.isArray(signature)) {
+        signatureBuffer = Buffer.from(signature);
+        console.log("Converted from array, length:", signatureBuffer.length);
+      } else {
+        signatureBuffer = Buffer.from(signature as string, "base64");
+        console.log("Converted from base64 string, length:", signatureBuffer.length);
       }
     }
 
-    // Try different ways to create the ED25519 public key
-    console.log("Trying different public key formats...");
-    
-    // Method 1: SPKI format (current approach)
-    const spki = ed25519SpkiFromRaw(keyInfo.pubKey);
-    console.log("SPKI hex:", spki.toString('hex'));
-    
-    let publicKey;
-    try {
-      publicKey = createPublicKey({
-        key: spki,
-        format: "der",
-        type: "spki",
-      });
-      console.log("✅ SPKI public key created successfully");
-    } catch (e) {
-      console.log("❌ SPKI public key creation failed:", e.message);
-      
-      // Method 2: Try raw key format
-      try {
-        publicKey = createPublicKey({
-          key: keyInfo.pubKey,
-          format: "der",
-          type: "spki",
-        });
-        console.log("✅ Raw public key created successfully");
-      } catch (e2) {
-        console.log("❌ Raw public key creation failed:", e2.message);
-        return false;
-      }
-    }
-
-    const messageBuffer = Buffer.from(challenge, "utf8");
-    console.log("Message buffer length:", messageBuffer.length);
-    console.log("Signature buffer length:", signatureBuffer.length);
-    console.log("Message hex:", messageBuffer.toString('hex'));
     console.log("Signature hex:", signatureBuffer.toString('hex'));
-    
-    // Test if our ED25519 verification setup is working at all
-    try {
-      const testMessage = Buffer.from("test", "utf8");
-      const testResult = cryptoVerify(null, testMessage, publicKey, signatureBuffer);
-      console.log("Test verification with 'test' message:", testResult);
-    } catch (e) {
-      console.log("Test verification error:", e.message);
-    }
 
-    // Let's also try to verify the signature with different public key formats
-    console.log("Testing different public key approaches...");
-    try {
-      // Try raw 32-byte key directly
-      const rawKey = keyInfo.pubKey;
-      console.log("Raw key length:", rawKey.length);
-      
-      // Try creating public key from raw bytes in different ways
-      const keyFormats = [
-        { name: "Raw 32 bytes as Ed25519", key: createPublicKey({ key: rawKey, format: 'der', type: 'spki' }) },
-      ];
-      
-      for (const keyFormat of keyFormats) {
-        try {
-          const testResult = cryptoVerify(null, Buffer.from(challenge, 'utf8'), keyFormat.key, signatureBuffer);
-          console.log(`${keyFormat.name} verification:`, testResult);
-          if (testResult) {
-            console.log(`✅ SUCCESS with ${keyFormat.name}!`);
-            return true;
-          }
-        } catch (e) {
-          console.log(`${keyFormat.name} error:`, e.message);
-        }
-      }
-    } catch (e) {
-      console.log("Alternative key format error:", e.message);
-    }
+    // Verify using Hedera SDK - pass signature bytes directly
+    const messageBytes = Buffer.from(challenge, "utf8");
+    console.log("Message to verify:", challenge);
+    console.log("Message bytes length:", messageBytes.length);
+    
+    const isValid = hederaPublicKey.verify(messageBytes, signatureBuffer);
+    
+    console.log("✅ Hedera SDK verification result:", isValid);
+    console.log("=== End Hedera SDK Debug ===");
+    
+    return isValid;
 
-    // Since public keys match perfectly, HashPack must be signing a different message format
-    // Let's try some variations based on common wallet patterns
-    const textEncoder = new TextEncoder();
-    const challengeBytes = textEncoder.encode(challenge);
-    
-    // The challenge parameter now contains the full signedPayload structure already!
-    // So we should test the challenge directly since it's the signedPayload JSON
-    // Also try different signature interpretations
-    console.log("Testing different signature formats...");
-    const sigFormats = [
-      { name: "Original signature", sig: signatureBuffer },
-      { name: "Signature reversed", sig: Buffer.from(signatureBuffer).reverse() },
-      { name: "First 32 bytes only", sig: signatureBuffer.subarray(0, 32) },
-      { name: "Last 32 bytes only", sig: signatureBuffer.subarray(32) },
-    ];
-    
-    for (const sigFormat of sigFormats) {
-      try {
-        const testResult = cryptoVerify(null, Buffer.from(challenge, 'utf8'), publicKey, sigFormat.sig);
-        console.log(`${sigFormat.name} verification:`, testResult);
-        if (testResult) {
-          console.log(`✅ SUCCESS with ${sigFormat.name}!`);
-          return true;
-        }
-      } catch (e) {
-        console.log(`${sigFormat.name} error:`, e.message);
-      }
-    }
-
-    const formats = [
-      { name: "Challenge as signedPayload - HASHCONNECT PATTERN", buffer: Buffer.from(textEncoder.encode(challenge)) },
-      { name: "Challenge UTF-8", buffer: Buffer.from(challenge, "utf8") },
-      { name: "TextEncoder().encode() - EXACT MATCH", buffer: Buffer.from(challengeBytes) },
-      { name: "SHA256 hash of challenge", buffer: createHash('sha256').update(challenge, 'utf8').digest() },
-      { name: "Challenge with newline", buffer: Buffer.from(challenge + '\n', "utf8") },
-    ];
-    
-    console.log("Challenge is now the signedPayload structure:", challenge);
-    
-    // Also let's check if the signature might be in a different format
-    console.log("Signature analysis:");
-    console.log("- First 8 bytes:", signatureBuffer.subarray(0, 8).toString('hex'));
-    console.log("- Last 8 bytes:", signatureBuffer.subarray(-8).toString('hex'));
-    console.log("- All zeros?", signatureBuffer.every(b => b === 0));
-    console.log("- All 255s?", signatureBuffer.every(b => b === 255));
-
-    for (const format of formats) {
-      try {
-        const isValid = cryptoVerify(null, format.buffer, publicKey, signatureBuffer);
-        console.log(`${format.name} verification:`, isValid);
-        if (isValid) {
-          console.log(`✅ SUCCESS with ${format.name}`);
-          console.log("=== End Debug ===");
-          return true;
-        }
-      } catch (e) {
-        console.log(`${format.name} error:`, e.message);
-      }
-    }
-    
-    console.log("❌ All verification attempts failed");
-    console.log("=== End Debug ===");
-    
-    return false;
   } catch (e) {
-    console.error("Signature verification error:", e);
+    console.error("Hedera SDK verification error:", e);
     return false;
   }
 }
