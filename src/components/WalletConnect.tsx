@@ -15,7 +15,7 @@ import {
 } from "@buidlerlabs/hashgraph-react-wallets";
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
 import { useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
-import { Buffer } from 'buffer';
+import { Buffer } from "buffer";
 
 export const WalletConnect: React.FC = () => {
   const [connecting, setConnecting] = useState(false);
@@ -26,9 +26,7 @@ export const WalletConnect: React.FC = () => {
   } = useWallet(HashpackConnector);
   const { data: accountId } = useAccountId();
   const { signAuth } = useAuthSignature(HashpackConnector);
-  const { data: accountInfo } = useAccountInfo()
-
-  console.log(accountInfo)
+  const { data: accountInfo } = useAccountInfo();
 
   const handleConnectHashpack = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -55,18 +53,12 @@ export const WalletConnect: React.FC = () => {
     try {
       if (!accountId) throw new Error("No account ID available");
 
-      // Get public key from wallet (this might need to be implemented based on your wallet integration)
-      // For now, we'll need to fetch it from the Hedera network or get it from the wallet
-      // This is a simplified approach - you may need to get the public key differently
-      const publicKey = accountInfo?.key?.key; 
-      
       // Step 1: Get challenge from server
       const challengeResp = await fetch("/api/auth/challenge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           accountId,
-          publicKey 
         }),
       });
 
@@ -79,13 +71,15 @@ export const WalletConnect: React.FC = () => {
 
       // Step 2: Sign the challenge message
       const authResult = await signAuth(message);
-      
+
       if (!authResult?.signature) {
         throw new Error("Failed to get signature from wallet");
       }
 
       // Convert signature to base64 format
-      const signatureBase64 = Buffer.from(authResult.signature).toString('base64');
+      const signatureBase64 = Buffer.from(authResult.signature).toString(
+        "base64"
+      );
 
       // Step 3: Verify signature with server
       const loginResp = await fetch("/api/auth/login", {
@@ -130,10 +124,10 @@ export const WalletConnect: React.FC = () => {
 
   // Trigger authentication after wallet connects and accountId is available
   useEffect(() => {
-    if (isConnected && accountId && connecting) {
+    if (isConnected && accountId && connecting && accountInfo?.key?.key) {
       handleAuthenticate();
     }
-  }, [isConnected, accountId, connecting, handleAuthenticate]);
+  }, [isConnected, accountId, connecting, handleAuthenticate, accountInfo]);
 
   const handleDisconnect = useCallback(() => {
     disconnect();
