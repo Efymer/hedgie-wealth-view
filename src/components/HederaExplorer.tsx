@@ -274,7 +274,7 @@ export const HederaExplorer: React.FC = () => {
 
         {!accountId ? null : (
           <>
-            {/* <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">Account {accountId}</h2>
                 <p className="text-muted-foreground">
@@ -285,7 +285,7 @@ export const HederaExplorer: React.FC = () => {
                 accountId={accountId}
                 accountName={`Account ${accountId}`}
               />
-            </div> */}
+            </div>
 
             <Tabs defaultValue="overview" className="space-y-6">
               <TabsList className="grid w-full grid-cols-3">
