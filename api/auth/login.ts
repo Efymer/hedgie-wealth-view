@@ -3,7 +3,7 @@
 // Verifies the wallet signature against the challenge and issues JWT
 
 import type { IncomingHttpHeaders } from "http";
-import { createHmac, createPublicKey, verify as cryptoVerify } from "crypto";
+import { createHmac, createPublicKey, verify as cryptoVerify, createHash } from "crypto";
 import { Redis } from "ioredis";
 
 export type Req = {
@@ -189,11 +189,16 @@ async function verifyWalletSignature(
     console.log("Signature hex:", signatureBuffer.toString('hex'));
 
     // Try different message formats that HashPack might be signing
+    // Based on HashPack docs, they might be using different message formats
     const formats = [
       { name: "UTF-8 challenge", buffer: Buffer.from(challenge, "utf8") },
-      { name: "Base64 challenge", buffer: Buffer.from(Buffer.from(challenge, "utf8").toString('base64'), "utf8") },
-      { name: "Hex challenge", buffer: Buffer.from(challenge, "hex") },
-      { name: "Challenge bytes", buffer: Buffer.from(challenge) },
+      { name: "Challenge as raw bytes", buffer: Buffer.from(challenge) },
+      { name: "Challenge as Uint8Array equivalent", buffer: new Uint8Array(Buffer.from(challenge, 'utf8')) },
+      { name: "SHA256 hash of challenge", buffer: createHash('sha256').update(challenge, 'utf8').digest() },
+      { name: "Just the nonce part", buffer: Buffer.from(challenge.split('#')[1]?.split(' ')[0] || challenge, 'utf8') },
+      { name: "Account ID only", buffer: Buffer.from(accountId, 'utf8') },
+      { name: "Simple message", buffer: Buffer.from("test message", 'utf8') },
+      { name: "Empty buffer", buffer: Buffer.alloc(0) },
     ];
 
     for (const format of formats) {
@@ -250,20 +255,22 @@ export default async function handler(req: Req, res: Res) {
       accountId: string;
       signature: string | { type: "Buffer"; data: number[] };
       nonce: string;
-      challenge: string;
+      payload: { url: string; data: { ts: number; accountId: string; nonce: string } };
+      serverSignature: string;
     }>;
 
-    const { accountId, signature, nonce, challenge } = body;
+    const { accountId, signature, nonce, payload, serverSignature } = body;
 
     if (
       typeof accountId !== "string" ||
       !signature ||
       typeof nonce !== "string" ||
-      typeof challenge !== "string"
+      !payload ||
+      typeof serverSignature !== "string"
     ) {
       return res
         .status(400)
-        .json({ error: "accountId, signature, nonce, and challenge required" });
+        .json({ error: "accountId, signature, nonce, payload, and serverSignature required" });
     }
 
     // Step 4a: Verify nonce exists and hasn't been reused
@@ -278,6 +285,8 @@ export default async function handler(req: Req, res: Res) {
     const nonceData = JSON.parse(nonceDataStr) as {
       timestamp: number;
       accountId: string;
+      payload: { url: string; data: { ts: number; accountId: string; nonce: string } };
+      serverSignature: string;
     };
 
     // Check nonce is for the correct account
@@ -294,10 +303,21 @@ export default async function handler(req: Req, res: Res) {
       return res.status(400).json({ error: "Nonce expired" });
     }
 
+    // Verify server signature first
+    const serverSecret = process.env.SERVER_SIGNING_SECRET || process.env.HASURA_ADMIN_SECRET;
+    if (!serverSecret) {
+      return res.status(500).json({ error: "Server signing secret not configured" });
+    }
+    
+    const expectedServerSig = createHmac('sha256', serverSecret).update(JSON.stringify(payload)).digest('hex');
+    if (expectedServerSig !== serverSignature) {
+      return res.status(400).json({ error: "Invalid server signature" });
+    }
+
     // Consume nonce (prevent replay)
     await redisClient.del(nonceKey);
 
-    // Step 4b: Verify the signature
+    // Step 4b: Verify the wallet signature
     // Handle signature as Buffer (from JSON parsing) or string
     let signatureToVerify: Buffer | string;
     if (
@@ -312,9 +332,11 @@ export default async function handler(req: Req, res: Res) {
       signatureToVerify = signature as string;
     }
 
+    // The wallet signs the JSON.stringify(payload)
+    const payloadToVerify = JSON.stringify(payload);
     const isValidSignature = await verifyWalletSignature(
       accountId,
-      challenge,
+      payloadToVerify,
       signatureToVerify
     );
     if (!isValidSignature) {

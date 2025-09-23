@@ -62,10 +62,13 @@ export const WalletConnect: React.FC = () => {
         throw new Error(error?.error || "Failed to get challenge");
       }
 
-      const { challenge, nonce } = await challengeResp.json();
+      const { payload, serverSignature, nonce } = await challengeResp.json();
 
-      // Step 3: Wallet signs the challenge
-      const signatureResult = await signAuth(challenge);
+      // Step 3: Wallet signs the server-signed payload (HashPack pattern)
+      // The wallet signs the entire payload object that was signed by the server
+      console.log("Signing payload:", payload);
+      const payloadToSign = JSON.stringify(payload);
+      const signatureResult = await signAuth(payloadToSign);
 
       // Extract signature from result (format may vary by wallet)
       const signature =
@@ -84,7 +87,8 @@ export const WalletConnect: React.FC = () => {
           accountId,
           signature,
           nonce,
-          challenge,
+          payload,
+          serverSignature,
         }),
       });
 

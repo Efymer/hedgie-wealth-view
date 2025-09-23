@@ -3,7 +3,7 @@
 // Creates a random nonce (challenge string) and sends it to the client
 
 import type { IncomingHttpHeaders } from "http";
-import { randomBytes } from "crypto";
+import { randomBytes, createHmac } from "crypto";
 import { Redis } from "ioredis";
 
 export type Req = { method?: string; headers?: IncomingHttpHeaders; body?: unknown };
@@ -34,24 +34,37 @@ export default async function handler(req: Req, res: Res) {
       return res.status(400).json({ error: "accountId required" });
     }
 
-    // Generate random nonce
-    const nonceBytes = randomBytes(16);
-    const nonce = nonceBytes.toString("hex");
+    // Generate server-signed payload following HashPack pattern
+    const timestamp = Date.now();
+    const nonce = randomBytes(16).toString("hex");
     
-    // Create human-readable challenge message
-    const timestamp = new Date().toISOString();
-    const challenge = `Login request #${nonce} for account ${accountId} at ${timestamp}`;
+    // Create payload similar to HashPack docs
+    const payload = {
+      url: process.env.FRONTEND_URL || "http://localhost:3000",
+      data: {
+        ts: timestamp,
+        accountId: accountId,
+        nonce: nonce
+      }
+    };
+
+    // Server signs the payload (this proves the challenge came from our server)
+    const serverSecret = process.env.SERVER_SIGNING_SECRET || process.env.JWT_SIGNING_SECRET;
+    if (!serverSecret) throw new Error("SERVER_SIGNING_SECRET required");
+    
+    const payloadString = JSON.stringify(payload);
+    const serverSignature = createHmac('sha256', serverSecret).update(payloadString).digest('hex');
 
     // Store nonce in Redis with 5-minute TTL for replay protection
     const redisClient = getRedisClient();
     const nonceKey = `auth:nonce:${nonce}`;
-    const nonceData = JSON.stringify({ timestamp: Date.now(), accountId });
+    const nonceData = JSON.stringify({ timestamp, accountId, payload, serverSignature });
     await redisClient.setex(nonceKey, 5 * 60, nonceData); // 5 minutes TTL
 
     return res.status(200).json({ 
-      challenge,
-      nonce,
-      timestamp 
+      payload,
+      serverSignature,
+      nonce
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
