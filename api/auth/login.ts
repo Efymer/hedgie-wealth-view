@@ -6,7 +6,11 @@ import type { IncomingHttpHeaders } from "http";
 import { createHmac, createPublicKey, verify as cryptoVerify } from "crypto";
 import { Redis } from "ioredis";
 
-export type Req = { method?: string; headers?: IncomingHttpHeaders; body?: unknown };
+export type Req = {
+  method?: string;
+  headers?: IncomingHttpHeaders;
+  body?: unknown;
+};
 export type Res = { status: (c: number) => Res; json: (b: unknown) => void };
 
 // Redis client for nonce storage
@@ -24,13 +28,19 @@ function getRedisClient(): Redis {
 }
 
 // GraphQL helper
-async function gql<T = unknown>(query: string, variables: Record<string, unknown> = {}) {
+async function gql<T = unknown>(
+  query: string,
+  variables: Record<string, unknown> = {}
+) {
   const endpoint = process.env.HASURA_GRAPHQL_ENDPOINT as string;
   const admin = process.env.HASURA_ADMIN_SECRET as string;
   if (!endpoint || !admin) throw new Error("Missing HASURA env");
   const res = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-hasura-admin-secret": admin },
+    headers: {
+      "Content-Type": "application/json",
+      "x-hasura-admin-secret": admin,
+    },
     body: JSON.stringify({ query, variables }),
   });
   const json = await res.json();
@@ -58,7 +68,7 @@ function createHasuraJWT(userId: string) {
   const secret = process.env.JWT_SIGNING_SECRET as string;
   const issuer = process.env.JWT_ISSUER || "hedgie-auth";
   if (!secret) throw new Error("Missing JWT_SIGNING_SECRET");
-  
+
   const header = { alg: "HS256", typ: "JWT" };
   const payload = {
     iss: issuer,
@@ -70,7 +80,7 @@ function createHasuraJWT(userId: string) {
       "x-hasura-user-id": userId,
     },
   };
-  
+
   const h = base64url(JSON.stringify(header));
   const p = base64url(JSON.stringify(payload));
   const sig = signHS256(`${h}.${p}`, secret);
@@ -78,7 +88,8 @@ function createHasuraJWT(userId: string) {
 }
 
 // Hedera account key fetching and verification
-const MIRROR = process.env.MIRROR_NODE_URL || "https://mainnet.mirrornode.hedera.com";
+const MIRROR =
+  process.env.MIRROR_NODE_URL || "https://mainnet.mirrornode.hedera.com";
 
 function hexToBuffer(hex: string): Buffer {
   return Buffer.from(hex.replace(/^0x/, ""), "hex");
@@ -90,49 +101,103 @@ function ed25519SpkiFromRaw(raw32: Buffer): Buffer {
   return Buffer.concat([prefix, raw32]);
 }
 
-async function fetchAccountPrimaryKey(accountId: string): Promise<{ algo: "ED25519"; pubKey: Buffer } | null> {
+async function fetchAccountPrimaryKey(
+  accountId: string
+): Promise<{ algo: "ED25519"; pubKey: Buffer } | null> {
   const url = `${MIRROR}/api/v1/accounts/${encodeURIComponent(accountId)}`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) return null;
-  
+
   const data = await res.json();
   const keyObj = data?.key || data?.keys || data?.account?.key;
   if (!keyObj) return null;
 
   // Handle ED25519 key object
-  if (typeof keyObj === "object" && typeof keyObj.key === "string" && 
-      (keyObj._type === "ED25519" || keyObj.type === "ED25519")) {
+  if (
+    typeof keyObj === "object" &&
+    typeof keyObj.key === "string" &&
+    (keyObj._type === "ED25519" || keyObj.type === "ED25519")
+  ) {
     const raw = hexToBuffer(keyObj.key);
     if (raw.length !== 32) return null;
     return { algo: "ED25519", pubKey: raw };
   }
-  
+
   // Handle direct hex string (64 chars = 32 bytes)
   if (typeof keyObj === "string" && /^[0-9a-fA-F]{64}$/.test(keyObj)) {
     const raw = hexToBuffer(keyObj);
     return { algo: "ED25519", pubKey: raw };
   }
-  
+
   return null;
 }
 
-async function verifyWalletSignature(accountId: string, challenge: string, signature: Buffer | string): Promise<boolean> {
+async function verifyWalletSignature(
+  accountId: string,
+  challenge: string,
+  signature: Buffer | string
+): Promise<boolean> {
   if (process.env.ALLOW_DEV_AUTH === "true") return true;
-  
+
   try {
+    console.log("=== Signature Verification Debug ===");
+    console.log("Account ID:", accountId);
+    console.log("Challenge:", challenge);
+    console.log("Signature type:", typeof signature);
+    console.log("Signature:", signature);
+
     const keyInfo = await fetchAccountPrimaryKey(accountId);
-    if (!keyInfo || keyInfo.algo !== "ED25519") return false;
+    console.log("Key info:", keyInfo);
     
+    if (!keyInfo || keyInfo.algo !== "ED25519") {
+      console.log("No ED25519 key found for account");
+      return false;
+    }
+
     // Handle signature as Buffer or base64 string
-    const signatureBuffer = Buffer.isBuffer(signature) 
-      ? signature 
-      : Buffer.from(signature, "base64");
-    
+    let signatureBuffer: Buffer;
+    if (Buffer.isBuffer(signature)) {
+      signatureBuffer = signature;
+      console.log("Using signature as Buffer, length:", signatureBuffer.length);
+    } else {
+      // Try different encodings
+      try {
+        signatureBuffer = Buffer.from(signature, "base64");
+        console.log("Decoded as base64, length:", signatureBuffer.length);
+      } catch (e1) {
+        try {
+          signatureBuffer = Buffer.from(signature, "hex");
+          console.log("Decoded as hex, length:", signatureBuffer.length);
+        } catch (e2) {
+          console.log("Failed to decode signature as base64 or hex");
+          return false;
+        }
+      }
+    }
+
     const spki = ed25519SpkiFromRaw(keyInfo.pubKey);
-    const publicKey = createPublicKey({ key: spki, format: "der", type: "spki" });
-    
+    const publicKey = createPublicKey({
+      key: spki,
+      format: "der",
+      type: "spki",
+    });
+
+    const messageBuffer = Buffer.from(challenge, "utf8");
+    console.log("Message buffer length:", messageBuffer.length);
+    console.log("Signature buffer length:", signatureBuffer.length);
+
     // Verify signature over UTF-8 encoded challenge
-    return cryptoVerify(null, Buffer.from(challenge, "utf8"), publicKey, signatureBuffer);
+    const isValid = cryptoVerify(
+      null,
+      messageBuffer,
+      publicKey,
+      signatureBuffer
+    );
+    
+    console.log("Signature verification result:", isValid);
+    console.log("=== End Debug ===");
+    
+    return isValid;
   } catch (e) {
     console.error("Signature verification error:", e);
     return false;
@@ -145,70 +210,97 @@ async function upsertUserByWallet(accountId: string): Promise<string> {
     mutation UpsertUser($wallet: String!) {
       insert_users_one(
         object: { wallet_account_id: $wallet }
-        on_conflict: { constraint: users_wallet_account_id_key, update_columns: [] }
-      ) { id }
+        on_conflict: {
+          constraint: users_wallet_account_id_key
+          update_columns: []
+        }
+      ) {
+        id
+      }
     }
   `;
-  const data = await gql<{ insert_users_one: { id: string } }>(mutation, { wallet: accountId });
+  const data = await gql<{ insert_users_one: { id: string } }>(mutation, {
+    wallet: accountId,
+  });
   return data.insert_users_one.id;
 }
 
 export default async function handler(req: Req, res: Res) {
   try {
-    if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
-    
-    const body = (req.body || {}) as Partial<{ 
-      accountId: string; 
-      signature: string | { type: 'Buffer'; data: number[] }; 
+    if (req.method !== "POST")
+      return res.status(405).json({ error: "Method Not Allowed" });
+
+    const body = (req.body || {}) as Partial<{
+      accountId: string;
+      signature: string | { type: "Buffer"; data: number[] };
       nonce: string;
       challenge: string;
     }>;
-    
+
     const { accountId, signature, nonce, challenge } = body;
-    
-    if (typeof accountId !== "string" || !signature || 
-        typeof nonce !== "string" || typeof challenge !== "string") {
-      return res.status(400).json({ error: "accountId, signature, nonce, and challenge required" });
+
+    if (
+      typeof accountId !== "string" ||
+      !signature ||
+      typeof nonce !== "string" ||
+      typeof challenge !== "string"
+    ) {
+      return res
+        .status(400)
+        .json({ error: "accountId, signature, nonce, and challenge required" });
     }
 
     // Step 4a: Verify nonce exists and hasn't been reused
     const redisClient = getRedisClient();
     const nonceKey = `auth:nonce:${nonce}`;
     const nonceDataStr = await redisClient.get(nonceKey);
-    
+
     if (!nonceDataStr) {
       return res.status(400).json({ error: "Invalid or expired nonce" });
     }
-    
-    const nonceData = JSON.parse(nonceDataStr) as { timestamp: number; accountId: string };
-    
+
+    const nonceData = JSON.parse(nonceDataStr) as {
+      timestamp: number;
+      accountId: string;
+    };
+
     // Check nonce is for the correct account
     if (nonceData.accountId !== accountId) {
-      return res.status(400).json({ error: "Nonce was issued for different account" });
+      return res
+        .status(400)
+        .json({ error: "Nonce was issued for different account" });
     }
-    
+
     // Check nonce age (5 minutes max) - Redis TTL should handle this, but double-check
     const maxAge = 5 * 60 * 1000; // 5 minutes
     if (Date.now() - nonceData.timestamp > maxAge) {
       await redisClient.del(nonceKey);
       return res.status(400).json({ error: "Nonce expired" });
     }
-    
+
     // Consume nonce (prevent replay)
     await redisClient.del(nonceKey);
 
     // Step 4b: Verify the signature
     // Handle signature as Buffer (from JSON parsing) or string
     let signatureToVerify: Buffer | string;
-    if (typeof signature === 'object' && signature.type === 'Buffer' && Array.isArray(signature.data)) {
+    if (
+      typeof signature === "object" &&
+      signature.type === "Buffer" &&
+      Array.isArray(signature.data)
+    ) {
       // Signature came as Buffer serialized to JSON: { type: 'Buffer', data: [1,2,3...] }
       signatureToVerify = Buffer.from(signature.data);
     } else {
       // Signature is a string (base64 or hex)
       signatureToVerify = signature as string;
     }
-    
-    const isValidSignature = await verifyWalletSignature(accountId, challenge, signatureToVerify);
+
+    const isValidSignature = await verifyWalletSignature(
+      accountId,
+      challenge,
+      signatureToVerify
+    );
     if (!isValidSignature) {
       return res.status(401).json({ error: "Invalid signature" });
     }
@@ -217,12 +309,11 @@ export default async function handler(req: Req, res: Res) {
     const userId = await upsertUserByWallet(accountId);
     const token = createHasuraJWT(userId);
 
-    return res.status(200).json({ 
-      token, 
+    return res.status(200).json({
+      token,
       userId,
-      accountId 
+      accountId,
     });
-    
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Login error:", message);
