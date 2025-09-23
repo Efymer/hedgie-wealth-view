@@ -1,5 +1,5 @@
 // POST /api/auth/login
-// Step 4: Server verifies the signature
+// Step 2: Server verifies the signature
 // Verifies the wallet signature against the challenge and issues JWT
 
 import type { IncomingHttpHeaders } from "http";
@@ -35,21 +35,6 @@ function utf8ToBytes(str: string): Uint8Array {
 
 function base64ToBytes(base64: string): Uint8Array {
   return new Uint8Array(Buffer.from(base64, "base64"));
-}
-
-function buildChallengeMessage(params: {
-  domain: string;
-  uri: string;
-  accountId: string;
-  nonce: string;
-  issuedAt: string;
-}): string {
-  return `${params.domain} wants you to sign in with your Hedera account:
-${params.accountId}
-
-URI: ${params.uri}
-Nonce: ${params.nonce}
-Issued At: ${params.issuedAt}`;
 }
 
 // JWT creation
@@ -89,44 +74,6 @@ function createHasuraJWT(userId: string) {
 }
 
 // Hedera account key fetching and verification
-const MIRROR =
-  process.env.MIRROR_NODE_URL || "https://mainnet.mirrornode.hedera.com";
-
-function hexToBuffer(hex: string): Buffer {
-  return Buffer.from(hex.replace(/^0x/, ""), "hex");
-}
-
-async function fetchAccountPrimaryKey(
-  accountId: string
-): Promise<{ algo: "ED25519"; pubKey: Buffer } | null> {
-  const url = `${MIRROR}/api/v1/accounts/${encodeURIComponent(accountId)}`;
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) return null;
-
-  const data = await res.json();
-  const keyObj = data?.key || data?.keys || data?.account?.key;
-  if (!keyObj) return null;
-
-  // Handle ED25519 key object
-  if (
-    typeof keyObj === "object" &&
-    typeof keyObj.key === "string" &&
-    (keyObj._type === "ED25519" || keyObj.type === "ED25519")
-  ) {
-    const raw = hexToBuffer(keyObj.key);
-    if (raw.length !== 32) return null;
-    return { algo: "ED25519", pubKey: raw };
-  }
-
-  // Handle direct hex string (64 chars = 32 bytes)
-  if (typeof keyObj === "string" && /^[0-9a-fA-F]{64}$/.test(keyObj)) {
-    const raw = hexToBuffer(keyObj);
-    return { algo: "ED25519", pubKey: raw };
-  }
-
-  return null;
-}
-
 async function verifySignature(
   publicKeyString: string,
   messageBytes: string,
@@ -145,7 +92,7 @@ async function verifySignature(
     // Create Hedera PublicKey from string (handles DER & raw hex forms)
     const pk = PublicKey.fromString(publicKeyString);
     const sigBytes = base64ToBytes(signatureBase64);
-    const msgBytes = utf8ToBytes(messageBytes);
+    const msgBytes = base64ToBytes(messageBytes);
     // Verify Ed25519 signature
     const isValid = pk.verify(msgBytes, sigBytes);
     console.log("Signature verification result:", isValid);

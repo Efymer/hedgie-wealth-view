@@ -1,6 +1,5 @@
 // POST /api/auth/challenge
 // Step 1: Server generates a nonce/challenge for client to sign
-
 import type { IncomingHttpHeaders } from "http";
 import { randomBytes, randomUUID } from "crypto";
 import { Redis } from "ioredis";
@@ -12,7 +11,6 @@ export type Req = {
 };
 export type Res = { status: (c: number) => Res; json: (b: unknown) => void };
 
-// Redis client for nonce storage
 let redis: Redis | null = null;
 
 function getRedisClient(): Redis {
@@ -24,11 +22,6 @@ function getRedisClient(): Redis {
     redis = new Redis(redisUrl);
   }
   return redis;
-}
-
-// Helper functions
-function utf8ToBytes(str: string): Uint8Array {
-  return new TextEncoder().encode(str);
 }
 
 function buildChallengeMessage(params: {
