@@ -202,23 +202,14 @@ async function verifyWalletSignature(
       console.log("Test verification error:", e.message);
     }
 
-    // Try different message formats that HashPack might be signing
-    // Based on common wallet patterns and HashConnect documentation
-    const parsedPayload = JSON.parse(challenge);
+    // Based on hashgraph-react-wallets source code, HashPack uses TextEncoder().encode(message)
+    // This is the key insight from the library source!
+    const textEncoder = new TextEncoder();
     const formats = [
+      { name: "TextEncoder().encode() - EXACT MATCH", buffer: Buffer.from(textEncoder.encode(challenge)) },
       { name: "UTF-8 challenge", buffer: Buffer.from(challenge, "utf8") },
       { name: "Challenge as Uint8Array", buffer: new Uint8Array(Buffer.from(challenge, 'utf8')) },
       { name: "SHA256 hash of challenge", buffer: createHash('sha256').update(challenge, 'utf8').digest() },
-      { name: "SHA512 hash of challenge", buffer: createHash('sha512').update(challenge, 'utf8').digest() },
-      { name: "Blake2b hash of challenge", buffer: createHash('blake2b512').update(challenge, 'utf8').digest() },
-      { name: "Just the nonce", buffer: Buffer.from(parsedPayload.data.nonce, 'utf8') },
-      { name: "Just the timestamp", buffer: Buffer.from(parsedPayload.data.ts.toString(), 'utf8') },
-      { name: "Nonce as hex bytes", buffer: Buffer.from(parsedPayload.data.nonce, 'hex') },
-      { name: "Challenge without spaces", buffer: Buffer.from(challenge.replace(/\s/g, ''), 'utf8') },
-      { name: "Challenge as base64 then utf8", buffer: Buffer.from(Buffer.from(challenge, 'utf8').toString('base64'), 'utf8') },
-      { name: "Raw challenge bytes", buffer: Buffer.from(challenge) },
-      { name: "Challenge with \\n", buffer: Buffer.from(challenge + '\n', 'utf8') },
-      { name: "Challenge with \\r\\n", buffer: Buffer.from(challenge + '\r\n', 'utf8') },
     ];
 
     for (const format of formats) {
