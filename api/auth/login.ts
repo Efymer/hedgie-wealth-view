@@ -187,7 +187,7 @@ async function verifyWalletSignature(
 
     // HashConnect prefixes messages before signing to prevent transaction confusion
     // Format: '\x19Hedera Signed Message:\n' + message.length + message
-    const prefixedMessage = '\x19Hedera Signed Message:\n' + challenge.length + challenge;
+    const prefixedMessage = `\x19Hedera Signed Message:\n${challenge.length}${challenge}`;
     const messageBytes = Buffer.from(prefixedMessage, "utf8");
     
     console.log("Original message:", challenge);
