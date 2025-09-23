@@ -192,14 +192,36 @@ async function verifyWalletSignature(
     
     const isValid = hederaPublicKey.verify(messageBytes, signatureBuffer);
     
-    // Also try alternative public key creation methods if first attempt fails
+    // Also try alternative message formats if primary verification fails
     if (!isValid) {
-      console.log("Primary verification failed, trying alternatives...");
+      console.log("Primary verification failed, trying alternative message formats...");
+      
+      const messageFormats = [
+        { name: "TextEncoder bytes", bytes: new TextEncoder().encode(challenge) },
+        { name: "UTF-8 with BOM", bytes: Buffer.concat([Buffer.from([0xEF, 0xBB, 0xBF]), Buffer.from(challenge, 'utf8')]) },
+        { name: "Just payload part", bytes: Buffer.from(JSON.stringify(JSON.parse(challenge).payload), 'utf8') },
+        { name: "Challenge without spaces", bytes: Buffer.from(challenge.replace(/\s/g, ''), 'utf8') },
+        { name: "Challenge as hex then utf8", bytes: Buffer.from(Buffer.from(challenge, 'utf8').toString('hex'), 'utf8') },
+      ];
+      
+      for (const format of messageFormats) {
+        try {
+          const formatIsValid = hederaPublicKey.verify(Buffer.from(format.bytes), signatureBuffer);
+          console.log(`${format.name} verification:`, formatIsValid);
+          if (formatIsValid) {
+            console.log(`✅ SUCCESS with ${format.name}!`);
+            return true;
+          }
+        } catch (e) {
+          console.log(`${format.name} error:`, e.message);
+        }
+      }
+      
+      // Also try alternative public key creation
       try {
         const altPublicKey = PublicKey.fromString(keyInfo.pubKey.toString('hex'));
         console.log("Alternative public key from hex:", altPublicKey.toString());
         
-        // Test with alternative key
         const altIsValid = altPublicKey.verify(messageBytes, signatureBuffer);
         console.log("Alternative key verification result:", altIsValid);
         if (altIsValid) {
