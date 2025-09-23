@@ -49,7 +49,7 @@ export default async function handler(req: Req, res: Res) {
     };
 
     // Server signs the payload (this proves the challenge came from our server)
-    const serverSecret = process.env.SERVER_SIGNING_SECRET || process.env.JWT_SIGNING_SECRET;
+    const serverSecret = process.env.SERVER_SIGNING_SECRET || process.env.HASURA_ADMIN_SECRET;
     if (!serverSecret) throw new Error("SERVER_SIGNING_SECRET required");
     
     const payloadString = JSON.stringify(payload);
