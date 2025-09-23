@@ -64,82 +64,38 @@ export const WalletConnect: React.FC = () => {
 
       const { challenge, nonce } = await challengeResp.json();
 
-      // Step 3: Wallet signs the challenge (Buidler Labs dAccess pattern)
-      // The challenge contains: { payload: {...}, server: { accountId, signature } }
-      console.log("Challenge to sign:", challenge);
+      // Step 3: Use Buidler Labs signAuth method
+      console.log("Challenge received:", challenge);
       
-      const challengeToSign = JSON.stringify(challenge);
-      console.log("String to sign:", challengeToSign);
+      const authResult = await signAuth(challenge.payload);
       
-      const signatureResult = await signAuth(challengeToSign);
-
-      // Extract signature from SignerSignature object
-      console.log("SignatureResult type:", typeof signatureResult);
-      console.log("SignatureResult:", signatureResult);
+      console.log("Buidler Labs signAuth result:", authResult);
       
-      let signature;
-      if (typeof signatureResult === "string") {
-        signature = signatureResult;
-      } else if (signatureResult && typeof signatureResult === "object") {
-        // SignerSignature object from @hashgraph/sdk
-        const sigObj = signatureResult as any;
-        console.log("SignerSignature object keys:", Object.keys(sigObj));
-        console.log("SignerSignature prototype:", Object.getPrototypeOf(sigObj));
-        
-        // Extract both signature and public key for verification
-        if (sigObj.signature) {
-          signature = sigObj.signature;
-          console.log("Using sigObj.signature:", signature);
-          
-          // Also extract the public key from SignerSignature for comparison
-          if (sigObj.publicKey && sigObj.publicKey._key) {
-            const signerPublicKey = sigObj.publicKey._key;
-            console.log("SignerSignature public key:", signerPublicKey);
-            if (typeof signerPublicKey.toString === 'function') {
-              console.log("SignerSignature public key string:", signerPublicKey.toString());
-            }
-          }
-        } else if (sigObj._signature) {
-          signature = sigObj._signature;
-          console.log("Using sigObj._signature:", signature);
-        } else if (typeof sigObj.toBytes === 'function') {
-          signature = sigObj.toBytes();
-          console.log("Using sigObj.toBytes():", signature);
-        } else if (typeof sigObj.toString === 'function') {
-          const sigString = sigObj.toString();
-          console.log("SignerSignature toString():", sigString);
-          // Try to parse as hex or base64
-          try {
-            signature = Buffer.from(sigString, 'hex');
-            console.log("Parsed as hex buffer:", signature);
-          } catch (e) {
-            try {
-              signature = Buffer.from(sigString, 'base64');
-              console.log("Parsed as base64 buffer:", signature);
-            } catch (e2) {
-              signature = sigString;
-              console.log("Using as string:", signature);
-            }
-          }
-        } else {
-          signature = sigObj;
-          console.log("Using raw object:", signature);
-        }
-      } else {
-        signature = signatureResult;
+      if (!authResult?.signature) {
+        throw new Error("Failed to get signature from wallet");
       }
 
-      if (!signature) throw new Error("No signature returned from wallet");
+      // Create the request body in Buidler Labs format
+      const tokenCreateRequestBody = {
+        payload: challenge.payload,
+        signatures: {
+          server: challenge.server.signature,
+          wallet: {
+            accountId: accountId,
+            value: authResult.signature
+          }
+        }
+      };
+      
+      console.log("Token create request body:", tokenCreateRequestBody);
 
-      // Step 4: Server verifies the signature
+      // Step 4: Server verifies the signature (Buidler Labs format)
       const loginResp = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          accountId,
-          signature,
+          ...tokenCreateRequestBody,
           nonce,
-          challenge,
         }),
       });
 
@@ -170,7 +126,7 @@ export const WalletConnect: React.FC = () => {
           e instanceof Error ? e.message : "Unknown authentication error",
       });
     }
-  }, [accountId, signAuth, disconnect]);
+  }, [accountId, disconnect, signAuth]);
 
   // Trigger authentication after wallet connects and accountId is available
   useEffect(() => {

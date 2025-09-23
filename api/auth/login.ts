@@ -140,7 +140,7 @@ async function verifyWalletSignature(
   serverSignature?: string
 ): Promise<boolean> {
   // Temporarily enable dev auth while we investigate HashConnect signature verification
-  if (process.env.ALLOW_DEV_AUTH === "true" || true) {
+  if (process.env.ALLOW_DEV_AUTH === "true" || process.env.NODE_ENV === "development") {
     console.log("🚧 DEV AUTH: Bypassing signature verification - HashConnect method needs investigation");
     return true;
   }
@@ -167,8 +167,9 @@ async function verifyWalletSignature(
       console.log("Using signature as Buffer, length:", signatureBuffer.length);
     } else {
       // Convert from serialized format
-      if (typeof signature === "object" && signature !== null && (signature as any).type === "Buffer" && Array.isArray((signature as any).data)) {
-        signatureBuffer = Buffer.from((signature as any).data);
+      const sigObj = signature as { type?: string; data?: number[] };
+      if (typeof signature === "object" && signature !== null && sigObj.type === "Buffer" && Array.isArray(sigObj.data)) {
+        signatureBuffer = Buffer.from(sigObj.data);
         console.log("Converted from Buffer serialization, length:", signatureBuffer.length);
       } else if (Array.isArray(signature)) {
         signatureBuffer = Buffer.from(signature);
@@ -312,25 +313,35 @@ export default async function handler(req: Req, res: Res) {
     if (req.method !== "POST")
       return res.status(405).json({ error: "Method Not Allowed" });
 
+    // Handle Buidler Labs dAccess format
     const body = (req.body || {}) as Partial<{
-      accountId: string;
-      signature: string | { type: "Buffer"; data: number[] };
+      payload: { url: string; data: { ts: number; accountId: string; nonce: string } };
+      signatures: {
+        server: string;
+        wallet: {
+          accountId: string;
+          value: string;
+        };
+      };
       nonce: string;
-      challenge: { payload: { url: string; data: { ts: number; accountId: string; nonce: string } }; server: { accountId: string; signature: string } };
     }>;
 
-    const { accountId, signature, nonce, challenge } = body;
-
-    if (
-      typeof accountId !== "string" ||
-      !signature ||
-      typeof nonce !== "string" ||
-      !challenge
-    ) {
-      return res
-        .status(400)
-        .json({ error: "accountId, signature, nonce, and challenge required" });
+    const { payload, signatures, nonce } = body;
+    
+    if (!payload || !signatures || !nonce) {
+      return res.status(400).json({ error: "payload, signatures, and nonce required" });
     }
+    
+    const accountId = signatures.wallet.accountId;
+    const signature = signatures.wallet.value;
+    const serverSignature = signatures.server;
+
+    console.log("Received Buidler Labs format request:");
+    console.log("- Account ID:", accountId);
+    console.log("- Signature:", signature);
+    console.log("- Server signature:", serverSignature);
+    console.log("- Payload:", payload);
+    console.log("- Nonce:", nonce);
 
     // Step 4a: Verify nonce exists and hasn't been reused
     const redisClient = getRedisClient();
@@ -368,8 +379,8 @@ export default async function handler(req: Req, res: Res) {
       return res.status(500).json({ error: "Server signing secret not configured" });
     }
     
-    const expectedServerSig = createHmac('sha256', serverSecret).update(JSON.stringify(challenge.payload)).digest('hex');
-    if (expectedServerSig !== challenge.server.signature) {
+    const expectedServerSig = createHmac('sha256', serverSecret).update(JSON.stringify(payload)).digest('hex');
+    if (expectedServerSig !== serverSignature) {
       return res.status(400).json({ error: "Invalid server signature" });
     }
 
@@ -377,51 +388,31 @@ export default async function handler(req: Req, res: Res) {
     await redisClient.del(nonceKey);
 
     // Step 4b: Verify the wallet signature
-    // Handle signature as Buffer, Uint8Array, or string
-    let signatureToVerify: Buffer | string;
+    // In Buidler Labs format, signature is a hex string
     console.log("Raw signature received:", signature);
     console.log("Signature type:", typeof signature);
-    console.log("Is array?", Array.isArray(signature));
     
-    if (
-      typeof signature === "object" &&
-      signature.type === "Buffer" &&
-      Array.isArray(signature.data)
-    ) {
-      // Signature came as Buffer serialized to JSON: { type: 'Buffer', data: [1,2,3...] }
-      signatureToVerify = Buffer.from(signature.data);
-      console.log("Converted Buffer signature, length:", signatureToVerify.length);
-    } else if (Array.isArray(signature)) {
-      // Signature came as Uint8Array serialized to JSON: [182, 226, 93, 38, ...]
-      signatureToVerify = Buffer.from(signature);
-      console.log("Converted Uint8Array signature, length:", signatureToVerify.length);
-    } else if (typeof signature === "object" && signature !== null) {
-      // Check if it's a Uint8Array-like object
-      const sigObj = signature as any;
-      if (sigObj.type === "Uint8Array" && Array.isArray(sigObj.data)) {
-        signatureToVerify = Buffer.from(sigObj.data);
-        console.log("Converted Uint8Array object signature, length:", signatureToVerify.length);
-      } else {
-        console.log("Unknown signature object format:", sigObj);
-        signatureToVerify = signature as string;
-      }
-    } else {
-      // Signature is a string (base64 or hex)
-      signatureToVerify = signature as string;
-      console.log("Using signature as string");
+    // Convert hex signature to Buffer for verification
+    let signatureToVerify: Buffer;
+    try {
+      signatureToVerify = Buffer.from(signature, 'hex');
+      console.log("Converted hex signature to Buffer, length:", signatureToVerify.length);
+    } catch (error) {
+      console.error("Failed to convert hex signature:", error);
+      return res.status(400).json({ error: "Invalid signature format" });
     }
 
-    // The wallet signs the challenge structure (Buidler Labs dAccess pattern)
-    const challengeToVerify = JSON.stringify(challenge);
-    console.log("Backend challenge to verify:", challengeToVerify);
+    // The wallet signs the payload (Buidler Labs dAccess pattern)
+    const payloadToVerify = JSON.stringify(payload);
+    console.log("Backend payload to verify:", payloadToVerify);
     console.log("Original payload from nonce:", JSON.stringify(nonceData.payload));
-    console.log("Payloads match:", JSON.stringify(challenge.payload) === JSON.stringify(nonceData.payload));
+    console.log("Payloads match:", JSON.stringify(payload) === JSON.stringify(nonceData.payload));
     
     const isValidSignature = await verifyWalletSignature(
       accountId,
-      challengeToVerify,
+      payloadToVerify,
       signatureToVerify,
-      challenge.server.signature
+      serverSignature
     );
     if (!isValidSignature) {
       return res.status(401).json({ error: "Invalid signature" });
@@ -430,28 +421,23 @@ export default async function handler(req: Req, res: Res) {
     // Step 5: Issue JWT
     console.log("Step 5: Creating user and issuing JWT for account:", accountId);
     
-    try {
-      const userId = await upsertUserByWallet(accountId);
-      console.log("User upsert result:", userId);
-      
-      if (!userId) {
-        console.error("upsertUserByWallet returned null/undefined for account:", accountId);
-        return res.status(500).json({ error: "Failed to create or find user" });
-      }
-      
-      console.log("Creating JWT for user ID:", userId);
-      const token = createHasuraJWT(userId);
-      console.log("JWT created successfully");
-
-      return res.status(200).json({
-        token,
-        userId,
-        accountId,
-      });
-    } catch (jwtError) {
-      console.error("JWT creation error:", jwtError);
-      return res.status(500).json({ error: "Failed to create authentication token" });
+    const userId = await upsertUserByWallet(accountId);
+    console.log("User upsert result:", userId);
+    
+    if (!userId) {
+      console.error("upsertUserByWallet returned null/undefined for account:", accountId);
+      return res.status(500).json({ error: "Failed to create or find user" });
     }
+    
+    console.log("Creating JWT for user ID:", userId);
+    const token = createHasuraJWT(userId);
+    console.log("JWT created successfully");
+
+    return res.status(200).json({
+      token,
+      userId,
+      accountId,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Login error:", message);
