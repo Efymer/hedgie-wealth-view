@@ -82,7 +82,7 @@ export const WalletConnect: React.FC = () => {
           server: challenge.server.signature,
           wallet: {
             accountId: accountId,
-            value: authResult.signature
+            value: Buffer.from(authResult.signature).toString('hex')
           }
         }
       };
