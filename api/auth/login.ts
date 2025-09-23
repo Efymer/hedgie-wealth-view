@@ -148,7 +148,7 @@ async function verifyWalletSignature(
 
     const keyInfo = await fetchAccountPrimaryKey(accountId);
     console.log("Key info:", keyInfo);
-    
+
     if (!keyInfo || keyInfo.algo !== "ED25519") {
       console.log("No ED25519 key found for account");
       return false;
@@ -185,19 +185,35 @@ async function verifyWalletSignature(
     const messageBuffer = Buffer.from(challenge, "utf8");
     console.log("Message buffer length:", messageBuffer.length);
     console.log("Signature buffer length:", signatureBuffer.length);
+    console.log("Message hex:", messageBuffer.toString('hex'));
+    console.log("Signature hex:", signatureBuffer.toString('hex'));
 
-    // Verify signature over UTF-8 encoded challenge
-    const isValid = cryptoVerify(
-      null,
-      messageBuffer,
-      publicKey,
-      signatureBuffer
-    );
+    // Try different message formats that HashPack might be signing
+    const formats = [
+      { name: "UTF-8 challenge", buffer: Buffer.from(challenge, "utf8") },
+      { name: "Base64 challenge", buffer: Buffer.from(Buffer.from(challenge, "utf8").toString('base64'), "utf8") },
+      { name: "Hex challenge", buffer: Buffer.from(challenge, "hex") },
+      { name: "Challenge bytes", buffer: Buffer.from(challenge) },
+    ];
+
+    for (const format of formats) {
+      try {
+        const isValid = cryptoVerify(null, format.buffer, publicKey, signatureBuffer);
+        console.log(`${format.name} verification:`, isValid);
+        if (isValid) {
+          console.log(`✅ SUCCESS with ${format.name}`);
+          console.log("=== End Debug ===");
+          return true;
+        }
+      } catch (e) {
+        console.log(`${format.name} error:`, e.message);
+      }
+    }
     
-    console.log("Signature verification result:", isValid);
+    console.log("❌ All verification attempts failed");
     console.log("=== End Debug ===");
     
-    return isValid;
+    return false;
   } catch (e) {
     console.error("Signature verification error:", e);
     return false;
