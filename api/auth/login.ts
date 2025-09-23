@@ -37,6 +37,10 @@ function base64ToBytes(base64: string): Uint8Array {
   return new Uint8Array(Buffer.from(base64, "base64"));
 }
 
+function prefixMessageToSign(message: string) {
+  return '\x19Hedera Signed Message:\n' + message.length + message
+}
+
 // JWT creation
 function base64url(input: string | Buffer) {
   return Buffer.from(input)
@@ -76,7 +80,7 @@ function createHasuraJWT(userId: string) {
 // Hedera account key fetching and verification
 async function verifySignature(
   publicKeyString: string,
-  messageBytesBase64: string,
+  message: string,
   signatureBase64: string
 ): Promise<boolean> {
   // Enable dev auth in development mode
@@ -89,22 +93,11 @@ async function verifySignature(
   }
 
   try {
-    console.log("Verifying signature with:");
-    console.log("- Public Key:", publicKeyString);
-    console.log("- Message Bytes (base64):", messageBytesBase64);
-    console.log("- Signature (base64):", signatureBase64);
 
-    // Try different public key formats
+
     const pk = PublicKey.fromString(publicKeyString);
-    console.log("✓ Public key parsed successfully as-is", pk);
-
     const sigBytes = base64ToBytes(signatureBase64);
-    const msgBytes = base64ToBytes(messageBytesBase64);
-
-    console.log("- Message bytes length:", msgBytes.length);
-    console.log("- Signature bytes length:", sigBytes.length);
-    console.log("- Public key type:", pk.constructor.name);
-    console.log("- Public key toString:", pk.toString());
+    const msgBytes = new TextEncoder().encode(prefixMessageToSign(message));
 
     // Verify Ed25519 signature
     const isValid = pk.verify(msgBytes, sigBytes);
@@ -191,14 +184,14 @@ export default async function handler(req: Req, res: Res) {
       nonceId: string;
       accountId: string;
       publicKey: string;
-      signatureBase64: string;
+      signature: string;
     }>;
 
-    const { nonceId, accountId, publicKey, signatureBase64 } = body;
+    const { nonceId, accountId, publicKey, signature } = body;
 
-    if (!nonceId || !accountId || !publicKey || !signatureBase64) {
+    if (!nonceId || !accountId || !publicKey || !signature) {
       return res.status(400).json({
-        error: "nonceId, accountId, publicKey, signatureBase64 required",
+        error: "nonceId, accountId, publicKey, signature required",
       });
     }
 
@@ -215,7 +208,6 @@ export default async function handler(req: Req, res: Res) {
       accountId: string;
       publicKey: string;
       message: string;
-      msgBytes: string;
       expiresAt: number;
       used: boolean;
     };
@@ -235,17 +227,11 @@ export default async function handler(req: Req, res: Res) {
       return res.status(400).json({ error: "Public key mismatch" });
     }
 
-    console.log("About to verify signature with nonce data:");
-    console.log("- Stored message:", nonceData.message);
-    console.log("- Stored msgBytes:", nonceData.msgBytes);
-    console.log("- Provided publicKey:", publicKey);
-    console.log("- Stored publicKey:", nonceData.publicKey);
-    
     // Verify signature
     const isValid = await verifySignature(
       publicKey,
-      nonceData.msgBytes,
-      signatureBase64
+      nonceData.message,
+      signature
     );
 
     if (!isValid) {

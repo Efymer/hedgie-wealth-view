@@ -55,14 +55,7 @@ export const WalletConnect: React.FC = () => {
 
       // Try to get public key in different ways
       const publicKey = accountInfo?.key?.key || accountInfo?.publicKey || accountInfo?.key;
-      
-      console.log("Starting authentication:");
-      console.log("- Account Info:", accountInfo);
-      console.log("- Public Key:", accountInfo?.key?.key);
-      console.log("- Public Key Type:", typeof accountInfo?.key?.key);
-      console.log("- Using Public Key:", publicKey);
 
-      // Step 1: Get challenge from server
       const challengeResp = await fetch("/api/auth/challenge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,58 +70,21 @@ export const WalletConnect: React.FC = () => {
         throw new Error(error?.error || "Failed to get challenge");
       }
 
-      const { nonceId, message, messageBase64 } = await challengeResp.json();
+      const { nonceId, message } = await challengeResp.json();
 
-      console.log("Challenge received:");
-      console.log("- Message:", message);
-      console.log("- Message Base64:", messageBase64);
-
-      // Step 2: Sign the challenge message
-      // Use the plain text message for signing (wallets expect human-readable text)
       const authResult = await signAuth(message);
 
       if (!authResult?.signature) {
         throw new Error("Failed to get signature from wallet");
       }
 
-      console.log("Signature result:", authResult);
-
-      // Convert signature to base64 format
-      let signatureBase64: string;
-      console.log("Raw signature type:", typeof authResult.signature);
-      console.log("Raw signature:", authResult.signature);
-      
-      if (typeof authResult.signature === 'string') {
-        // If signature is already a string, it might be hex or base64
-        const sigStr = authResult.signature as string;
-        if (sigStr.length === 128) {
-          // Likely hex (64 bytes * 2 chars per byte)
-          signatureBase64 = Buffer.from(sigStr, 'hex').toString('base64');
-          console.log("Converted hex signature to base64");
-        } else {
-          // Might already be base64 or some other format
-          signatureBase64 = sigStr;
-          console.log("Using signature as-is (assuming base64)");
-        }
-      } else {
-        // If signature is Uint8Array or Buffer
-        signatureBase64 = Buffer.from(authResult.signature).toString('base64');
-        console.log("Converted bytes signature to base64");
-      }
-
-      console.log("Final signature base64:", signatureBase64);
-      console.log("Signature base64 length:", signatureBase64.length);
-
-      // Step 3: Verify signature with server
       const loginPayload = {
         nonceId,
         accountId,
         publicKey: publicKey,
-        signatureBase64,
+        signature: Buffer.from(authResult.signature).toString("base64"),
       };
-      
-      console.log("Login payload:", loginPayload);
-      
+
       const loginResp = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -74,8 +74,6 @@ export default async function handler(req: Req, res: Res) {
       issuedAt,
     });
 
-    // Store both the plain message and its bytes for verification
-    const msgBytes = new TextEncoder().encode(message);
     const nonceId = randomUUID();
     const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
 
@@ -85,8 +83,7 @@ export default async function handler(req: Req, res: Res) {
     const nonceData = {
       accountId,
       publicKey,
-      message, // Store the original message for signing
-      msgBytes: Buffer.from(msgBytes).toString('base64'), // Store as base64 for verification
+      message,
       expiresAt,
       used: false,
     };
@@ -95,8 +92,7 @@ export default async function handler(req: Req, res: Res) {
 
     return res.status(200).json({
       nonceId,
-      message, // human-readable (display to user)
-      messageBase64: Buffer.from(msgBytes).toString("base64"), // wallets often want bytes
+      message,
       expiresAt,
     });
   } catch (err) {
