@@ -81,10 +81,38 @@ export const WalletConnect: React.FC = () => {
         // SignerSignature object from @hashgraph/sdk
         const sigObj = signatureResult as any;
         console.log("SignerSignature object keys:", Object.keys(sigObj));
+        console.log("SignerSignature prototype:", Object.getPrototypeOf(sigObj));
         
-        // Try different ways to extract the signature
-        signature = sigObj.signature || sigObj._signature || sigObj;
-        console.log("Extracted signature:", signature);
+        // Try different ways to extract the signature bytes
+        if (sigObj.signature) {
+          signature = sigObj.signature;
+          console.log("Using sigObj.signature:", signature);
+        } else if (sigObj._signature) {
+          signature = sigObj._signature;
+          console.log("Using sigObj._signature:", signature);
+        } else if (typeof sigObj.toBytes === 'function') {
+          signature = sigObj.toBytes();
+          console.log("Using sigObj.toBytes():", signature);
+        } else if (typeof sigObj.toString === 'function') {
+          const sigString = sigObj.toString();
+          console.log("SignerSignature toString():", sigString);
+          // Try to parse as hex or base64
+          try {
+            signature = Buffer.from(sigString, 'hex');
+            console.log("Parsed as hex buffer:", signature);
+          } catch (e) {
+            try {
+              signature = Buffer.from(sigString, 'base64');
+              console.log("Parsed as base64 buffer:", signature);
+            } catch (e2) {
+              signature = sigString;
+              console.log("Using as string:", signature);
+            }
+          }
+        } else {
+          signature = sigObj;
+          console.log("Using raw object:", signature);
+        }
       } else {
         signature = signatureResult;
       }
