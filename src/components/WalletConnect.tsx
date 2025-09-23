@@ -59,6 +59,7 @@ export const WalletConnect: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           accountId,
+          publicKey: accountInfo?.key?.key,
         }),
       });
 
@@ -88,7 +89,7 @@ export const WalletConnect: React.FC = () => {
         body: JSON.stringify({
           nonceId,
           accountId,
-          publicKey,
+          publicKey: accountInfo?.key?.key,
           signatureBase64,
         }),
       });
