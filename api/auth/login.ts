@@ -264,11 +264,11 @@ async function upsertUserByWallet(accountId: string): Promise<string | null> {
     }
   `;
 
-  console.log("Hasura endpoint:", process.env.HASURA_ENDPOINT);
+  console.log("Hasura endpoint:", process.env.HASURA_GRAPHQL_ENDPOINT);
   console.log("Has admin secret:", !!process.env.HASURA_ADMIN_SECRET);
 
   try {
-    const response = await fetch(process.env.HASURA_ENDPOINT!, {
+    const response = await fetch(process.env.HASURA_GRAPHQL_ENDPOINT!, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
