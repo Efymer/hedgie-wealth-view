@@ -66,9 +66,9 @@ function signHS256(input: string, secret: string) {
 }
 
 function createHasuraJWT(userId: string) {
-  const secret = process.env.JWT_SIGNING_SECRET as string;
+  const secret = process.env.HASURA_ADMIN_SECRET as string;
   const issuer = process.env.JWT_ISSUER || "hedgie-auth";
-  if (!secret) throw new Error("Missing JWT_SIGNING_SECRET");
+  if (!secret) throw new Error("Missing HASURA_ADMIN_SECRET");
 
   const header = { alg: "HS256", typ: "JWT" };
   const payload = {
@@ -326,7 +326,7 @@ export default async function handler(req: Req, res: Res) {
     }
 
     // Verify server signature first
-    const serverSecret = process.env.SERVER_SIGNING_SECRET || process.env.HASURA_ADMIN_SECRET;
+    const serverSecret = process.env.HASURA_ADMIN_SECRET;
     if (!serverSecret) {
       return res.status(500).json({ error: "Server signing secret not configured" });
     }
