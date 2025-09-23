@@ -51,7 +51,7 @@ export const useFollowedAccounts = () => {
   const [followedAccounts, setFollowedAccounts] = useState<FollowedAccount[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load follows via React Query helper
+  // Load follows via React Query helper 
   const { data, isLoading } = useGQLQuery<{ follows: GqlFollow[] }>([
     "follows",
   ], Q_FOLLOWS);
