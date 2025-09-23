@@ -4,10 +4,24 @@
 
 import type { IncomingHttpHeaders } from "http";
 import { createHmac, createPublicKey, verify as cryptoVerify } from "crypto";
-import { activeNonces } from "./challenge";
+import { Redis } from "ioredis";
 
 export type Req = { method?: string; headers?: IncomingHttpHeaders; body?: unknown };
 export type Res = { status: (c: number) => Res; json: (b: unknown) => void };
+
+// Redis client for nonce storage
+let redis: Redis | null = null;
+
+function getRedisClient(): Redis {
+  if (!redis) {
+    const redisUrl = process.env.REDIS_URL;
+    if (!redisUrl) {
+      throw new Error("REDIS_URL environment variable is required");
+    }
+    redis = new Redis(redisUrl);
+  }
+  return redis;
+}
 
 // GraphQL helper
 async function gql<T = unknown>(query: string, variables: Record<string, unknown> = {}) {
@@ -154,25 +168,30 @@ export default async function handler(req: Req, res: Res) {
     }
 
     // Step 4a: Verify nonce exists and hasn't been reused
-    const nonceData = activeNonces.get(nonce);
-    if (!nonceData) {
+    const redisClient = getRedisClient();
+    const nonceKey = `auth:nonce:${nonce}`;
+    const nonceDataStr = await redisClient.get(nonceKey);
+    
+    if (!nonceDataStr) {
       return res.status(400).json({ error: "Invalid or expired nonce" });
     }
+    
+    const nonceData = JSON.parse(nonceDataStr) as { timestamp: number; accountId: string };
     
     // Check nonce is for the correct account
     if (nonceData.accountId !== accountId) {
       return res.status(400).json({ error: "Nonce was issued for different account" });
     }
     
-    // Check nonce age (5 minutes max)
+    // Check nonce age (5 minutes max) - Redis TTL should handle this, but double-check
     const maxAge = 5 * 60 * 1000; // 5 minutes
     if (Date.now() - nonceData.timestamp > maxAge) {
-      activeNonces.delete(nonce);
+      await redisClient.del(nonceKey);
       return res.status(400).json({ error: "Nonce expired" });
     }
     
     // Consume nonce (prevent replay)
-    activeNonces.delete(nonce);
+    await redisClient.del(nonceKey);
 
     // Step 4b: Verify the signature
     const isValidSignature = await verifyWalletSignature(accountId, challenge, signature);

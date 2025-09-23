@@ -4,23 +4,24 @@
 
 import type { IncomingHttpHeaders } from "http";
 import { randomBytes } from "crypto";
+import { Redis } from "ioredis";
 
 export type Req = { method?: string; headers?: IncomingHttpHeaders; body?: unknown };
 export type Res = { status: (c: number) => Res; json: (b: unknown) => void };
 
-// In-memory nonce storage (in production, use Redis with TTL)
-const activeNonces = new Map<string, { timestamp: number; accountId?: string }>();
+// Redis client for nonce storage
+let redis: Redis | null = null;
 
-// Clean up expired nonces every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  const expiry = 5 * 60 * 1000; // 5 minutes
-  for (const [nonce, data] of activeNonces.entries()) {
-    if (now - data.timestamp > expiry) {
-      activeNonces.delete(nonce);
+function getRedisClient(): Redis {
+  if (!redis) {
+    const redisUrl = process.env.REDIS_URL;
+    if (!redisUrl) {
+      throw new Error("REDIS_URL environment variable is required");
     }
+    redis = new Redis(redisUrl);
   }
-}, 5 * 60 * 1000);
+  return redis;
+}
 
 export default async function handler(req: Req, res: Res) {
   try {
@@ -41,8 +42,11 @@ export default async function handler(req: Req, res: Res) {
     const timestamp = new Date().toISOString();
     const challenge = `Login request #${nonce} for account ${accountId} at ${timestamp}`;
 
-    // Store nonce with timestamp for replay protection
-    activeNonces.set(nonce, { timestamp: Date.now(), accountId });
+    // Store nonce in Redis with 5-minute TTL for replay protection
+    const redisClient = getRedisClient();
+    const nonceKey = `auth:nonce:${nonce}`;
+    const nonceData = JSON.stringify({ timestamp: Date.now(), accountId });
+    await redisClient.setex(nonceKey, 5 * 60, nonceData); // 5 minutes TTL
 
     return res.status(200).json({ 
       challenge,
@@ -55,5 +59,3 @@ export default async function handler(req: Req, res: Res) {
   }
 }
 
-// Export for use in login endpoint
-export { activeNonces };
