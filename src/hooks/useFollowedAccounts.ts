@@ -18,7 +18,6 @@ const Q_FOLLOWS = /* GraphQL */ `
     follows(order_by: { followed_at: desc }) {
       account_id
       followed_at
-      account { display_name }
     }
   }
 `;
