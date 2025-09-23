@@ -76,13 +76,16 @@ export const WalletConnect: React.FC = () => {
 
       if (!signature) throw new Error("No signature returned from wallet");
 
+      // Ensure signature is a string
+      const signatureStr = typeof signature === "string" ? signature : String(signature);
+
       // Step 4: Server verifies the signature
       const loginResp = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           accountId,
-          signature,
+          signature: signatureStr,
           nonce,
           challenge,
         }),
