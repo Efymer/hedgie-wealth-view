@@ -97,9 +97,8 @@ async function verifySignature(
 
     const pk = PublicKey.fromString(publicKeyString);
     const sigBytes = base64ToBytes(signatureBase64);
-    const msgBytes = new TextEncoder().encode(prefixMessageToSign(message));
-    // Verify Ed25519 signature
-    const isValid = pk.verify(msgBytes, sigBytes);
+    const msgBytes = prefixMessageToSign(message);
+    const isValid = pk.verify(new TextEncoder().encode(msgBytes), sigBytes);
     console.log("Signature verification result:", isValid);
 
     return isValid;

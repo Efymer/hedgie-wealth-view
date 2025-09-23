@@ -23,6 +23,7 @@ export const WalletConnect: React.FC = () => {
     connect: connectHashpack,
     isConnected,
     disconnect,
+    signer,
   } = useWallet(HashpackConnector);
   const { data: accountId } = useAccountId();
   const { signAuth } = useAuthSignature(HashpackConnector);
@@ -54,7 +55,8 @@ export const WalletConnect: React.FC = () => {
       if (!accountId) throw new Error("No account ID available");
 
       // Try to get public key in different ways
-      const publicKey = accountInfo?.key?.key || accountInfo?.publicKey || accountInfo?.key;
+      const publicKey =
+        accountInfo?.key?.key || accountInfo?.publicKey || accountInfo?.key;
 
       const challengeResp = await fetch("/api/auth/challenge", {
         method: "POST",
@@ -70,11 +72,13 @@ export const WalletConnect: React.FC = () => {
         throw new Error(error?.error || "Failed to get challenge");
       }
 
-      const { nonceId, message } = await challengeResp.json();
+      const { nonceId } = await challengeResp.json();
 
-      const authResult = await signAuth(message);
+      const messageBytes = new TextEncoder().encode("message");
 
-      if (!authResult?.signature) {
+      const [{ signature }] = await signer.sign([messageBytes]);
+
+      if (!signature) {
         throw new Error("Failed to get signature from wallet");
       }
 
@@ -82,7 +86,7 @@ export const WalletConnect: React.FC = () => {
         nonceId,
         accountId,
         publicKey: publicKey,
-        signature: Buffer.from(authResult.signature).toString("base64"),
+        signature: Buffer.from(signature).toString("base64"),
       };
 
       const loginResp = await fetch("/api/auth/login", {
