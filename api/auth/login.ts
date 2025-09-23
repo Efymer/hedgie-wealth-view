@@ -156,11 +156,7 @@ async function verifyWalletSignature(
       return false;
     }
 
-    // Create Hedera PublicKey from raw bytes
-    const hederaPublicKey = PublicKey.fromBytes(keyInfo.pubKey);
-    console.log("Hedera public key:", hederaPublicKey.toString());
-
-    // Handle signature as Buffer
+    // Handle signature as Buffer first
     let signatureBuffer: Buffer;
     if (Buffer.isBuffer(signature)) {
       signatureBuffer = signature;
@@ -181,12 +177,39 @@ async function verifyWalletSignature(
 
     console.log("Signature hex:", signatureBuffer.toString('hex'));
 
+    // Create Hedera PublicKey from raw bytes
+    console.log("Raw public key bytes:", keyInfo.pubKey);
+    console.log("Raw public key hex:", keyInfo.pubKey.toString('hex'));
+    console.log("Raw public key length:", keyInfo.pubKey.length);
+    
+    const hederaPublicKey = PublicKey.fromBytes(keyInfo.pubKey);
+    console.log("Hedera public key created:", hederaPublicKey.toString());
+
     // Verify using Hedera SDK - pass signature bytes directly
     const messageBytes = Buffer.from(challenge, "utf8");
     console.log("Message to verify:", challenge);
     console.log("Message bytes length:", messageBytes.length);
     
     const isValid = hederaPublicKey.verify(messageBytes, signatureBuffer);
+    
+    // Also try alternative public key creation methods if first attempt fails
+    if (!isValid) {
+      console.log("Primary verification failed, trying alternatives...");
+      try {
+        const altPublicKey = PublicKey.fromString(keyInfo.pubKey.toString('hex'));
+        console.log("Alternative public key from hex:", altPublicKey.toString());
+        
+        // Test with alternative key
+        const altIsValid = altPublicKey.verify(messageBytes, signatureBuffer);
+        console.log("Alternative key verification result:", altIsValid);
+        if (altIsValid) {
+          console.log("✅ SUCCESS with alternative public key!");
+          return true;
+        }
+      } catch (e) {
+        console.log("Alternative public key creation failed:", e.message);
+      }
+    }
     
     console.log("✅ Hedera SDK verification result:", isValid);
     console.log("=== End Hedera SDK Debug ===");
