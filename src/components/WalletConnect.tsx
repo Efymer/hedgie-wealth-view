@@ -62,24 +62,16 @@ export const WalletConnect: React.FC = () => {
         throw new Error(error?.error || "Failed to get challenge");
       }
 
-      const { payload, serverSignature, nonce } = await challengeResp.json();
+      const { challenge, nonce } = await challengeResp.json();
 
-      // Step 3: Wallet signs the server-signed payload (HashPack pattern)
-      // The wallet signs the entire payload object that was signed by the server
-      console.log("Signing payload:", payload);
-      console.log("Server signature:", serverSignature);
+      // Step 3: Wallet signs the challenge (Buidler Labs dAccess pattern)
+      // The challenge contains: { payload: {...}, server: { accountId, signature } }
+      console.log("Challenge to sign:", challenge);
       
-      // Try creating the signedPayload structure that HashConnect expects
-      const signedPayload = {
-        serverSignature: serverSignature,
-        originalPayload: payload
-      };
-      console.log("SignedPayload structure:", signedPayload);
+      const challengeToSign = JSON.stringify(challenge);
+      console.log("String to sign:", challengeToSign);
       
-      const payloadToSign = JSON.stringify(signedPayload);
-      console.log("String to sign:", payloadToSign);
-      
-      const signatureResult = await signAuth(payloadToSign);
+      const signatureResult = await signAuth(challengeToSign);
 
       // Extract signature from SignerSignature object
       console.log("SignatureResult type:", typeof signatureResult);
@@ -147,8 +139,7 @@ export const WalletConnect: React.FC = () => {
           accountId,
           signature,
           nonce,
-          payload,
-          serverSignature,
+          challenge,
         }),
       });
 

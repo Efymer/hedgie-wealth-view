@@ -74,9 +74,17 @@ export default async function handler(req: Req, res: Res) {
     });
     await redisClient.setex(nonceKey, 5 * 60, nonceData); // 5 minutes TTL
 
-    return res.status(200).json({
+    // Return challenge in Buidler Labs dAccess format
+    const challenge = {
       payload,
-      serverSignature,
+      server: {
+        accountId: process.env.SERVER_ACCOUNT_ID || "0.0.server", 
+        signature: serverSignature
+      }
+    };
+
+    return res.status(200).json({
+      challenge,
       nonce,
     });
   } catch (err) {

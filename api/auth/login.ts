@@ -315,22 +315,20 @@ export default async function handler(req: Req, res: Res) {
       accountId: string;
       signature: string | { type: "Buffer"; data: number[] };
       nonce: string;
-      payload: { url: string; data: { ts: number; accountId: string; nonce: string } };
-      serverSignature: string;
+      challenge: { payload: { url: string; data: { ts: number; accountId: string; nonce: string } }; server: { accountId: string; signature: string } };
     }>;
 
-    const { accountId, signature, nonce, payload, serverSignature } = body;
+    const { accountId, signature, nonce, challenge } = body;
 
     if (
       typeof accountId !== "string" ||
       !signature ||
       typeof nonce !== "string" ||
-      !payload ||
-      typeof serverSignature !== "string"
+      !challenge
     ) {
       return res
         .status(400)
-        .json({ error: "accountId, signature, nonce, payload, and serverSignature required" });
+        .json({ error: "accountId, signature, nonce, and challenge required" });
     }
 
     // Step 4a: Verify nonce exists and hasn't been reused
@@ -369,8 +367,8 @@ export default async function handler(req: Req, res: Res) {
       return res.status(500).json({ error: "Server signing secret not configured" });
     }
     
-    const expectedServerSig = createHmac('sha256', serverSecret).update(JSON.stringify(payload)).digest('hex');
-    if (expectedServerSig !== serverSignature) {
+    const expectedServerSig = createHmac('sha256', serverSecret).update(JSON.stringify(challenge.payload)).digest('hex');
+    if (expectedServerSig !== challenge.server.signature) {
       return res.status(400).json({ error: "Invalid server signature" });
     }
 
@@ -412,21 +410,17 @@ export default async function handler(req: Req, res: Res) {
       console.log("Using signature as string");
     }
 
-    // The wallet actually signs the signedPayload structure (server + original)
-    const signedPayload = {
-      serverSignature: serverSignature,
-      originalPayload: payload
-    };
-    const payloadToVerify = JSON.stringify(signedPayload);
-    console.log("Backend generated signedPayload to verify:", payloadToVerify);
+    // The wallet signs the challenge structure (Buidler Labs dAccess pattern)
+    const challengeToVerify = JSON.stringify(challenge);
+    console.log("Backend challenge to verify:", challengeToVerify);
     console.log("Original payload from nonce:", JSON.stringify(nonceData.payload));
-    console.log("Payloads match:", JSON.stringify(payload) === JSON.stringify(nonceData.payload));
+    console.log("Payloads match:", JSON.stringify(challenge.payload) === JSON.stringify(nonceData.payload));
     
     const isValidSignature = await verifyWalletSignature(
       accountId,
-      payloadToVerify,
+      challengeToVerify,
       signatureToVerify,
-      serverSignature
+      challenge.server.signature
     );
     if (!isValidSignature) {
       return res.status(401).json({ error: "Invalid signature" });
