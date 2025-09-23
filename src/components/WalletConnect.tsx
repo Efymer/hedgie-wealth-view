@@ -82,7 +82,7 @@ export const WalletConnect: React.FC = () => {
         nonceId,
         accountId,
         publicKey: publicKey,
-        signature: Buffer.from(authResult.signature).toString("base64"),
+        signature: authResult.signature, // Already base64 encoded
       };
 
       const loginResp = await fetch("/api/auth/login", {
