@@ -14,6 +14,7 @@ import {
 } from "@buidlerlabs/hashgraph-react-wallets";
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
 import { useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
+import { Buffer } from 'buffer';
 
 export const WalletConnect: React.FC = () => {
   const [connecting, setConnecting] = useState(false);
