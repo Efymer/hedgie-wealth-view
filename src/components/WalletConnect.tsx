@@ -70,12 +70,24 @@ export const WalletConnect: React.FC = () => {
       const payloadToSign = JSON.stringify(payload);
       const signatureResult = await signAuth(payloadToSign);
 
-      // Extract signature from result (format may vary by wallet)
-      const signature =
-        typeof signatureResult === "string"
-          ? signatureResult
-          : (signatureResult as unknown as { signature?: string })?.signature ||
-            signatureResult;
+      // Extract signature from SignerSignature object
+      console.log("SignatureResult type:", typeof signatureResult);
+      console.log("SignatureResult:", signatureResult);
+      
+      let signature;
+      if (typeof signatureResult === "string") {
+        signature = signatureResult;
+      } else if (signatureResult && typeof signatureResult === "object") {
+        // SignerSignature object from @hashgraph/sdk
+        const sigObj = signatureResult as any;
+        console.log("SignerSignature object keys:", Object.keys(sigObj));
+        
+        // Try different ways to extract the signature
+        signature = sigObj.signature || sigObj._signature || sigObj;
+        console.log("Extracted signature:", signature);
+      } else {
+        signature = signatureResult;
+      }
 
       if (!signature) throw new Error("No signature returned from wallet");
 

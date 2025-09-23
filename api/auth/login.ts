@@ -153,6 +153,7 @@ async function verifyWalletSignature(
 
     const keyInfo = await fetchAccountPrimaryKey(accountId);
     console.log("Key info:", keyInfo);
+    console.log("Raw public key hex:", keyInfo?.pubKey?.toString('hex'));
 
     if (!keyInfo || keyInfo.algo !== "ED25519") {
       console.log("No ED25519 key found for account");
@@ -180,12 +181,37 @@ async function verifyWalletSignature(
       }
     }
 
+    // Try different ways to create the ED25519 public key
+    console.log("Trying different public key formats...");
+    
+    // Method 1: SPKI format (current approach)
     const spki = ed25519SpkiFromRaw(keyInfo.pubKey);
-    const publicKey = createPublicKey({
-      key: spki,
-      format: "der",
-      type: "spki",
-    });
+    console.log("SPKI hex:", spki.toString('hex'));
+    
+    let publicKey;
+    try {
+      publicKey = createPublicKey({
+        key: spki,
+        format: "der",
+        type: "spki",
+      });
+      console.log("✅ SPKI public key created successfully");
+    } catch (e) {
+      console.log("❌ SPKI public key creation failed:", e.message);
+      
+      // Method 2: Try raw key format
+      try {
+        publicKey = createPublicKey({
+          key: keyInfo.pubKey,
+          format: "der",
+          type: "spki",
+        });
+        console.log("✅ Raw public key created successfully");
+      } catch (e2) {
+        console.log("❌ Raw public key creation failed:", e2.message);
+        return false;
+      }
+    }
 
     const messageBuffer = Buffer.from(challenge, "utf8");
     console.log("Message buffer length:", messageBuffer.length);
@@ -203,14 +229,23 @@ async function verifyWalletSignature(
     }
 
     // Based on hashgraph-react-wallets source code, HashPack uses TextEncoder().encode(message)
-    // This is the key insight from the library source!
+    // Let's also try some basic test messages to verify our setup
     const textEncoder = new TextEncoder();
     const formats = [
       { name: "TextEncoder().encode() - EXACT MATCH", buffer: Buffer.from(textEncoder.encode(challenge)) },
       { name: "UTF-8 challenge", buffer: Buffer.from(challenge, "utf8") },
+      { name: "Simple test message", buffer: Buffer.from("hello", "utf8") },
+      { name: "Empty message", buffer: Buffer.alloc(0) },
       { name: "Challenge as Uint8Array", buffer: new Uint8Array(Buffer.from(challenge, 'utf8')) },
       { name: "SHA256 hash of challenge", buffer: createHash('sha256').update(challenge, 'utf8').digest() },
     ];
+    
+    // Also let's check if the signature might be in a different format
+    console.log("Signature analysis:");
+    console.log("- First 8 bytes:", signatureBuffer.subarray(0, 8).toString('hex'));
+    console.log("- Last 8 bytes:", signatureBuffer.subarray(-8).toString('hex'));
+    console.log("- All zeros?", signatureBuffer.every(b => b === 0));
+    console.log("- All 255s?", signatureBuffer.every(b => b === 255));
 
     for (const format of formats) {
       try {
