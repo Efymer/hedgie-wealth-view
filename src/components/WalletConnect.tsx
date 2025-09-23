@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import {
+  useAccountInfo,
   useAuthSignature,
   UserRefusedToSignAuthError,
   useWallet,
@@ -25,6 +26,9 @@ export const WalletConnect: React.FC = () => {
   } = useWallet(HashpackConnector);
   const { data: accountId } = useAccountId();
   const { signAuth } = useAuthSignature(HashpackConnector);
+  const { data: accountInfo } = useAccountInfo()
+
+  console.log(accountInfo)
 
   const handleConnectHashpack = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -51,11 +55,19 @@ export const WalletConnect: React.FC = () => {
     try {
       if (!accountId) throw new Error("No account ID available");
 
-      // Step 2: Server generates a challenge
+      // Get public key from wallet (this might need to be implemented based on your wallet integration)
+      // For now, we'll need to fetch it from the Hedera network or get it from the wallet
+      // This is a simplified approach - you may need to get the public key differently
+      const publicKey = accountInfo?.key?.key; 
+      
+      // Step 1: Get challenge from server
       const challengeResp = await fetch("/api/auth/challenge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId }),
+        body: JSON.stringify({ 
+          accountId,
+          publicKey 
+        }),
       });
 
       if (!challengeResp.ok) {
@@ -63,40 +75,27 @@ export const WalletConnect: React.FC = () => {
         throw new Error(error?.error || "Failed to get challenge");
       }
 
-      const { challenge, nonce } = await challengeResp.json();
+      const { nonceId, message, messageBase64 } = await challengeResp.json();
 
-      // Step 3: Use Buidler Labs signAuth method
-      console.log("Challenge received:", challenge);
-      
-      const authResult = await signAuth(challenge.payload);
-      
-      console.log("Buidler Labs signAuth result:", authResult);
+      // Step 2: Sign the challenge message
+      const authResult = await signAuth(message);
       
       if (!authResult?.signature) {
         throw new Error("Failed to get signature from wallet");
       }
 
-      // Create the request body in Buidler Labs format
-      const tokenCreateRequestBody = {
-        payload: challenge.payload,
-        signatures: {
-          server: challenge.server.signature,
-          wallet: {
-            accountId: accountId,
-            value: Buffer.from(authResult.signature).toString('hex')
-          }
-        }
-      };
-      
-      console.log("Token create request body:", tokenCreateRequestBody);
+      // Convert signature to base64 format
+      const signatureBase64 = Buffer.from(authResult.signature).toString('base64');
 
-      // Step 4: Server verifies the signature (Buidler Labs format)
+      // Step 3: Verify signature with server
       const loginResp = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...tokenCreateRequestBody,
-          nonce,
+          nonceId,
+          accountId,
+          publicKey,
+          signatureBase64,
         }),
       });
 
@@ -107,7 +106,7 @@ export const WalletConnect: React.FC = () => {
 
       const { token } = await loginResp.json();
 
-      // Step 5: Store JWT
+      // Step 4: Store JWT
       if (token) {
         localStorage.setItem("hasura_jwt", token);
         toast({

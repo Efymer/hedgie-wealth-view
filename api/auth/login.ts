@@ -3,7 +3,7 @@
 // Verifies the wallet signature against the challenge and issues JWT
 
 import type { IncomingHttpHeaders } from "http";
-import { createHmac, createHash } from "crypto";
+import { createHmac, createHash, randomBytes } from "crypto";
 import { Redis } from "ioredis";
 import { PublicKey } from "@hashgraph/sdk";
 
@@ -28,28 +28,28 @@ function getRedisClient(): Redis {
   return redis;
 }
 
-// GraphQL helper
-async function gql<T = unknown>(
-  query: string,
-  variables: Record<string, unknown> = {}
-) {
-  const endpoint = process.env.HASURA_GRAPHQL_ENDPOINT as string;
-  const admin = process.env.HASURA_ADMIN_SECRET as string;
-  if (!endpoint || !admin) throw new Error("Missing HASURA env");
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-hasura-admin-secret": admin,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-  const json = await res.json();
-  if (!res.ok || json.errors) {
-    const msg = json?.errors?.[0]?.message || `GraphQL error (${res.status})`;
-    throw new Error(msg);
-  }
-  return json.data as T;
+// Helper functions for cleaner auth flow
+function utf8ToBytes(str: string): Uint8Array {
+  return new TextEncoder().encode(str);
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  return new Uint8Array(Buffer.from(base64, 'base64'));
+}
+
+function buildChallengeMessage(params: {
+  domain: string;
+  uri: string;
+  accountId: string;
+  nonce: string;
+  issuedAt: string;
+}): string {
+  return `${params.domain} wants you to sign in with your Hedera account:
+${params.accountId}
+
+URI: ${params.uri}
+Nonce: ${params.nonce}
+Issued At: ${params.issuedAt}`;
 }
 
 // JWT creation
@@ -96,11 +96,6 @@ function hexToBuffer(hex: string): Buffer {
   return Buffer.from(hex.replace(/^0x/, ""), "hex");
 }
 
-function ed25519SpkiFromRaw(raw32: Buffer): Buffer {
-  // SPKI DER for Ed25519 = SEQUENCE( AlgorithmIdentifier(1.3.101.112), BIT STRING(pubkey) )
-  const prefix = Buffer.from("302a300506032b6570032100", "hex");
-  return Buffer.concat([prefix, raw32]);
-}
 
 async function fetchAccountPrimaryKey(
   accountId: string
@@ -133,119 +128,31 @@ async function fetchAccountPrimaryKey(
   return null;
 }
 
-async function verifyWalletSignature(
+async function verifySignature(
   accountId: string,
-  challenge: string,
-  signature: Buffer | string,
-  serverSignature?: string
+  publicKeyString: string,
+  messageBytes: Uint8Array,
+  signatureBase64: string
 ): Promise<boolean> {
-  // Temporarily enable dev auth while we investigate HashConnect signature verification
+  // Enable dev auth in development mode
   if (process.env.ALLOW_DEV_AUTH === "true" || process.env.NODE_ENV === "development") {
-    console.log("🚧 DEV AUTH: Bypassing signature verification - HashConnect method needs investigation");
+    console.log("🚧 DEV AUTH: Bypassing signature verification");
     return true;
   }
 
   try {
-    console.log("=== Hedera SDK Signature Verification ===");
-    console.log("Account ID:", accountId);
-    console.log("Challenge:", challenge);
-    console.log("Signature type:", typeof signature);
-    console.log("Signature:", signature);
-    
-    const keyInfo = await fetchAccountPrimaryKey(accountId);
-    console.log("Key info:", keyInfo);
-    
-    if (!keyInfo || keyInfo.algo !== "ED25519") {
-      console.log("No ED25519 key found for account");
-      return false;
-    }
+    // Create Hedera PublicKey from string (handles DER & raw hex forms)
+    const pk = PublicKey.fromString(publicKeyString);
+    const sigBytes = base64ToBytes(signatureBase64);
 
-    // Handle signature as Buffer first
-    let signatureBuffer: Buffer;
-    if (Buffer.isBuffer(signature)) {
-      signatureBuffer = signature;
-      console.log("Using signature as Buffer, length:", signatureBuffer.length);
-    } else {
-      // Convert from serialized format
-      const sigObj = signature as { type?: string; data?: number[] };
-      if (typeof signature === "object" && signature !== null && sigObj.type === "Buffer" && Array.isArray(sigObj.data)) {
-        signatureBuffer = Buffer.from(sigObj.data);
-        console.log("Converted from Buffer serialization, length:", signatureBuffer.length);
-      } else if (Array.isArray(signature)) {
-        signatureBuffer = Buffer.from(signature);
-        console.log("Converted from array, length:", signatureBuffer.length);
-      } else {
-        signatureBuffer = Buffer.from(signature as string, "base64");
-        console.log("Converted from base64 string, length:", signatureBuffer.length);
-      }
-    }
-
-    console.log("Signature hex:", signatureBuffer.toString('hex'));
-
-    // Create Hedera PublicKey from raw bytes
-    console.log("Raw public key bytes:", keyInfo.pubKey);
-    console.log("Raw public key hex:", keyInfo.pubKey.toString('hex'));
-    console.log("Raw public key length:", keyInfo.pubKey.length);
-    
-    const hederaPublicKey = PublicKey.fromBytes(keyInfo.pubKey);
-    console.log("Hedera public key created:", hederaPublicKey.toString());
-
-    // HashConnect prefixes messages before signing to prevent transaction confusion
-    // Format: '\x19Hedera Signed Message:\n' + message.length + message
-    const prefix = '\x19Hedera Signed Message:\n';
-    const prefixedMessage = prefix + challenge.length + challenge;
-    const messageBytes = Buffer.from(prefixedMessage, "utf8");
-    
-    console.log("Original message:", challenge);
-    console.log("Prefix hex:", Buffer.from(prefix, 'utf8').toString('hex'));
-    console.log("Prefixed message length:", prefixedMessage.length);
-    console.log("Prefixed message hex (first 50 bytes):", messageBytes.subarray(0, 50).toString('hex'));
-    console.log("Message bytes length:", messageBytes.length);
-    
-    const isValid = hederaPublicKey.verify(messageBytes, signatureBuffer);
-    
-    // If primary verification fails, let's try a completely different approach
-    if (!isValid) {
-      console.log("Primary verification failed, trying alternative approaches...");
-      
-      // Maybe we need to verify against the public key that's embedded in the SignerSignature
-      // Let's check if the signature was created with a different message or approach
-      console.log("Trying different message formats...");
-      
-      const messageFormats = [
-        { name: "TextEncoder bytes", bytes: new TextEncoder().encode(challenge) },
-        { name: "Just payload part", bytes: Buffer.from(JSON.stringify(JSON.parse(challenge).payload), 'utf8') },
-        { name: "Challenge without spaces", bytes: Buffer.from(challenge.replace(/\s/g, ''), 'utf8') },
-        { name: "Empty message", bytes: Buffer.alloc(0) },
-        { name: "Account ID only", bytes: Buffer.from(accountId, 'utf8') },
-        { name: "Nonce only", bytes: Buffer.from(JSON.parse(challenge).payload.data.nonce, 'utf8') },
-      ];
-      
-      for (const format of messageFormats) {
-        try {
-          const formatIsValid = hederaPublicKey.verify(Buffer.from(format.bytes), signatureBuffer);
-          console.log(`${format.name} verification:`, formatIsValid);
-          if (formatIsValid) {
-            console.log(`✅ SUCCESS with ${format.name}!`);
-            return true;
-          }
-        } catch (e) {
-          console.log(`${format.name} error:`, e.message);
-        }
-      }
-      
-      console.log("All Hedera SDK verification attempts failed.");
-      console.log("This might indicate that signAuth() is not the correct method for HashConnect authentication.");
-      console.log("Consider using hashconnect.authenticate() instead of signAuth() in the frontend.");
-    }
-    
-    console.log("✅ Hedera SDK verification result:", isValid);
-    console.log("=== End Hedera SDK Debug ===");
+    // Verify Ed25519 signature
+    const isValid = pk.verify(messageBytes, sigBytes);
+    console.log("Signature verification result:", isValid);
     
     return isValid;
 
   } catch (e) {
-    console.error("Hedera SDK verification error:", e);
+    console.error("Signature verification error:", e);
     return false;
   }
 }
@@ -313,130 +220,78 @@ export default async function handler(req: Req, res: Res) {
     if (req.method !== "POST")
       return res.status(405).json({ error: "Method Not Allowed" });
 
-    // Handle Buidler Labs dAccess format
     const body = (req.body || {}) as Partial<{
-      payload: { url: string; data: { ts: number; accountId: string; nonce: string } };
-      signatures: {
-        server: string;
-        wallet: {
-          accountId: string;
-          value: string;
-        };
-      };
-      nonce: string;
+      nonceId: string;
+      accountId: string;
+      publicKey: string;
+      signatureBase64: string;
     }>;
 
-    const { payload, signatures, nonce } = body;
+    const { nonceId, accountId, publicKey, signatureBase64 } = body;
     
-    if (!payload || !signatures || !nonce) {
-      return res.status(400).json({ error: "payload, signatures, and nonce required" });
+    if (!nonceId || !accountId || !publicKey || !signatureBase64) {
+      return res.status(400).json({ 
+        error: "nonceId, accountId, publicKey, signatureBase64 required" 
+      });
     }
-    
-    const accountId = signatures.wallet.accountId;
-    const signature = signatures.wallet.value;
-    const serverSignature = signatures.server;
 
-    console.log("Received Buidler Labs format request:");
-    console.log("- Account ID:", accountId);
-    console.log("- Signature:", signature);
-    console.log("- Server signature:", serverSignature);
-    console.log("- Payload:", payload);
-    console.log("- Nonce:", nonce);
-
-    // Step 4a: Verify nonce exists and hasn't been reused
+    // Get nonce data from Redis
     const redisClient = getRedisClient();
-    const nonceKey = `auth:nonce:${nonce}`;
+    const nonceKey = `auth:nonce:${nonceId}`;
     const nonceDataStr = await redisClient.get(nonceKey);
 
     if (!nonceDataStr) {
-      return res.status(400).json({ error: "Invalid or expired nonce" });
+      return res.status(400).json({ error: "Unknown or expired nonce" });
     }
 
     const nonceData = JSON.parse(nonceDataStr) as {
-      timestamp: number;
       accountId: string;
-      payload: { url: string; data: { ts: number; accountId: string; nonce: string } };
-      serverSignature: string;
+      publicKey: string;
+      msgBytes: number[];
+      expiresAt: number;
+      used: boolean;
     };
 
-    // Check nonce is for the correct account
-    if (nonceData.accountId !== accountId) {
-      return res
-        .status(400)
-        .json({ error: "Nonce was issued for different account" });
+    // Validate nonce
+    if (nonceData.used) {
+      return res.status(400).json({ error: "Nonce already used" });
     }
-
-    // Check nonce age (5 minutes max) - Redis TTL should handle this, but double-check
-    const maxAge = 5 * 60 * 1000; // 5 minutes
-    if (Date.now() - nonceData.timestamp > maxAge) {
+    if (Date.now() > nonceData.expiresAt) {
       await redisClient.del(nonceKey);
       return res.status(400).json({ error: "Nonce expired" });
     }
-
-    // Verify server signature first
-    const serverSecret = process.env.HASURA_ADMIN_SECRET;
-    if (!serverSecret) {
-      return res.status(500).json({ error: "Server signing secret not configured" });
+    if (nonceData.accountId !== accountId) {
+      return res.status(400).json({ error: "Account mismatch" });
     }
-    
-    const expectedServerSig = createHmac('sha256', serverSecret).update(JSON.stringify(payload)).digest('hex');
-    if (expectedServerSig !== serverSignature) {
-      return res.status(400).json({ error: "Invalid server signature" });
+    if (nonceData.publicKey !== publicKey) {
+      return res.status(400).json({ error: "Public key mismatch" });
     }
 
-    // Consume nonce (prevent replay)
-    await redisClient.del(nonceKey);
-
-    // Step 4b: Verify the wallet signature
-    // In Buidler Labs format, signature is a hex string
-    console.log("Raw signature received:", signature);
-    console.log("Signature type:", typeof signature);
+    // Verify signature
+    const msgBytes = new Uint8Array(nonceData.msgBytes);
+    const isValid = await verifySignature(accountId, publicKey, msgBytes, signatureBase64);
     
-    // Convert hex signature to Buffer for verification
-    let signatureToVerify: Buffer;
-    try {
-      signatureToVerify = Buffer.from(signature, 'hex');
-      console.log("Converted hex signature to Buffer, length:", signatureToVerify.length);
-    } catch (error) {
-      console.error("Failed to convert hex signature:", error);
-      return res.status(400).json({ error: "Invalid signature format" });
-    }
-
-    // The wallet signs the payload (Buidler Labs dAccess pattern)
-    const payloadToVerify = JSON.stringify(payload);
-    console.log("Backend payload to verify:", payloadToVerify);
-    console.log("Original payload from nonce:", JSON.stringify(nonceData.payload));
-    console.log("Payloads match:", JSON.stringify(payload) === JSON.stringify(nonceData.payload));
-    
-    const isValidSignature = await verifyWalletSignature(
-      accountId,
-      payloadToVerify,
-      signatureToVerify,
-      serverSignature
-    );
-    if (!isValidSignature) {
+    if (!isValid) {
       return res.status(401).json({ error: "Invalid signature" });
     }
 
-    // Step 5: Issue JWT
-    console.log("Step 5: Creating user and issuing JWT for account:", accountId);
-    
+    // Mark nonce as used (prevent replay)
+    nonceData.used = true;
+    await redisClient.setex(nonceKey, 60, JSON.stringify(nonceData)); // Keep for 1 minute
+
+    // Create user and issue JWT
     const userId = await upsertUserByWallet(accountId);
-    console.log("User upsert result:", userId);
-    
     if (!userId) {
-      console.error("upsertUserByWallet returned null/undefined for account:", accountId);
       return res.status(500).json({ error: "Failed to create or find user" });
     }
     
-    console.log("Creating JWT for user ID:", userId);
     const token = createHasuraJWT(userId);
-    console.log("JWT created successfully");
 
     return res.status(200).json({
+      ok: true,
       token,
-      userId,
       accountId,
+      userId,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

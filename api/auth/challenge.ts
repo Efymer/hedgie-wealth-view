@@ -1,9 +1,8 @@
 // POST /api/auth/challenge
-// Step 2: Server generates a challenge
-// Creates a random nonce (challenge string) and sends it to the client
+// Step 1: Server generates a nonce/challenge for client to sign
 
 import type { IncomingHttpHeaders } from "http";
-import { randomBytes, createHmac } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import { Redis } from "ioredis";
 
 export type Req = {
@@ -27,68 +26,81 @@ function getRedisClient(): Redis {
   return redis;
 }
 
+// Helper functions
+function utf8ToBytes(str: string): Uint8Array {
+  return new TextEncoder().encode(str);
+}
+
+function buildChallengeMessage(params: {
+  domain: string;
+  uri: string;
+  accountId: string;
+  nonce: string;
+  issuedAt: string;
+}): string {
+  return `${params.domain} wants you to sign in with your Hedera account:
+${params.accountId}
+
+URI: ${params.uri}
+Nonce: ${params.nonce}
+Issued At: ${params.issuedAt}`;
+}
+
 export default async function handler(req: Req, res: Res) {
   try {
     if (req.method !== "POST")
       return res.status(405).json({ error: "Method Not Allowed" });
 
-    const body = (req.body || {}) as Partial<{ accountId: string }>;
-    const { accountId } = body;
+    const body = (req.body || {}) as Partial<{ 
+      accountId: string; 
+      publicKey: string; 
+      domain?: string; 
+      uri?: string; 
+    }>;
+    
+    const { accountId, publicKey, domain, uri } = body;
 
-    if (typeof accountId !== "string") {
-      return res.status(400).json({ error: "accountId required" });
+    if (!accountId || !publicKey) {
+      return res.status(400).json({ error: "accountId and publicKey are required" });
     }
 
-    // Generate server-signed payload following HashPack pattern
-    const timestamp = Date.now();
-    const nonce = randomBytes(16).toString("hex");
-
-    // Create payload similar to HashPack docs
-    const payload = {
-      url: process.env.FRONTEND_URL || "http://localhost:3000",
-      data: {
-        ts: timestamp,
-        accountId: accountId,
-        nonce: nonce,
-      },
-    };
-
-    // Server signs the payload (this proves the challenge came from our server)
-    const serverSecret =
-      process.env.SERVER_SIGNING_SECRET || process.env.HASURA_ADMIN_SECRET;
-    if (!serverSecret) throw new Error("SERVER_SIGNING_SECRET required");
-
-    const payloadString = JSON.stringify(payload);
-    const serverSignature = createHmac("sha256", serverSecret)
-      .update(payloadString)
-      .digest("hex");
-
-    // Store nonce in Redis with 5-minute TTL for replay protection
-    const redisClient = getRedisClient();
-    const nonceKey = `auth:nonce:${nonce}`;
-    const nonceData = JSON.stringify({
-      timestamp,
+    // Generate nonce and build challenge message
+    const nonce = randomUUID(); // cryptographically random
+    const issuedAt = new Date().toISOString();
+    const message = buildChallengeMessage({
+      domain: domain || 'hedgie-wealth-view.vercel.app',
+      uri: uri || process.env.FRONTEND_URL || 'https://hedgie-wealth-view.vercel.app/login',
       accountId,
-      payload,
-      serverSignature,
+      nonce,
+      issuedAt,
     });
-    await redisClient.setex(nonceKey, 5 * 60, nonceData); // 5 minutes TTL
 
-    // Return challenge in Buidler Labs dAccess format
-    const challenge = {
-      payload,
-      server: {
-        accountId: process.env.SERVER_ACCOUNT_ID || "0.0.server", 
-        signature: serverSignature
-      }
+    const msgBytes = utf8ToBytes(message);
+    const nonceId = randomUUID();
+    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+    // Store nonce data in Redis
+    const redisClient = getRedisClient();
+    const nonceKey = `auth:nonce:${nonceId}`;
+    const nonceData = {
+      accountId,
+      publicKey,
+      msgBytes: Array.from(msgBytes), // Convert Uint8Array to regular array for JSON
+      expiresAt,
+      used: false
     };
+    
+    await redisClient.setex(nonceKey, 5 * 60, JSON.stringify(nonceData)); // 5 minutes TTL
 
     return res.status(200).json({
-      challenge,
-      nonce,
+      nonceId,
+      message, // human-readable (display to user)
+      messageBase64: Buffer.from(msgBytes).toString('base64'), // wallets often want bytes
+      expiresAt,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("Challenge error:", message);
     return res.status(500).json({ error: message });
   }
 }
