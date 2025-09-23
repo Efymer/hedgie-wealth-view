@@ -1,0 +1,198 @@
+// POST /api/auth/login
+// Step 4: Server verifies the signature
+// Verifies the wallet signature against the challenge and issues JWT
+
+import type { IncomingHttpHeaders } from "http";
+import { createHmac, createPublicKey, verify as cryptoVerify } from "crypto";
+import { activeNonces } from "./challenge";
+
+export type Req = { method?: string; headers?: IncomingHttpHeaders; body?: unknown };
+export type Res = { status: (c: number) => Res; json: (b: unknown) => void };
+
+// GraphQL helper
+async function gql<T = unknown>(query: string, variables: Record<string, unknown> = {}) {
+  const endpoint = process.env.HASURA_GRAPHQL_ENDPOINT as string;
+  const admin = process.env.HASURA_ADMIN_SECRET as string;
+  if (!endpoint || !admin) throw new Error("Missing HASURA env");
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-hasura-admin-secret": admin },
+    body: JSON.stringify({ query, variables }),
+  });
+  const json = await res.json();
+  if (!res.ok || json.errors) {
+    const msg = json?.errors?.[0]?.message || `GraphQL error (${res.status})`;
+    throw new Error(msg);
+  }
+  return json.data as T;
+}
+
+// JWT creation
+function base64url(input: string | Buffer) {
+  return Buffer.from(input)
+    .toString("base64")
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+}
+
+function signHS256(input: string, secret: string) {
+  return createHmac("sha256", secret).update(input).digest("base64url");
+}
+
+function createHasuraJWT(userId: string) {
+  const secret = process.env.JWT_SIGNING_SECRET as string;
+  const issuer = process.env.JWT_ISSUER || "hedgie-auth";
+  if (!secret) throw new Error("Missing JWT_SIGNING_SECRET");
+  
+  const header = { alg: "HS256", typ: "JWT" };
+  const payload = {
+    iss: issuer,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
+    "https://hasura.io/jwt/claims": {
+      "x-hasura-allowed-roles": ["user"],
+      "x-hasura-default-role": "user",
+      "x-hasura-user-id": userId,
+    },
+  };
+  
+  const h = base64url(JSON.stringify(header));
+  const p = base64url(JSON.stringify(payload));
+  const sig = signHS256(`${h}.${p}`, secret);
+  return `${h}.${p}.${sig}`;
+}
+
+// Hedera account key fetching and verification
+const MIRROR = process.env.MIRROR_NODE_URL || "https://mainnet.mirrornode.hedera.com";
+
+function hexToBuffer(hex: string): Buffer {
+  return Buffer.from(hex.replace(/^0x/, ""), "hex");
+}
+
+function ed25519SpkiFromRaw(raw32: Buffer): Buffer {
+  // SPKI DER for Ed25519 = SEQUENCE( AlgorithmIdentifier(1.3.101.112), BIT STRING(pubkey) )
+  const prefix = Buffer.from("302a300506032b6570032100", "hex");
+  return Buffer.concat([prefix, raw32]);
+}
+
+async function fetchAccountPrimaryKey(accountId: string): Promise<{ algo: "ED25519"; pubKey: Buffer } | null> {
+  const url = `${MIRROR}/api/v1/accounts/${encodeURIComponent(accountId)}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) return null;
+  
+  const data = await res.json();
+  const keyObj = data?.key || data?.keys || data?.account?.key;
+  if (!keyObj) return null;
+
+  // Handle ED25519 key object
+  if (typeof keyObj === "object" && typeof keyObj.key === "string" && 
+      (keyObj._type === "ED25519" || keyObj.type === "ED25519")) {
+    const raw = hexToBuffer(keyObj.key);
+    if (raw.length !== 32) return null;
+    return { algo: "ED25519", pubKey: raw };
+  }
+  
+  // Handle direct hex string (64 chars = 32 bytes)
+  if (typeof keyObj === "string" && /^[0-9a-fA-F]{64}$/.test(keyObj)) {
+    const raw = hexToBuffer(keyObj);
+    return { algo: "ED25519", pubKey: raw };
+  }
+  
+  return null;
+}
+
+async function verifyWalletSignature(accountId: string, challenge: string, signatureB64: string): Promise<boolean> {
+  if (process.env.ALLOW_DEV_AUTH === "true") return true;
+  
+  try {
+    const keyInfo = await fetchAccountPrimaryKey(accountId);
+    if (!keyInfo || keyInfo.algo !== "ED25519") return false;
+    
+    const signature = Buffer.from(signatureB64, "base64");
+    const spki = ed25519SpkiFromRaw(keyInfo.pubKey);
+    const publicKey = createPublicKey({ key: spki, format: "der", type: "spki" });
+    
+    // Verify signature over UTF-8 encoded challenge
+    return cryptoVerify(null, Buffer.from(challenge, "utf8"), publicKey, signature);
+  } catch (e) {
+    console.error("Signature verification error:", e);
+    return false;
+  }
+}
+
+// User management
+async function upsertUserByWallet(accountId: string): Promise<string> {
+  const mutation = /* GraphQL */ `
+    mutation UpsertUser($wallet: String!) {
+      insert_users_one(
+        object: { wallet_account_id: $wallet }
+        on_conflict: { constraint: users_wallet_account_id_key, update_columns: [] }
+      ) { id }
+    }
+  `;
+  const data = await gql<{ insert_users_one: { id: string } }>(mutation, { wallet: accountId });
+  return data.insert_users_one.id;
+}
+
+export default async function handler(req: Req, res: Res) {
+  try {
+    if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+    
+    const body = (req.body || {}) as Partial<{ 
+      accountId: string; 
+      signature: string; 
+      nonce: string;
+      challenge: string;
+    }>;
+    
+    const { accountId, signature, nonce, challenge } = body;
+    
+    if (typeof accountId !== "string" || typeof signature !== "string" || 
+        typeof nonce !== "string" || typeof challenge !== "string") {
+      return res.status(400).json({ error: "accountId, signature, nonce, and challenge required" });
+    }
+
+    // Step 4a: Verify nonce exists and hasn't been reused
+    const nonceData = activeNonces.get(nonce);
+    if (!nonceData) {
+      return res.status(400).json({ error: "Invalid or expired nonce" });
+    }
+    
+    // Check nonce is for the correct account
+    if (nonceData.accountId !== accountId) {
+      return res.status(400).json({ error: "Nonce was issued for different account" });
+    }
+    
+    // Check nonce age (5 minutes max)
+    const maxAge = 5 * 60 * 1000; // 5 minutes
+    if (Date.now() - nonceData.timestamp > maxAge) {
+      activeNonces.delete(nonce);
+      return res.status(400).json({ error: "Nonce expired" });
+    }
+    
+    // Consume nonce (prevent replay)
+    activeNonces.delete(nonce);
+
+    // Step 4b: Verify the signature
+    const isValidSignature = await verifyWalletSignature(accountId, challenge, signature);
+    if (!isValidSignature) {
+      return res.status(401).json({ error: "Invalid signature" });
+    }
+
+    // Step 5: Issue JWT
+    const userId = await upsertUserByWallet(accountId);
+    const token = createHasuraJWT(userId);
+
+    return res.status(200).json({ 
+      token, 
+      userId,
+      accountId 
+    });
+    
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("Login error:", message);
+    return res.status(500).json({ error: message });
+  }
+}

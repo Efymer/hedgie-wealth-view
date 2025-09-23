@@ -25,57 +25,104 @@ export const WalletConnect: React.FC = () => {
   const { data: accountId } = useAccountId();
   const { signAuth } = useAuthSignature(HashpackConnector);
 
-  const handleConnectHashpack = async (e) => {
+  const handleConnectHashpack = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setConnecting(true);
-    await connectHashpack();
-    toast({
-      title: "Wallet Connected",
-      description: "Successfully connected to your wallet",
-    });
+    try {
+      // Step 1: Connect the wallet
+      await connectHashpack();
+      toast({
+        title: "Wallet Connected",
+        description: "Please sign the authentication challenge",
+      });
+    } catch (e) {
+      setConnecting(false);
+      toast({
+        title: "Connection Failed",
+        description:
+          e instanceof Error ? e.message : "Failed to connect wallet",
+      });
+    }
   };
 
-  console.log(connecting);
-
-  useEffect(() => {
-    if (accountId && connecting) {
-      handleAuthenticate();
-    }
-  }, [accountId, connecting]);
-
-  const handleAuthenticate = async () => {
+  const handleAuthenticate = useCallback(async () => {
     try {
-      // Create a one-time nonce and sign the expected message
-      const nonce = crypto.getRandomValues(new Uint8Array(16)).reduce((s, b) => s + b.toString(16).padStart(2, "0"), "");
-      const message = `hedgie-auth:${nonce}`;
-      const sigResult = await signAuth(message);
-      type SigShape = { accountId?: string; signature?: string };
-      const r = sigResult as unknown as SigShape;
-      const acc = r.accountId;
-      const signature = r.signature;
-      if (!acc || !signature) throw new Error("Wallet did not return accountId/signature");
+      if (!accountId) throw new Error("No account ID available");
 
-      // Exchange for JWT
-      const resp = await fetch("/api/auth/issue-token", {
+      // Step 2: Server generates a challenge
+      const challengeResp = await fetch("/api/auth/challenge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId: acc, nonce, signature }),
+        body: JSON.stringify({ accountId }),
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error((data && data.error) || "Auth failed");
-      if (data?.token) localStorage.setItem("hasura_jwt", data.token);
-      toast({ title: "Authenticated", description: "Your wallet has been authenticated" });
+
+      if (!challengeResp.ok) {
+        const error = await challengeResp.json();
+        throw new Error(error?.error || "Failed to get challenge");
+      }
+
+      const { challenge, nonce } = await challengeResp.json();
+
+      // Step 3: Wallet signs the challenge
+      const signatureResult = await signAuth(challenge);
+
+      // Extract signature from result (format may vary by wallet)
+      const signature =
+        typeof signatureResult === "string"
+          ? signatureResult
+          : (signatureResult as unknown as { signature?: string })?.signature ||
+            signatureResult;
+
+      if (!signature) throw new Error("No signature returned from wallet");
+
+      // Step 4: Server verifies the signature
+      const loginResp = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountId,
+          signature,
+          nonce,
+          challenge,
+        }),
+      });
+
+      if (!loginResp.ok) {
+        const error = await loginResp.json();
+        throw new Error(error?.error || "Authentication failed");
+      }
+
+      const { token } = await loginResp.json();
+
+      // Step 5: Store JWT
+      if (token) {
+        localStorage.setItem("hasura_jwt", token);
+        toast({
+          title: "Authentication Successful",
+          description: "You are now signed in",
+        });
+      }
+
+      setConnecting(false);
     } catch (e) {
-      try { disconnect(); } catch (_err) { /* noop */ }
-      localStorage.removeItem("hasura_jwt");
+      console.error("Authentication error:", e);
+      disconnect();
       setConnecting(false);
       toast({
         title: "Authentication Failed",
-        description: e instanceof Error ? e.message : "Unable to authenticate wallet",
+        description:
+          e instanceof Error ? e.message : "Unknown authentication error",
       });
     }
-  };
+  }, [accountId, signAuth, disconnect]);
+
+  // Trigger authentication after wallet connects and accountId is available
+  useEffect(() => {
+    if (isConnected && accountId && connecting) {
+      handleAuthenticate();
+    }
+  }, [isConnected, accountId, connecting, handleAuthenticate]);
 
   const handleDisconnect = useCallback(() => {
     disconnect();
@@ -84,7 +131,7 @@ export const WalletConnect: React.FC = () => {
       title: "Wallet Disconnected",
       description: "Your wallet has been disconnected",
     });
-  }, []);
+  }, [disconnect]);
 
   // const displayAddress = useMemo(() => {
   //   if (wallet?.evmAddress) {
