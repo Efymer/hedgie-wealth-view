@@ -242,25 +242,17 @@ async function verifyWalletSignature(
     const textEncoder = new TextEncoder();
     const challengeBytes = textEncoder.encode(challenge);
     
-    // Based on HashConnect docs, the user signs the "signedPayload" which includes server signature!
-    // The signedPayload structure is: { serverSignature, originalPayload }
-    const signedPayload = {
-      serverSignature: serverSignature,
-      originalPayload: JSON.parse(challenge)
-    };
-    const signedPayloadString = JSON.stringify(signedPayload);
-    
+    // The challenge parameter now contains the full signedPayload structure already!
+    // So we should test the challenge directly since it's the signedPayload JSON
     const formats = [
-      { name: "SignedPayload (server + original) - HASHCONNECT PATTERN", buffer: Buffer.from(textEncoder.encode(signedPayloadString)) },
-      { name: "SignedPayload UTF-8", buffer: Buffer.from(signedPayloadString, "utf8") },
+      { name: "Challenge as signedPayload - HASHCONNECT PATTERN", buffer: Buffer.from(textEncoder.encode(challenge)) },
+      { name: "Challenge UTF-8", buffer: Buffer.from(challenge, "utf8") },
       { name: "TextEncoder().encode() - EXACT MATCH", buffer: Buffer.from(challengeBytes) },
-      { name: "UTF-8 challenge", buffer: Buffer.from(challenge, "utf8") },
-      { name: "Just the payload data", buffer: Buffer.from(JSON.stringify(JSON.parse(challenge).data), "utf8") },
       { name: "SHA256 hash of challenge", buffer: createHash('sha256').update(challenge, 'utf8').digest() },
       { name: "Challenge with newline", buffer: Buffer.from(challenge + '\n', "utf8") },
     ];
     
-    console.log("Testing signedPayload structure:", signedPayloadString);
+    console.log("Challenge is now the signedPayload structure:", challenge);
     
     // Also let's check if the signature might be in a different format
     console.log("Signature analysis:");
