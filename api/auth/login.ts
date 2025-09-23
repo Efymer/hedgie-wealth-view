@@ -364,8 +364,12 @@ export default async function handler(req: Req, res: Res) {
     await redisClient.del(nonceKey);
 
     // Step 4b: Verify the wallet signature
-    // Handle signature as Buffer (from JSON parsing) or string
+    // Handle signature as Buffer, Uint8Array, or string
     let signatureToVerify: Buffer | string;
+    console.log("Raw signature received:", signature);
+    console.log("Signature type:", typeof signature);
+    console.log("Is array?", Array.isArray(signature));
+    
     if (
       typeof signature === "object" &&
       signature.type === "Buffer" &&
@@ -373,9 +377,25 @@ export default async function handler(req: Req, res: Res) {
     ) {
       // Signature came as Buffer serialized to JSON: { type: 'Buffer', data: [1,2,3...] }
       signatureToVerify = Buffer.from(signature.data);
+      console.log("Converted Buffer signature, length:", signatureToVerify.length);
+    } else if (Array.isArray(signature)) {
+      // Signature came as Uint8Array serialized to JSON: [182, 226, 93, 38, ...]
+      signatureToVerify = Buffer.from(signature);
+      console.log("Converted Uint8Array signature, length:", signatureToVerify.length);
+    } else if (typeof signature === "object" && signature !== null) {
+      // Check if it's a Uint8Array-like object
+      const sigObj = signature as any;
+      if (sigObj.type === "Uint8Array" && Array.isArray(sigObj.data)) {
+        signatureToVerify = Buffer.from(sigObj.data);
+        console.log("Converted Uint8Array object signature, length:", signatureToVerify.length);
+      } else {
+        console.log("Unknown signature object format:", sigObj);
+        signatureToVerify = signature as string;
+      }
     } else {
       // Signature is a string (base64 or hex)
       signatureToVerify = signature as string;
+      console.log("Using signature as string");
     }
 
     // The wallet signs the JSON.stringify(payload)
