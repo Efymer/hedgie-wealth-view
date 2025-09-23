@@ -67,7 +67,18 @@ export const WalletConnect: React.FC = () => {
       // Step 3: Wallet signs the server-signed payload (HashPack pattern)
       // The wallet signs the entire payload object that was signed by the server
       console.log("Signing payload:", payload);
-      const payloadToSign = JSON.stringify(payload);
+      console.log("Server signature:", serverSignature);
+      
+      // Try creating the signedPayload structure that HashConnect expects
+      const signedPayload = {
+        serverSignature: serverSignature,
+        originalPayload: payload
+      };
+      console.log("SignedPayload structure:", signedPayload);
+      
+      const payloadToSign = JSON.stringify(signedPayload);
+      console.log("String to sign:", payloadToSign);
+      
       const signatureResult = await signAuth(payloadToSign);
 
       // Extract signature from SignerSignature object
