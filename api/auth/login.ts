@@ -76,7 +76,7 @@ function createHasuraJWT(userId: string) {
 // Hedera account key fetching and verification
 async function verifySignature(
   publicKeyString: string,
-  messageBytes: string,
+  messageBytesBase64: string,
   signatureBase64: string
 ): Promise<boolean> {
   // Enable dev auth in development mode
@@ -89,10 +89,19 @@ async function verifySignature(
   }
 
   try {
+    console.log("Verifying signature with:");
+    console.log("- Public Key:", publicKeyString);
+    console.log("- Message Bytes (base64):", messageBytesBase64);
+    console.log("- Signature (base64):", signatureBase64);
+    
     // Create Hedera PublicKey from string (handles DER & raw hex forms)
     const pk = PublicKey.fromString(publicKeyString);
     const sigBytes = base64ToBytes(signatureBase64);
-    const msgBytes = base64ToBytes(messageBytes);
+    const msgBytes = base64ToBytes(messageBytesBase64);
+    
+    console.log("- Message bytes length:", msgBytes.length);
+    console.log("- Signature bytes length:", sigBytes.length);
+    
     // Verify Ed25519 signature
     const isValid = pk.verify(msgBytes, sigBytes);
     console.log("Signature verification result:", isValid);
@@ -201,6 +210,7 @@ export default async function handler(req: Req, res: Res) {
     const nonceData = JSON.parse(nonceDataStr) as {
       accountId: string;
       publicKey: string;
+      message: string;
       msgBytes: string;
       expiresAt: number;
       used: boolean;

@@ -1,5 +1,6 @@
 // POST /api/auth/challenge
 // Step 1: Server generates a nonce/challenge for client to sign
+
 import type { IncomingHttpHeaders } from "http";
 import { randomBytes, randomUUID } from "crypto";
 import { Redis } from "ioredis";
@@ -73,7 +74,8 @@ export default async function handler(req: Req, res: Res) {
       issuedAt,
     });
 
-    const msgBytes = message;
+    // Store both the plain message and its bytes for verification
+    const msgBytes = new TextEncoder().encode(message);
     const nonceId = randomUUID();
     const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
 
@@ -83,7 +85,8 @@ export default async function handler(req: Req, res: Res) {
     const nonceData = {
       accountId,
       publicKey,
-      msgBytes,
+      message, // Store the original message for signing
+      msgBytes: Buffer.from(msgBytes).toString('base64'), // Store as base64 for verification
       expiresAt,
       used: false,
     };

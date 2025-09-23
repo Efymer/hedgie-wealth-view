@@ -68,30 +68,49 @@ export const WalletConnect: React.FC = () => {
         throw new Error(error?.error || "Failed to get challenge");
       }
 
-      const { nonceId, message } = await challengeResp.json();
+      const { nonceId, message, messageBase64 } = await challengeResp.json();
+
+      console.log("Challenge received:");
+      console.log("- Message:", message);
+      console.log("- Message Base64:", messageBase64);
+      console.log("- Public Key:", accountInfo?.key?.key);
 
       // Step 2: Sign the challenge message
+      // Use the plain text message for signing (wallets expect human-readable text)
       const authResult = await signAuth(message);
 
       if (!authResult?.signature) {
         throw new Error("Failed to get signature from wallet");
       }
 
+      console.log("Signature result:", authResult);
+
       // Convert signature to base64 format
-      const signatureBase64 = Buffer.from(authResult.signature).toString(
-        "base64"
-      );
+      let signatureBase64: string;
+      if (typeof authResult.signature === 'string') {
+        // If signature is already a string, assume it's hex and convert
+        signatureBase64 = Buffer.from(authResult.signature, 'hex').toString('base64');
+      } else {
+        // If signature is Uint8Array or Buffer
+        signatureBase64 = Buffer.from(authResult.signature).toString('base64');
+      }
+
+      console.log("Signature base64:", signatureBase64);
 
       // Step 3: Verify signature with server
+      const loginPayload = {
+        nonceId,
+        accountId,
+        publicKey: accountInfo?.key?.key,
+        signatureBase64,
+      };
+      
+      console.log("Login payload:", loginPayload);
+      
       const loginResp = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nonceId,
-          accountId,
-          publicKey: accountInfo?.key?.key,
-          signatureBase64,
-        }),
+        body: JSON.stringify(loginPayload),
       });
 
       if (!loginResp.ok) {
