@@ -56,7 +56,7 @@ function signHS256(input: string, secret: string) {
 
 function createHasuraJWT(userId: string) {
   const secret = process.env.HASURA_ADMIN_SECRET as string;
-  const issuer = process.env.JWT_ISSUER || "hedgie-auth";
+  const issuer = process.env.JWT_ISSUER || "hbarwatch";
   if (!secret) throw new Error("Missing HASURA_ADMIN_SECRET");
 
   const header = { alg: "HS256", typ: "JWT" };
