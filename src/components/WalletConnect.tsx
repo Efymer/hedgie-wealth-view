@@ -72,9 +72,9 @@ export const WalletConnect: React.FC = () => {
         throw new Error(error?.error || "Failed to get challenge");
       }
 
-      const { nonceId } = await challengeResp.json();
+      const { nonceId, message } = await challengeResp.json();
 
-      const messageBytes = new TextEncoder().encode("message");
+      const messageBytes = new TextEncoder().encode(message);
 
       const [{ signature }] = await signer.sign([messageBytes]);
 
