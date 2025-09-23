@@ -118,7 +118,7 @@ async function upsertUserByWallet(accountId: string): Promise<string | null> {
         object: { wallet_account_id: $wallet }
         on_conflict: {
           constraint: users_wallet_account_id_key
-          update_columns: []
+          update_columns: [wallet_account_id]
         }
       ) {
         id
