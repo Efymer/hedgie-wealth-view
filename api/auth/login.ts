@@ -250,24 +250,61 @@ async function verifyWalletSignature(
 }
 
 // User management
-async function upsertUserByWallet(accountId: string): Promise<string> {
+async function upsertUserByWallet(accountId: string): Promise<string | null> {
+  console.log("upsertUserByWallet called with accountId:", accountId);
+  
   const mutation = /* GraphQL */ `
     mutation UpsertUser($wallet: String!) {
       insert_users_one(
         object: { wallet_account_id: $wallet }
-        on_conflict: {
-          constraint: users_wallet_account_id_key
-          update_columns: []
-        }
+        on_conflict: { constraint: users_wallet_account_id_key, update_columns: [] }
       ) {
         id
       }
     }
   `;
-  const data = await gql<{ insert_users_one: { id: string } }>(mutation, {
-    wallet: accountId,
-  });
-  return data.insert_users_one.id;
+
+  console.log("Hasura endpoint:", process.env.HASURA_ENDPOINT);
+  console.log("Has admin secret:", !!process.env.HASURA_ADMIN_SECRET);
+
+  try {
+    const response = await fetch(process.env.HASURA_ENDPOINT!, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": process.env.HASURA_ADMIN_SECRET!,
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: { wallet: accountId },
+      }),
+    });
+
+    console.log("Hasura response status:", response.status);
+    
+    if (!response.ok) {
+      console.error("Hasura response not ok:", response.status, response.statusText);
+      const errorText = await response.text();
+      console.error("Hasura error response:", errorText);
+      return null;
+    }
+
+    const result = await response.json();
+    console.log("Hasura response:", JSON.stringify(result, null, 2));
+    
+    if (result.errors) {
+      console.error("Hasura GraphQL errors:", result.errors);
+      return null;
+    }
+    
+    const userId = result.data?.insert_users_one?.id;
+    console.log("Extracted user ID:", userId);
+    
+    return userId;
+  } catch (error) {
+    console.error("upsertUserByWallet error:", error);
+    return null;
+  }
 }
 
 export default async function handler(req: Req, res: Res) {
@@ -391,14 +428,30 @@ export default async function handler(req: Req, res: Res) {
     }
 
     // Step 5: Issue JWT
-    const userId = await upsertUserByWallet(accountId);
-    const token = createHasuraJWT(userId);
+    console.log("Step 5: Creating user and issuing JWT for account:", accountId);
+    
+    try {
+      const userId = await upsertUserByWallet(accountId);
+      console.log("User upsert result:", userId);
+      
+      if (!userId) {
+        console.error("upsertUserByWallet returned null/undefined for account:", accountId);
+        return res.status(500).json({ error: "Failed to create or find user" });
+      }
+      
+      console.log("Creating JWT for user ID:", userId);
+      const token = createHasuraJWT(userId);
+      console.log("JWT created successfully");
 
-    return res.status(200).json({
-      token,
-      userId,
-      accountId,
-    });
+      return res.status(200).json({
+        token,
+        userId,
+        accountId,
+      });
+    } catch (jwtError) {
+      console.error("JWT creation error:", jwtError);
+      return res.status(500).json({ error: "Failed to create authentication token" });
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Login error:", message);
