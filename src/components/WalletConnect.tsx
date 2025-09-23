@@ -83,10 +83,19 @@ export const WalletConnect: React.FC = () => {
         console.log("SignerSignature object keys:", Object.keys(sigObj));
         console.log("SignerSignature prototype:", Object.getPrototypeOf(sigObj));
         
-        // Try different ways to extract the signature bytes
+        // Extract both signature and public key for verification
         if (sigObj.signature) {
           signature = sigObj.signature;
           console.log("Using sigObj.signature:", signature);
+          
+          // Also extract the public key from SignerSignature for comparison
+          if (sigObj.publicKey && sigObj.publicKey._key) {
+            const signerPublicKey = sigObj.publicKey._key;
+            console.log("SignerSignature public key:", signerPublicKey);
+            if (typeof signerPublicKey.toString === 'function') {
+              console.log("SignerSignature public key string:", signerPublicKey.toString());
+            }
+          }
         } else if (sigObj._signature) {
           signature = sigObj._signature;
           console.log("Using sigObj._signature:", signature);

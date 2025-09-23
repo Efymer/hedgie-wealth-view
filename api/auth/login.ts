@@ -154,6 +154,14 @@ async function verifyWalletSignature(
     const keyInfo = await fetchAccountPrimaryKey(accountId);
     console.log("Key info:", keyInfo);
     console.log("Raw public key hex:", keyInfo?.pubKey?.toString('hex'));
+    
+    // Let's also check if we can get the public key from the signature object
+    if (typeof signature === "object" && signature !== null && !Array.isArray(signature)) {
+      const sigObj = signature as any;
+      if (sigObj.publicKey) {
+        console.log("Public key from signature object:", sigObj.publicKey);
+      }
+    }
 
     if (!keyInfo || keyInfo.algo !== "ED25519") {
       console.log("No ED25519 key found for account");
