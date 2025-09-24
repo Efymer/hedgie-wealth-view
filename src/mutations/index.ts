@@ -156,13 +156,11 @@ export const useUpsertAccountMutation = () => {
     },
     onSuccess: () => {
       console.log("Upserted account");
-      // invalidate follows query
     },
   });
 };
 
 export const useFollowMutation = () => {
-  const queryClient = useQueryClient();
 
   return useGQLMutation<
     { insert_follows_one: { id: string; followed_at: string } },

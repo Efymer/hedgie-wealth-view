@@ -884,6 +884,8 @@ export const useFollowsQuery = () => {
       )
     : [];
 
+    console.log(transformedData);
+
   return {
     ...query,
     data: transformedData,
@@ -961,7 +963,6 @@ export const useFollowedAccountsActions = () => {
     const currentData =
       queryClient.getQueryData<FollowedAccount[]>(["follows"]) || [];
 
-    console.log(currentData);
     const isCurrentlyFollowing =
       currentData?.some((a) => a.accountId === accountId) ?? false;
 

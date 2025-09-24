@@ -18,7 +18,7 @@ export const useFollowedAccounts = () => {
 
   // Helper function to check if an account is being followed
   const isFollowing = (accountId: string): boolean => {
-    return followsQuery?.data?.some((a) => a.accountId === accountId) ?? false;
+    return followsQuery.data?.some((a) => a.accountId === accountId) ?? false;
   };
 
   // Determine overall loading state
