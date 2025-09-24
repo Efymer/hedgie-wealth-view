@@ -4,6 +4,7 @@
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "crons": [
-    { "path": "/api/cron/snapshot-balances", "schedule": "0 0 * * *" }
+    { "path": "/api/cron/snapshot-balances", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/poll-transactions", "schedule": "*/1 * * * *" }
   ]
 }
