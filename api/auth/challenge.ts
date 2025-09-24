@@ -65,7 +65,7 @@ export default async function handler(req: Req, res: Res) {
     const issuedAt = new Date().toISOString();
     const message = buildChallengeMessage({
       domain: domain || "hedgie-wealth-view.vercel.app",
-      uri:
+      uri: 
         uri ||
         process.env.FRONTEND_URL ||
         "https://hedgie-wealth-view.vercel.app/login",
