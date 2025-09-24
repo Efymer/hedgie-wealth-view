@@ -923,7 +923,7 @@ export const useFollowedAccountsActions = () => {
 
   const toggleFollow = async (accountId: string, accountName?: string) => {
     const currentData = queryClient.getQueryData<FollowedAccount[]>(["follows"]) || [];
-    const isCurrentlyFollowing = currentData.some(a => a.accountId === accountId);
+    const isCurrentlyFollowing = currentData?.some(a => a.accountId === accountId);
     
     if (isCurrentlyFollowing) {
       await unfollowAccount(accountId);
