@@ -884,8 +884,6 @@ export const useFollowsQuery = () => {
       )
     : [];
 
-    console.log(transformedData);
-
   return {
     ...query,
     data: transformedData,
@@ -902,13 +900,24 @@ export const useFollowedAccountsActions = () => {
   const unfollowMutation = useUnfollowMutation();
 
   const followAccount = async (accountId: string, accountName?: string) => {
-    // Optimistic update
-    queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) => {
-      if (old.some((a) => a.accountId === accountId)) return old;
-      return [
-        { accountId, accountName, followedAt: new Date().toISOString() },
-        ...old,
-      ];
+    // Optimistic update - update the raw GraphQL data
+    queryClient.setQueryData<{ follows: GqlFollow[] }>(["follows"], (old) => {
+      if (!old?.follows) return old;
+      
+      // Check if already following
+      if (old.follows.some((f) => f.account_id === accountId)) return old;
+      
+      // Add new follow
+      return {
+        follows: [
+          {
+            account_id: accountId,
+            followed_at: new Date().toISOString(),
+            account: accountName ? { display_name: accountName } : null,
+          },
+          ...old.follows,
+        ],
+      };
     });
 
     try {
@@ -927,23 +936,27 @@ export const useFollowedAccountsActions = () => {
       await queryClient.invalidateQueries({ queryKey: ["follows"] });
     } catch (error) {
       // Revert optimistic update on error
-      queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) =>
-        old.filter((a) => a.accountId !== accountId)
-      );
+      queryClient.setQueryData<{ follows: GqlFollow[] }>(["follows"], (old) => {
+        if (!old?.follows) return old;
+        return {
+          follows: old.follows.filter((f) => f.account_id !== accountId),
+        };
+      });
       throw error;
     }
   };
 
   const unfollowAccount = async (accountId: string) => {
     // Store previous state for rollback
-    const previousData = queryClient.getQueryData<FollowedAccount[]>([
-      "follows",
-    ]);
+    const previousData = queryClient.getQueryData<{ follows: GqlFollow[] }>(["follows"]);
 
-    // Optimistic update
-    queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) =>
-      old.filter((a) => a.accountId !== accountId)
-    );
+    // Optimistic update - update the raw GraphQL data
+    queryClient.setQueryData<{ follows: GqlFollow[] }>(["follows"], (old) => {
+      if (!old?.follows) return old;
+      return {
+        follows: old.follows.filter((f) => f.account_id !== accountId),
+      };
+    });
 
     try {
       await unfollowMutation.mutateAsync({ account_id: accountId });
@@ -960,11 +973,9 @@ export const useFollowedAccountsActions = () => {
   };
 
   const toggleFollow = async (accountId: string, accountName?: string) => {
-    const currentData =
-      queryClient.getQueryData<FollowedAccount[]>(["follows"]) || [];
+    const currentData = queryClient.getQueryData<{ follows: GqlFollow[] }>(["follows"]);
 
-    const isCurrentlyFollowing =
-      currentData?.some((a) => a.accountId === accountId) ?? false;
+    const isCurrentlyFollowing = currentData?.follows?.some((f) => f.account_id === accountId) ?? false;
 
     if (isCurrentlyFollowing) {
       await unfollowAccount(accountId);
