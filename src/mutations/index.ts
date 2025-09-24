@@ -157,7 +157,6 @@ export const useUpsertAccountMutation = () => {
     onSuccess: () => {
       console.log("Upserted account");
       // invalidate follows query
-      queryClient.invalidateQueries({ queryKey: ["follows"] });
     },
   });
 };
