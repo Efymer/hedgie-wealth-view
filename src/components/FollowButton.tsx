@@ -53,10 +53,10 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
       variant={following ? "default" : variant}
       size={size}
       disabled={!isConnected && !following}
-      className={`flex items-center space-x-2 ${
+      className={`flex items-center space-x-2 transition-colors ${
         following 
-          ? "bg-green-600 hover:bg-green-700 text-white" 
-          : "hover:bg-muted/80"
+          ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
+          : "hover:bg-accent hover:text-accent-foreground border-input"
       }`}
     >
       {following ? (
