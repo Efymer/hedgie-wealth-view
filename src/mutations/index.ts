@@ -174,8 +174,6 @@ export const useFollowMutation = () => {
     },
     onSuccess: () => {
       console.log("Followed account");
-      // invalidate follows query
-      queryClient.invalidateQueries({ queryKey: ["follows"] });
     },
   });
 };
@@ -192,8 +190,6 @@ export const useUnfollowMutation = () => {
     },
     onSuccess: () => {
       console.log("Unfollowed account");
-      // invalidate follows query
-      queryClient.invalidateQueries({ queryKey: ["follows"] });
     },
   });
 };
