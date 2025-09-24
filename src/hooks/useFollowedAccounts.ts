@@ -19,7 +19,6 @@ const Q_FOLLOWS = /* GraphQL */ `
     follows(order_by: { followed_at: desc }) {
       account_id
       followed_at
-      account { display_name }
     }
   }
 `;
@@ -52,7 +51,7 @@ export const useFollowedAccounts = () => {
   const [followedAccounts, setFollowedAccounts] = useState<FollowedAccount[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load follows via React Query helper
+  // Load follows via React Query helper 
   const { data, isLoading } = useGQLQuery<{ follows: GqlFollow[] }>([
     "follows",
   ], Q_FOLLOWS);

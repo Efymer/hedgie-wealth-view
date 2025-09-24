@@ -56,7 +56,7 @@ function signHS256(input: string, secret: string) {
 
 function createHasuraJWT(userId: string) {
   const secret = process.env.HASURA_ADMIN_SECRET as string;
-  const issuer = process.env.JWT_ISSUER || "hedgie-auth";
+  const issuer = process.env.JWT_ISSUER || "hbarwatch";
   if (!secret) throw new Error("Missing HASURA_ADMIN_SECRET");
 
   const header = { alg: "HS256", typ: "JWT" };
@@ -118,7 +118,7 @@ async function upsertUserByWallet(accountId: string): Promise<string | null> {
         object: { wallet_account_id: $wallet }
         on_conflict: {
           constraint: users_wallet_account_id_key
-          update_columns: []
+          update_columns: [wallet_account_id]
         }
       ) {
         id

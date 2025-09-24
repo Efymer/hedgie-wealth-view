@@ -3,6 +3,8 @@ import { UserPlus, UserMinus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFollowedAccounts } from "@/hooks/useFollowedAccounts";
 import { toast } from "@/hooks/use-toast";
+import { useWallet } from "@buidlerlabs/hashgraph-react-wallets";
+import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
 
 interface FollowButtonProps {
   accountId: string;
@@ -18,9 +20,18 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
   size = "default",
 }) => {
   const { isFollowing, toggleFollow } = useFollowedAccounts();
+  const { isConnected } = useWallet(HashpackConnector);
   const following = isFollowing(accountId);
 
   const handleClick = () => {
+    if (!isConnected) {
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet to enable notifications",
+      });
+      return;
+    }
+
     toggleFollow(accountId, accountName);
     
     if (following) {
@@ -41,6 +52,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
       onClick={handleClick}
       variant={following ? "default" : variant}
       size={size}
+      disabled={!isConnected && !following}
       className={`flex items-center space-x-2 ${
         following 
           ? "bg-green-600 hover:bg-green-700 text-white" 
@@ -55,7 +67,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
       ) : (
         <>
           <UserPlus className="h-4 w-4" />
-          <span>Get Notifications</span>
+          <span>{!isConnected ? "Connect Wallet for Notifications" : "Get Notifications"}</span>
         </>
       )}
     </Button>

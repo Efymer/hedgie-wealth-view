@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Bell, User, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useWallet } from "@buidlerlabs/hashgraph-react-wallets";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useGQLMutation } from "@/mutations/index";
 import { useGQLQuery } from "@/queries/index";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type GqlNotification = {
   id: string;
@@ -51,6 +53,7 @@ const M_MARK_SEEN = /* GraphQL */ `
 export const NotificationsCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const { isConnected } = useWallet();
   
   // Poll latest notifications (every 10s)
   const { data: notifData } = useGQLQuery<{ notifications: GqlNotification[] }>(
@@ -89,6 +92,21 @@ export const NotificationsCenter: React.FC = () => {
     await markSeenMut.mutateAsync({ ts });
     await refetchLastSeen();
   };
+
+  if (!isConnected) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="sm" className="relative p-2 opacity-50 cursor-not-allowed" disabled>
+            <Bell className="h-5 w-5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Connect wallet to view notifications</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
