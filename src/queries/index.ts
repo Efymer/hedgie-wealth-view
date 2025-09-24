@@ -1,5 +1,18 @@
-import { useQuery, useQueries, useInfiniteQuery, UseQueryOptions, QueryKey, useQueryClient } from "@tanstack/react-query";
-import { graphQLFetch, GraphQLResponse, useUpsertAccountMutation, useFollowMutation, useUnfollowMutation } from "../mutations/index";
+import {
+  useQuery,
+  useQueries,
+  useInfiniteQuery,
+  UseQueryOptions,
+  QueryKey,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  graphQLFetch,
+  GraphQLResponse,
+  useUpsertAccountMutation,
+  useFollowMutation,
+  useUnfollowMutation,
+} from "../mutations/index";
 
 /**
  * GraphQL Query Hook
@@ -8,7 +21,10 @@ export function useGQLQuery<TData = unknown, TError = Error>(
   key: QueryKey,
   query: string,
   variables?: Record<string, unknown>,
-  options?: Omit<UseQueryOptions<TData, TError, TData, QueryKey>, "queryKey" | "queryFn">
+  options?: Omit<
+    UseQueryOptions<TData, TError, TData, QueryKey>,
+    "queryKey" | "queryFn"
+  >
 ) {
   return useQuery<TData, TError, TData, QueryKey>({
     queryKey: key,
@@ -21,7 +37,9 @@ export function useGQLQuery<TData = unknown, TError = Error>(
  * Example GraphQL Queries - you can add your specific GraphQL queries here
  */
 export const useUsersQuery = (limit: number = 10) => {
-  return useGQLQuery<{ users: Array<{ id: string; account_id: string; created_at: string }> }>(
+  return useGQLQuery<{
+    users: Array<{ id: string; account_id: string; created_at: string }>;
+  }>(
     ["users", { limit }],
     `
     query GetUsers($limit: Int!) {
@@ -40,7 +58,9 @@ export const useUsersQuery = (limit: number = 10) => {
 };
 
 export const useUserByAccountQuery = (accountId: string) => {
-  return useGQLQuery<{ users: Array<{ id: string; account_id: string; public_key: string }> }>(
+  return useGQLQuery<{
+    users: Array<{ id: string; account_id: string; public_key: string }>;
+  }>(
     ["user", accountId],
     `
     query GetUserByAccount($account_id: String!) {
@@ -443,19 +463,25 @@ const getAllTokensForAutocomplete = async (): Promise<TokenOption[]> => {
   try {
     const res = await fetch(HASHPACK_PRICES, { method: "POST" });
     if (!res.ok) return [];
-    
+
     const data = (await res.json()) as TokenPricesResponse;
-    
+
     if (Array.isArray(data)) {
-      return data.map((token: HashPackTokenData) => ({
-        token_id: (token.id || token.token_id || '') as string,
-        symbol: (token.symbol || token.token_id || token.id || '') as string,
-        name: (token.name || token.symbol || token.token_id || token.id || '') as string,
-        priceUsd: token.priceUsd || token.price || 0,
-      })).filter(token => token.token_id && token.symbol);
+      return data
+        .map((token: HashPackTokenData) => ({
+          token_id: (token.id || token.token_id || "") as string,
+          symbol: (token.symbol || token.token_id || token.id || "") as string,
+          name: (token.name ||
+            token.symbol ||
+            token.token_id ||
+            token.id ||
+            "") as string,
+          priceUsd: token.priceUsd || token.price || 0,
+        }))
+        .filter((token) => token.token_id && token.symbol);
     } else {
       // If it's a Record format, we can't get names without additional API calls
-      return Object.keys(data).map(tokenId => ({
+      return Object.keys(data).map((tokenId) => ({
         token_id: tokenId,
         symbol: tokenId,
         name: tokenId,
@@ -463,7 +489,7 @@ const getAllTokensForAutocomplete = async (): Promise<TokenOption[]> => {
       }));
     }
   } catch (error) {
-    console.error('Failed to fetch tokens for autocomplete:', error);
+    console.error("Failed to fetch tokens for autocomplete:", error);
     return [];
   }
 };
@@ -683,11 +709,14 @@ export const useTokenBalances = (
 
 export const getTopTokenHolders = async (
   tokenId: string,
-  topN: number = 100,
+  topN: number = 100
 ): Promise<TokenBalanceEntry[]> => {
   if (!tokenId) return [];
   // Delegate heavy pagination + caching to serverless backend
-  const base = import.meta.env.MODE === 'development' ? 'https://hbarwatch.vercel.app' : '';
+  const base =
+    import.meta.env.MODE === "development"
+      ? "https://hbarwatch.vercel.app"
+      : "";
   const url = `${base}/api/tokens/top-holders?tokenId=${encodeURIComponent(
     tokenId
   )}&topN=${topN}`;
@@ -767,7 +796,9 @@ export const useCounterpartyMap = (accountId: string, limit: number = 1000) => {
     queryKey: ["counterparty-map", accountId, { limit }],
     queryFn: async () => {
       const res = await fetch(
-        `/api/counterparty-map?accountId=${encodeURIComponent(accountId)}&limit=${limit}`,
+        `/api/counterparty-map?accountId=${encodeURIComponent(
+          accountId
+        )}&limit=${limit}`,
         { headers: { Accept: "application/json" } }
       );
       if (!res.ok) throw new Error("Failed to fetch counterparty map");
@@ -789,7 +820,9 @@ const getNetworth = async (
 ): Promise<NetWorthData[]> => {
   if (!accountId) return [];
   const base = "https://hbarwatch.vercel.app";
-  const url = `${base}/api/networth?accountId=${encodeURIComponent(accountId)}&limit=${limit}`;
+  const url = `${base}/api/networth?accountId=${encodeURIComponent(
+    accountId
+  )}&limit=${limit}`;
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) return [];
   const j = (await res.json()) as { data?: NetWorthData[] };
@@ -843,11 +876,13 @@ export const useFollowsQuery = () => {
   );
 
   const transformedData: FollowedAccount[] = query.data?.follows
-    ? query.data.follows.map((f): FollowedAccount => ({
-        accountId: f.account_id,
-        accountName: f.account?.display_name || undefined,
-        followedAt: f.followed_at,
-      }))
+    ? query.data.follows.map(
+        (f): FollowedAccount => ({
+          accountId: f.account_id,
+          accountName: f.account?.display_name || undefined,
+          followedAt: f.followed_at,
+        })
+      )
     : [];
 
   return {
@@ -868,7 +903,7 @@ export const useFollowedAccountsActions = () => {
   const followAccount = async (accountId: string, accountName?: string) => {
     // Optimistic update
     queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) => {
-      if (old.some(a => a.accountId === accountId)) return old;
+      if (old.some((a) => a.accountId === accountId)) return old;
       return [
         { accountId, accountName, followedAt: new Date().toISOString() },
         ...old,
@@ -878,21 +913,21 @@ export const useFollowedAccountsActions = () => {
     try {
       // First upsert the account if we have a display name
       if (accountName) {
-        await upsertAccountMutation.mutateAsync({ 
-          id: accountId, 
-          display_name: accountName 
+        await upsertAccountMutation.mutateAsync({
+          id: accountId,
+          display_name: accountName,
         });
       }
-      
+
       // Then follow the account
       await followMutation.mutateAsync({ account_id: accountId });
-      
+
       // Invalidate and refetch to get the latest data
       await queryClient.invalidateQueries({ queryKey: ["follows"] });
     } catch (error) {
       // Revert optimistic update on error
-      queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) => 
-        old.filter(a => a.accountId !== accountId)
+      queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) =>
+        old.filter((a) => a.accountId !== accountId)
       );
       throw error;
     }
@@ -900,16 +935,18 @@ export const useFollowedAccountsActions = () => {
 
   const unfollowAccount = async (accountId: string) => {
     // Store previous state for rollback
-    const previousData = queryClient.getQueryData<FollowedAccount[]>(["follows"]);
-    
+    const previousData = queryClient.getQueryData<FollowedAccount[]>([
+      "follows",
+    ]);
+
     // Optimistic update
-    queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) => 
-      old.filter(a => a.accountId !== accountId)
+    queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) =>
+      old.filter((a) => a.accountId !== accountId)
     );
 
     try {
       await unfollowMutation.mutateAsync({ account_id: accountId });
-      
+
       // Invalidate and refetch to get the latest data
       await queryClient.invalidateQueries({ queryKey: ["follows"] });
     } catch (error) {
@@ -922,9 +959,13 @@ export const useFollowedAccountsActions = () => {
   };
 
   const toggleFollow = async (accountId: string, accountName?: string) => {
-    const currentData = queryClient.getQueryData<FollowedAccount[]>(["follows"]) || [];
-    const isCurrentlyFollowing = currentData?.some(a => a.accountId === accountId) ?? false;
-    
+    const currentData =
+      queryClient.getQueryData<FollowedAccount[]>(["follows"]) || [];
+
+    console.log(currentData);
+    const isCurrentlyFollowing =
+      currentData?.some((a) => a.accountId === accountId) ?? false;
+
     if (isCurrentlyFollowing) {
       await unfollowAccount(accountId);
     } else {
