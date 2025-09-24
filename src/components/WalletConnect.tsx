@@ -176,7 +176,7 @@ export const WalletConnect: React.FC = () => {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="flex items-center space-x-2 hover:bg-muted/80"
+          className="flex items-center space-x-2 hover:bg-accent hover:text-accent-foreground"
           size="sm"
         >
           <div className="w-2 h-2 bg-green-500 rounded-full" />
@@ -216,7 +216,7 @@ export const WalletConnect: React.FC = () => {
           <Button
             variant="outline"
             onClick={handleDisconnect}
-            className="w-full flex items-center space-x-2 text-destructive hover:text-destructive"
+            className="w-full flex items-center space-x-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
           >
             <LogOut className="h-4 w-4" />
             <span>Disconnect</span>
