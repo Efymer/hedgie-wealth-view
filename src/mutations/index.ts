@@ -1,7 +1,14 @@
-import { useMutation, UseMutationOptions } from "@tanstack/react-query";
+import {
+  useMutation,
+  UseMutationOptions,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 // GraphQL Types
-export type GraphQLResponse<T> = { data?: T; errors?: Array<{ message: string }> };
+export type GraphQLResponse<T> = {
+  data?: T;
+  errors?: Array<{ message: string }>;
+};
 
 // Auth token management
 export function getAuthToken(): string | null {
@@ -10,11 +17,18 @@ export function getAuthToken(): string | null {
 }
 
 // Core GraphQL fetch function
-export async function graphQLFetch<T = unknown>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
-  const endpoint = import.meta.env?.VITE_HASURA_GRAPHQL_ENDPOINT || (window as unknown as Record<string, unknown>)?.HASURA_GRAPHQL_ENDPOINT;
+export async function graphQLFetch<T = unknown>(
+  query: string,
+  variables: Record<string, unknown> = {}
+): Promise<T> {
+  const endpoint =
+    import.meta.env?.VITE_HASURA_GRAPHQL_ENDPOINT ||
+    (window as unknown as Record<string, unknown>)?.HASURA_GRAPHQL_ENDPOINT;
   if (!endpoint) throw new Error("Missing VITE_HASURA_GRAPHQL_ENDPOINT");
 
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   const token = getAuthToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -32,12 +46,14 @@ export async function graphQLFetch<T = unknown>(query: string, variables: Record
 }
 
 // React Query mutation hook for GraphQL
-export function useGQLMutation<TData = unknown, TVariables extends Record<string, unknown> = Record<string, unknown>, TError = Error>(
-  query: string,
-  options?: UseMutationOptions<TData, TError, TVariables>
-) {
+export function useGQLMutation<
+  TData = unknown,
+  TVariables extends Record<string, unknown> = Record<string, unknown>,
+  TError = Error
+>(query: string, options?: UseMutationOptions<TData, TError, TVariables>) {
   return useMutation<TData, TError, TVariables>({
-    mutationFn: async (vars: TVariables) => graphQLFetch<TData>(query, vars || {}),
+    mutationFn: async (vars: TVariables) =>
+      graphQLFetch<TData>(query, vars || {}),
     ...(options || {}),
   });
 }
@@ -89,4 +105,95 @@ export const useUpdateUserMutation = () => {
       },
     }
   );
+};
+
+/**
+ * Followed Accounts Mutations
+ */
+const M_UPSERT_ACCOUNT = /* GraphQL */ `
+  mutation UpsertAccount($id: String!, $display_name: String) {
+    insert_accounts_one(
+      object: { id: $id, display_name: $display_name }
+      on_conflict: { constraint: accounts_pkey, update_columns: [display_name] }
+    ) {
+      id
+    }
+  }
+`;
+
+const M_FOLLOW = /* GraphQL */ `
+  mutation Follow($account_id: String!) {
+    insert_follows_one(
+      object: { account_id: $account_id }
+      on_conflict: {
+        constraint: follows_user_id_account_id_key
+        update_columns: []
+      }
+    ) {
+      id
+      followed_at
+    }
+  }
+`;
+
+const M_UNFOLLOW = /* GraphQL */ `
+  mutation Unfollow($account_id: String!) {
+    delete_follows(where: { account_id: { _eq: $account_id } }) {
+      affected_rows
+    }
+  }
+`;
+
+export const useUpsertAccountMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useGQLMutation<
+    { insert_accounts_one: { id: string } },
+    { id: string; display_name?: string }
+  >(M_UPSERT_ACCOUNT, {
+    onError: (error) => {
+      console.error("Failed to upsert account:", error);
+    },
+    onSuccess: () => {
+      console.log("Upserted account");
+      // invalidate follows query
+      queryClient.invalidateQueries({ queryKey: ["follows"] });
+    },
+  });
+};
+
+export const useFollowMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useGQLMutation<
+    { insert_follows_one: { id: string; followed_at: string } },
+    { account_id: string }
+  >(M_FOLLOW, {
+    onError: (error) => {
+      console.error("Failed to follow account:", error);
+    },
+    onSuccess: () => {
+      console.log("Followed account");
+      // invalidate follows query
+      queryClient.invalidateQueries({ queryKey: ["follows"] });
+    },
+  });
+};
+
+export const useUnfollowMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useGQLMutation<
+    { delete_follows: { affected_rows: number } },
+    { account_id: string }
+  >(M_UNFOLLOW, {
+    onError: (error) => {
+      console.error("Failed to unfollow account:", error);
+    },
+    onSuccess: () => {
+      console.log("Unfollowed account");
+      // invalidate follows query
+      queryClient.invalidateQueries({ queryKey: ["follows"] });
+    },
+  });
 };

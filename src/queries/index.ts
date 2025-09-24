@@ -1,5 +1,5 @@
-import { useQuery, useQueries, useInfiniteQuery, UseQueryOptions, QueryKey } from "@tanstack/react-query";
-import { graphQLFetch, GraphQLResponse } from "../mutations/index";
+import { useQuery, useQueries, useInfiniteQuery, UseQueryOptions, QueryKey, useQueryClient } from "@tanstack/react-query";
+import { graphQLFetch, GraphQLResponse, useUpsertAccountMutation, useFollowMutation, useUnfollowMutation } from "../mutations/index";
 
 /**
  * GraphQL Query Hook
@@ -803,4 +803,141 @@ export const useNetworth = (accountId: string, limit: number = 90) => {
     enabled: !!accountId,
     staleTime: 5 * 60_000,
   });
+};
+
+/**
+ * Followed Accounts Types and Queries
+ */
+export interface FollowedAccount {
+  accountId: string;
+  accountName?: string;
+  followedAt: string;
+}
+
+type GqlFollow = {
+  account_id: string;
+  followed_at: string;
+  account?: { display_name?: string | null } | null;
+};
+
+const Q_FOLLOWS = /* GraphQL */ `
+  query MyFollows {
+    follows(order_by: { followed_at: desc }) {
+      account_id
+      followed_at
+      account {
+        display_name
+      }
+    }
+  }
+`;
+
+export const useFollowsQuery = () => {
+  const query = useGQLQuery<{ follows: GqlFollow[] }>(
+    ["follows"],
+    Q_FOLLOWS,
+    {},
+    {
+      staleTime: 30_000, // 30 seconds
+    }
+  );
+
+  const transformedData: FollowedAccount[] = query.data?.follows
+    ? query.data.follows.map((f): FollowedAccount => ({
+        accountId: f.account_id,
+        accountName: f.account?.display_name || undefined,
+        followedAt: f.followed_at,
+      }))
+    : [];
+
+  return {
+    ...query,
+    data: transformedData,
+  };
+};
+
+/**
+ * Comprehensive followed accounts functionality with React Query patterns
+ */
+export const useFollowedAccountsActions = () => {
+  const queryClient = useQueryClient();
+  const upsertAccountMutation = useUpsertAccountMutation();
+  const followMutation = useFollowMutation();
+  const unfollowMutation = useUnfollowMutation();
+
+  const followAccount = async (accountId: string, accountName?: string) => {
+    // Optimistic update
+    queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) => {
+      if (old.some(a => a.accountId === accountId)) return old;
+      return [
+        { accountId, accountName, followedAt: new Date().toISOString() },
+        ...old,
+      ];
+    });
+
+    try {
+      // First upsert the account if we have a display name
+      if (accountName) {
+        await upsertAccountMutation.mutateAsync({ 
+          id: accountId, 
+          display_name: accountName 
+        });
+      }
+      
+      // Then follow the account
+      await followMutation.mutateAsync({ account_id: accountId });
+      
+      // Invalidate and refetch to get the latest data
+      await queryClient.invalidateQueries({ queryKey: ["follows"] });
+    } catch (error) {
+      // Revert optimistic update on error
+      queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) => 
+        old.filter(a => a.accountId !== accountId)
+      );
+      throw error;
+    }
+  };
+
+  const unfollowAccount = async (accountId: string) => {
+    // Store previous state for rollback
+    const previousData = queryClient.getQueryData<FollowedAccount[]>(["follows"]);
+    
+    // Optimistic update
+    queryClient.setQueryData<FollowedAccount[]>(["follows"], (old = []) => 
+      old.filter(a => a.accountId !== accountId)
+    );
+
+    try {
+      await unfollowMutation.mutateAsync({ account_id: accountId });
+      
+      // Invalidate and refetch to get the latest data
+      await queryClient.invalidateQueries({ queryKey: ["follows"] });
+    } catch (error) {
+      // Revert optimistic update on error
+      if (previousData) {
+        queryClient.setQueryData(["follows"], previousData);
+      }
+      throw error;
+    }
+  };
+
+  const toggleFollow = async (accountId: string, accountName?: string) => {
+    const currentData = queryClient.getQueryData<FollowedAccount[]>(["follows"]) || [];
+    const isCurrentlyFollowing = currentData.some(a => a.accountId === accountId);
+    
+    if (isCurrentlyFollowing) {
+      await unfollowAccount(accountId);
+    } else {
+      await followAccount(accountId, accountName);
+    }
+  };
+
+  return {
+    followAccount,
+    unfollowAccount,
+    toggleFollow,
+    isFollowing: followMutation.isPending,
+    isUnfollowing: unfollowMutation.isPending,
+    isUpsertingAccount: upsertAccountMutation.isPending,
+  };
 };
