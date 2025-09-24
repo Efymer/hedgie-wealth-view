@@ -1,6 +1,14 @@
 import React from "react";
 import { TrendingUp, DollarSign, Clock } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -33,33 +41,36 @@ const mockNetWorthData: NetWorthData[] = [
   { date: "2024-01-15", value: 5350, change: 3.18 },
 ];
 
-export const NetWorthChart: React.FC<NetWorthChartProps> = ({ 
+export const NetWorthChart: React.FC<NetWorthChartProps> = ({
   data = mockNetWorthData,
   accountId,
 }) => {
   const navigate = useNavigate();
   const currentValue = data[data.length - 1]?.value || 0;
-  const previousValue = data.length >= 2 ? (data[data.length - 2]?.value || 0) : 0;
+  const previousValue =
+    data.length >= 2 ? data[data.length - 2]?.value || 0 : 0;
   const hasBaseline = data.length >= 2 && previousValue !== 0;
-  const totalChange = hasBaseline ? ((currentValue - previousValue) / previousValue) * 100 : 0;
-  const totalChangeAmount = hasBaseline ? (currentValue - previousValue) : 0;
+  const totalChange = hasBaseline
+    ? ((currentValue - previousValue) / previousValue) * 100
+    : 0;
+  const totalChangeAmount = hasBaseline ? currentValue - previousValue : 0;
 
   // Calculate 7-day and 30-day changes
   const calculatePeriodChange = (days: number) => {
     if (data.length === 0) return { change: 0, amount: 0, hasData: false };
-    
+
     const currentIndex = data.length - 1;
     const pastIndex = Math.max(0, currentIndex - days);
-    
+
     if (pastIndex === currentIndex || data[pastIndex].value === 0) {
       return { change: 0, amount: 0, hasData: false };
     }
-    
+
     const currentVal = data[currentIndex].value;
     const pastVal = data[pastIndex].value;
     const change = ((currentVal - pastVal) / pastVal) * 100;
     const amount = currentVal - pastVal;
-    
+
     return { change, amount, hasData: true };
   };
 
@@ -67,9 +78,9 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
   const thirtyDayChange = calculatePeriodChange(Math.min(30, data.length - 1));
 
   const formatValue = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -77,7 +88,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -89,10 +100,13 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
           <p className="text-lg font-bold text-primary">
             {formatValue(data.value)}
           </p>
-          <p className={`text-xs ${
-            data.change >= 0 ? 'text-success' : 'text-destructive'
-          }`}>
-            {data.change >= 0 ? '+' : ''}{data.change.toFixed(2)}%
+          <p
+            className={`text-xs ${
+              data.change >= 0 ? "text-success" : "text-destructive"
+            }`}
+          >
+            {data.change >= 0 ? "+" : ""}
+            {data.change.toFixed(2)}%
           </p>
         </div>
       );
@@ -100,7 +114,13 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
     return null;
   };
 
-  const hideOverlayAccounts = new Set(["0.0.756953", "0.0.1050322", "0.0.123456", "0.0.789789", "0.0.345678"]);
+  const hideOverlayAccounts = new Set([
+    "0.0.756953",
+    "0.0.1050322",
+    "0.0.123456",
+    "0.0.789789",
+    "0.0.345678",
+  ]);
   const showOverlay = !(accountId && hideOverlayAccounts.has(accountId));
 
   return (
@@ -113,17 +133,23 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Clock className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold gradient-text">Waitlist Feature</h3>
-              <p className="text-muted-foreground">Net worth tracking is available for waitlist members</p>
+              <h3 className="text-2xl font-bold gradient-text">
+                Waitlist Feature
+              </h3>
+              <p className="text-muted-foreground">
+                Net worth tracking is available for waitlist members
+              </p>
             </div>
             <div className="space-y-2">
-              <Button 
-                onClick={() => navigate('/waitlist')}
+              <Button
+                onClick={() => navigate("/waitlist")}
                 className="px-6 py-2"
               >
                 Join Waitlist
               </Button>
-              <p className="text-xs text-muted-foreground">Get exclusive access to premium features</p>
+              <p className="text-xs text-muted-foreground">
+                Get exclusive access to premium features
+              </p>
             </div>
           </div>
         </div>
@@ -141,23 +167,37 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
           {/* 24h Change */}
           <div className="glass-card rounded-lg p-3 border border-border/30">
             <div className="flex items-center gap-1 mb-1">
-              <TrendingUp className={`h-3 w-3 ${
-                hasBaseline ? (totalChange >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground'
-              }`} />
-              <span className="text-xs font-medium text-muted-foreground">24h</span>
+              <TrendingUp
+                className={`h-3 w-3 ${
+                  hasBaseline
+                    ? totalChange >= 0
+                      ? "text-success"
+                      : "text-destructive"
+                    : "text-muted-foreground"
+                }`}
+              />
+              <span className="text-xs font-medium text-muted-foreground">
+                24h
+              </span>
             </div>
             <div className="space-y-1">
               {hasBaseline ? (
                 <>
-                  <p className={`text-lg font-bold ${
-                    totalChange >= 0 ? 'text-success' : 'text-destructive'
-                  }`}>
-                    {totalChange >= 0 ? '+' : ''}{totalChange.toFixed(2)}%
+                  <p
+                    className={`text-lg font-bold ${
+                      totalChange >= 0 ? "text-success" : "text-destructive"
+                    }`}
+                  >
+                    {totalChange >= 0 ? "+" : ""}
+                    {totalChange.toFixed(2)}%
                   </p>
-                  <p className={`text-xs ${
-                    totalChange >= 0 ? 'text-success' : 'text-destructive'
-                  }`}>
-                    {totalChange >= 0 ? '+' : ''}{formatValue(totalChangeAmount)}
+                  <p
+                    className={`text-xs ${
+                      totalChange >= 0 ? "text-success" : "text-destructive"
+                    }`}
+                  >
+                    {totalChange >= 0 ? "+" : ""}
+                    {formatValue(totalChangeAmount)}
                   </p>
                 </>
               ) : (
@@ -172,23 +212,41 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
           {/* 7-day Change */}
           <div className="glass-card rounded-lg p-3 border border-border/30">
             <div className="flex items-center gap-1 mb-1">
-              <TrendingUp className={`h-3 w-3 ${
-                sevenDayChange.hasData ? (sevenDayChange.change >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground'
-              }`} />
-              <span className="text-xs font-medium text-muted-foreground">7d</span>
+              <TrendingUp
+                className={`h-3 w-3 ${
+                  sevenDayChange.hasData
+                    ? sevenDayChange.change >= 0
+                      ? "text-success"
+                      : "text-destructive"
+                    : "text-muted-foreground"
+                }`}
+              />
+              <span className="text-xs font-medium text-muted-foreground">
+                7d
+              </span>
             </div>
             <div className="space-y-1">
               {sevenDayChange.hasData ? (
                 <>
-                  <p className={`text-lg font-bold ${
-                    sevenDayChange.change >= 0 ? 'text-success' : 'text-destructive'
-                  }`}>
-                    {sevenDayChange.change >= 0 ? '+' : ''}{sevenDayChange.change.toFixed(2)}%
+                  <p
+                    className={`text-lg font-bold ${
+                      sevenDayChange.change >= 0
+                        ? "text-success"
+                        : "text-destructive"
+                    }`}
+                  >
+                    {sevenDayChange.change >= 0 ? "+" : ""}
+                    {sevenDayChange.change.toFixed(2)}%
                   </p>
-                  <p className={`text-xs ${
-                    sevenDayChange.change >= 0 ? 'text-success' : 'text-destructive'
-                  }`}>
-                    {sevenDayChange.change >= 0 ? '+' : ''}{formatValue(sevenDayChange.amount)}
+                  <p
+                    className={`text-xs ${
+                      sevenDayChange.change >= 0
+                        ? "text-success"
+                        : "text-destructive"
+                    }`}
+                  >
+                    {sevenDayChange.change >= 0 ? "+" : ""}
+                    {formatValue(sevenDayChange.amount)}
                   </p>
                 </>
               ) : (
@@ -203,23 +261,41 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
           {/* 30-day Change */}
           <div className="glass-card rounded-lg p-3 border border-border/30">
             <div className="flex items-center gap-1 mb-1">
-              <TrendingUp className={`h-3 w-3 ${
-                thirtyDayChange.hasData ? (thirtyDayChange.change >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground'
-              }`} />
-              <span className="text-xs font-medium text-muted-foreground">30d</span>
+              <TrendingUp
+                className={`h-3 w-3 ${
+                  thirtyDayChange.hasData
+                    ? thirtyDayChange.change >= 0
+                      ? "text-success"
+                      : "text-destructive"
+                    : "text-muted-foreground"
+                }`}
+              />
+              <span className="text-xs font-medium text-muted-foreground">
+                30d
+              </span>
             </div>
             <div className="space-y-1">
               {thirtyDayChange.hasData ? (
                 <>
-                  <p className={`text-lg font-bold ${
-                    thirtyDayChange.change >= 0 ? 'text-success' : 'text-destructive'
-                  }`}>
-                    {thirtyDayChange.change >= 0 ? '+' : ''}{thirtyDayChange.change.toFixed(2)}%
+                  <p
+                    className={`text-lg font-bold ${
+                      thirtyDayChange.change >= 0
+                        ? "text-success"
+                        : "text-destructive"
+                    }`}
+                  >
+                    {thirtyDayChange.change >= 0 ? "+" : ""}
+                    {thirtyDayChange.change.toFixed(2)}%
                   </p>
-                  <p className={`text-xs ${
-                    thirtyDayChange.change >= 0 ? 'text-success' : 'text-destructive'
-                  }`}>
-                    {thirtyDayChange.change >= 0 ? '+' : ''}{formatValue(thirtyDayChange.amount)}
+                  <p
+                    className={`text-xs ${
+                      thirtyDayChange.change >= 0
+                        ? "text-success"
+                        : "text-destructive"
+                    }`}
+                  >
+                    {thirtyDayChange.change >= 0 ? "+" : ""}
+                    {formatValue(thirtyDayChange.amount)}
                   </p>
                 </>
               ) : (
@@ -235,27 +311,35 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
 
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <LineChart
+            data={data}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis 
-              dataKey="date" 
+            <XAxis
+              dataKey="date"
               tickFormatter={formatDate}
               stroke="hsl(var(--muted-foreground))"
               fontSize={12}
             />
-            <YAxis 
+            <YAxis
               tickFormatter={(value) => `$${(value / 1000).toFixed(1)}k`}
               stroke="hsl(var(--muted-foreground))"
               fontSize={12}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Line 
-              type="monotone" 
-              dataKey="value" 
-              stroke="hsl(var(--primary))" 
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="hsl(var(--primary))"
               strokeWidth={2}
               dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, stroke: "hsl(var(--primary))", strokeWidth: 2, fill: "hsl(var(--background))" }}
+              activeDot={{
+                r: 6,
+                stroke: "hsl(var(--primary))",
+                strokeWidth: 2,
+                fill: "hsl(var(--background))",
+              }}
             />
           </LineChart>
         </ResponsiveContainer>

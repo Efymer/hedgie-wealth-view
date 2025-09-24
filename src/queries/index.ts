@@ -834,7 +834,6 @@ export const useNetworth = (accountId: string, limit: number = 90) => {
     queryKey: ["networth", accountId, { limit }],
     queryFn: () => getNetworth(accountId, limit),
     enabled: !!accountId,
-    staleTime: 5 * 60_000,
   });
 };
 
