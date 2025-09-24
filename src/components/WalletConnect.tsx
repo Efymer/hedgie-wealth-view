@@ -176,7 +176,7 @@ export const WalletConnect: React.FC = () => {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="flex items-center space-x-2 hover:bg-accent hover:text-accent-foreground"
+          className="flex items-center space-x-2 hover:bg-accent/10 hover:text-accent-foreground transition-colors"
           size="sm"
         >
           <div className="w-2 h-2 bg-green-500 rounded-full" />
