@@ -208,10 +208,10 @@ export const WalletConnect: React.FC = () => {
             </p>
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <span className="text-sm text-muted-foreground">Balance</span>
-            {/* <p className="text-sm font-medium">{wallet?.balanceHBAR ?? "-"} HBAR</p> */}
-          </div>
+            {/* <p className="text-sm font-medium">{wallet?.balanceHBAR ?? "-"} HBAR</p>
+          </div> */}
 
           <Button
             variant="outline"
