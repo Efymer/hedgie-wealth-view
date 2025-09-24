@@ -135,7 +135,6 @@ async function fetchTransactions(accountId: string, afterTs?: string, limit = 10
   const params = new URLSearchParams();
   params.set("account.id", accountId);
   if (afterTs) params.set("timestamp", `gt:${afterTs}`);
-  params.set("order", "asc");
   params.set("limit", String(limit));
   const url = `${MIRROR}/api/v1/transactions?${params.toString()}`;
   log("fetch", { accountId, url });
