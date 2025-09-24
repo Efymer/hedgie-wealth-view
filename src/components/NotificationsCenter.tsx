@@ -87,7 +87,7 @@ export const NotificationsCenter: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="relative p-2 hover:bg-muted/80"
+          className="relative p-2 hover:bg-accent/10 hover:text-accent-foreground transition-colors"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (

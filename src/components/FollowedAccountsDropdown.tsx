@@ -52,7 +52,7 @@ export const FollowedAccountsDropdown: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="relative p-2 hover:bg-muted/80"
+          className="relative p-2 hover:bg-accent/10 hover:text-accent-foreground transition-colors"
         >
           <Users className="h-5 w-5" />
           {followedAccounts.length > 0 && (
