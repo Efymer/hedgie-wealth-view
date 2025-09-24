@@ -83,6 +83,31 @@ function log(...args: unknown[]) {
   console.log("[cron:poll-transactions]", ...args);
 }
 
+// Compare two consensus timestamps like "1695777782.123456789"
+function compareConsensusTs(a: string, b: string): number {
+  if (a === b) return 0;
+  const [as, an = "0"] = a.split(".");
+  const [bs, bn = "0"] = b.split(".");
+  const ai = Number(as);
+  const bi = Number(bs);
+  if (ai !== bi) return ai < bi ? -1 : 1;
+  // pad nanos to 9 digits for lexicographic comparison
+  const ap = an.padEnd(9, "0");
+  const bp = bn.padEnd(9, "0");
+  if (ap === bp) return 0;
+  return ap < bp ? -1 : 1;
+}
+
+function maxConsensusTs(list: { consensus_timestamp: string }[]): string {
+  let max = "0";
+  for (const item of list) {
+    if (compareConsensusTs(item.consensus_timestamp, max) > 0) {
+      max = item.consensus_timestamp;
+    }
+  }
+  return max;
+}
+
 // GraphQL documents
 const DISTINCT_ACCOUNTS = /* GraphQL */ `
   query DistinctFollowedAccounts($limit: Int!) {
@@ -183,19 +208,30 @@ export default async function handler(req: Req, res: Res) {
       // 2) Get cursor
       const cursorData = await gql<{ account_cursors_by_pk: { last_consensus_ts: string } | null }>(GET_CURSOR, { accountId });
       const lastTs = cursorData.account_cursors_by_pk?.last_consensus_ts;
+      
+      // 3) If first time (no cursor yet), set a baseline to avoid historical notifications
+      if (!lastTs) {
+        const firstBatch = await fetchTransactions(accountId, undefined, 1);
+        if (firstBatch.length) {
+          const baseline = maxConsensusTs(firstBatch);
+          await gql(UPSERT_CURSOR, { accountId, ts: baseline });
+        }
+        // Skip notifications on first encounter; continue with next account
+        continue;
+      }
 
-      // 3) Fetch transactions after cursor
+      // 4) Fetch transactions after cursor
       const txs = await fetchTransactions(accountId, lastTs, TXS_PER_ACCOUNT);
       if (!txs.length) {
         continue;
       }
 
-      // 4) Prepare notifications per follower
+      // 5) Prepare notifications per follower
       const followersData = await gql<{ follows: { user_id: string }[] }>(GET_FOLLOWERS, { accountId });
       const followerIds = followersData.follows.map(f => f.user_id);
       if (!followerIds.length) {
         // Still advance cursor to avoid reprocessing
-        const maxTs = txs[txs.length - 1].consensus_timestamp;
+        const maxTs = maxConsensusTs(txs);
         await gql(UPSERT_CURSOR, { accountId, ts: maxTs });
         continue;
       }
@@ -256,8 +292,8 @@ export default async function handler(req: Req, res: Res) {
         }
       }
 
-      // 5) Advance cursor to the last tx timestamp processed
-      const maxTs = txs[txs.length - 1].consensus_timestamp;
+      // 6) Advance cursor to the last tx timestamp processed
+      const maxTs = maxConsensusTs(txs);
       await gql(UPSERT_CURSOR, { accountId, ts: maxTs });
     }
 

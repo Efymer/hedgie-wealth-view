@@ -58,55 +58,6 @@ export function useGQLMutation<
   });
 }
 
-// Example mutations - you can add your specific GraphQL mutations here
-export const useCreateUserMutation = () => {
-  return useGQLMutation<
-    { insert_users_one: { id: string; account_id: string } },
-    { account_id: string; public_key: string }
-  >(
-    `
-    mutation CreateUser($account_id: String!, $public_key: String!) {
-      insert_users_one(object: { account_id: $account_id, public_key: $public_key }) {
-        id
-        account_id
-      }
-    }
-    `,
-    {
-      onSuccess: (data) => {
-        console.log("User created:", data);
-      },
-      onError: (error) => {
-        console.error("Failed to create user:", error);
-      },
-    }
-  );
-};
-
-export const useUpdateUserMutation = () => {
-  return useGQLMutation<
-    { update_users_by_pk: { id: string; account_id: string } },
-    { id: string; account_id?: string; public_key?: string }
-  >(
-    `
-    mutation UpdateUser($id: uuid!, $account_id: String, $public_key: String) {
-      update_users_by_pk(pk_columns: { id: $id }, _set: { account_id: $account_id, public_key: $public_key }) {
-        id
-        account_id
-      }
-    }
-    `,
-    {
-      onSuccess: (data) => {
-        console.log("User updated:", data);
-      },
-      onError: (error) => {
-        console.error("Failed to update user:", error);
-      },
-    }
-  );
-};
-
 /**
  * Followed Accounts Mutations
  */
@@ -145,8 +96,6 @@ const M_UNFOLLOW = /* GraphQL */ `
 `;
 
 export const useUpsertAccountMutation = () => {
-  const queryClient = useQueryClient();
-
   return useGQLMutation<
     { insert_accounts_one: { id: string } },
     { id: string; display_name?: string }
@@ -161,7 +110,6 @@ export const useUpsertAccountMutation = () => {
 };
 
 export const useFollowMutation = () => {
-
   return useGQLMutation<
     { insert_follows_one: { id: string; followed_at: string } },
     { account_id: string }
@@ -176,8 +124,6 @@ export const useFollowMutation = () => {
 };
 
 export const useUnfollowMutation = () => {
-  const queryClient = useQueryClient();
-
   return useGQLMutation<
     { delete_follows: { affected_rows: number } },
     { account_id: string }
