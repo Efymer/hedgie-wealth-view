@@ -75,7 +75,9 @@ export const Navigation: React.FC = () => {
               to="/"
               className="flex items-center space-x-3 text-xl font-semibold text-foreground hover:text-primary transition-colors group"
             >
-              <Activity className="h-6 w-6 text-primary" />
+              <div className="h-6 w-6 bg-primary rounded-md flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-xs">H</span>
+              </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <span className="leading-none">hbarwatch.io</span>
