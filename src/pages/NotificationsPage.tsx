@@ -1,114 +1,83 @@
 import React, { useState, useMemo } from "react";
 import { Bell, User, ArrowUpRight, ArrowDownLeft, Search, Filter, Calendar } from "lucide-react";
+import { useWallet } from "@buidlerlabs/hashgraph-react-wallets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { format, isToday, isYesterday, parseISO, startOfDay, isSameDay } from "date-fns";
+import { format, isToday, isYesterday, parseISO, startOfDay, formatDistanceToNow } from "date-fns";
+import {
+  useNotificationsQuery,
+  useNotificationLastSeenQuery,
+  type GqlNotification,
+} from "@/queries/index";
+import { useMarkNotificationSeenMutation } from "@/mutations/index";
 
 interface NotificationData {
   id: string;
   accountId: string;
-  accountName: string;
+  accountName?: string;
   type: 'sent' | 'received';
-  amount: string;
+  amount: number;
   token: string;
   timestamp: string;
   date: Date;
   isRead: boolean;
 }
 
-const DUMMY_NOTIFICATIONS: NotificationData[] = [
-  {
-    id: '1',
-    accountId: '0.0.123456',
-    accountName: 'John Doe',
-    type: 'sent',
-    amount: '1,500',
-    token: 'HBAR',
-    timestamp: '2 minutes ago',
-    date: new Date(),
-    isRead: false,
-  },
-  {
-    id: '2',
-    accountId: '0.0.789012',
-    accountName: 'Alice Smith',
-    type: 'received',
-    amount: '250',
-    token: 'USDC',
-    timestamp: '15 minutes ago',
-    date: new Date(),
-    isRead: false,
-  },
-  {
-    id: '3',
-    accountId: '0.0.345678',
-    accountName: 'Bob Wilson',
-    type: 'sent',
-    amount: '5,000',
-    token: 'HBAR',
-    timestamp: '1 hour ago',
-    date: new Date(Date.now() - 3600000),
-    isRead: true,
-  },
-  {
-    id: '4',
-    accountId: '0.0.901234',
-    accountName: 'Sarah Johnson',
-    type: 'received',
-    amount: '100',
-    token: 'SAUCE',
-    timestamp: '3 hours ago',
-    date: new Date(Date.now() - 3 * 3600000),
-    isRead: true,
-  },
-  {
-    id: '5',
-    accountId: '0.0.567890',
-    accountName: 'Mike Brown',
-    type: 'sent',
-    amount: '750',
-    token: 'HBAR',
-    timestamp: '1 day ago',
-    date: new Date(Date.now() - 86400000),
-    isRead: true,
-  },
-  {
-    id: '6',
-    accountId: '0.0.234567',
-    accountName: 'Emma Davis',
-    type: 'received',
-    amount: '2,000',
-    token: 'HBAR',
-    timestamp: '2 days ago',
-    date: new Date(Date.now() - 2 * 86400000),
-    isRead: true,
-  },
-  {
-    id: '7',
-    accountId: '0.0.890123',
-    accountName: 'David Miller',
-    type: 'sent',
-    amount: '500',
-    token: 'USDC',
-    timestamp: '3 days ago',
-    date: new Date(Date.now() - 3 * 86400000),
-    isRead: false,
-  },
-];
+// Helper function to convert consensus timestamp to Date
+const parseConsensusTimestamp = (consensusTs: string): Date => {
+  // Consensus timestamp format: "1695777782.123456789"
+  const [seconds, nanos = "0"] = consensusTs.split(".");
+  const milliseconds = parseInt(seconds) * 1000 + Math.floor(parseInt(nanos.padEnd(9, "0")) / 1000000);
+  return new Date(milliseconds);
+};
+
+// Helper function to format relative time
+const formatRelativeTime = (date: Date): string => {
+  return formatDistanceToNow(date, { addSuffix: true });
+};
+
 
 const NotificationsPage: React.FC = () => {
-  const [notifications, setNotifications] = useState<NotificationData[]>(DUMMY_NOTIFICATIONS);
+  const { isConnected } = useWallet();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "sent" | "received">("all");
   const [filterRead, setFilterRead] = useState<"all" | "read" | "unread">("all");
 
+  // Fetch notifications and last seen data
+  const { data: notifData, isLoading: notificationsLoading } = useNotificationsQuery();
+  const { data: lastSeenData } = useNotificationLastSeenQuery();
+  const markSeenMutation = useMarkNotificationSeenMutation();
+
+  const rawNotifications = useMemo(() => notifData?.notifications ?? [], [notifData]);
+  const lastSeenTs = lastSeenData?.notification_last_seen?.[0]?.last_seen_consensus_ts || null;
+
+  // Transform GraphQL notifications to component format
+  const notifications: NotificationData[] = useMemo(() => {
+    return rawNotifications.map((n: GqlNotification) => {
+      const date = parseConsensusTimestamp(n.consensus_ts);
+      const isRead = lastSeenTs ? n.consensus_ts <= lastSeenTs : false;
+      
+      return {
+        id: n.id,
+        accountId: n.account_id,
+        accountName: n.account_id, // Could be enhanced with account names from follows
+        type: n.direction,
+        amount: n.amount || 0,
+        token: n.token || 'HBAR',
+        timestamp: formatRelativeTime(date),
+        date,
+        isRead,
+      };
+    });
+  }, [rawNotifications, lastSeenTs]);
+
   const filteredNotifications = useMemo(() => {
     return notifications.filter(notification => {
-      const matchesSearch = notification.accountName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const matchesSearch = (notification.accountName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
                            notification.accountId.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            notification.token.toLowerCase().includes(searchQuery.toLowerCase());
       
@@ -154,21 +123,64 @@ const NotificationsPage: React.FC = () => {
     }
   };
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev =>
-      prev.map(n =>
-        n.id === notificationId ? { ...n, isRead: true } : n
-      )
-    );
+  const markAsRead = async (consensusTs: string) => {
+    try {
+      await markSeenMutation.mutateAsync({ ts: consensusTs });
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, isRead: true }))
-    );
+  const markAllAsRead = async () => {
+    if (!rawNotifications.length) return;
+    
+    try {
+      // Find the latest consensus timestamp from raw notifications
+      const latestConsensusTs = rawNotifications[0]?.consensus_ts;
+      if (latestConsensusTs) {
+        await markSeenMutation.mutateAsync({ ts: latestConsensusTs });
+      }
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  // Show loading state
+  if (notificationsLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4 animate-pulse" />
+              <p className="text-muted-foreground">Loading notifications...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show connect wallet message
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Bell className="h-16 w-16 mx-auto text-muted-foreground mb-6" />
+              <h3 className="text-xl font-semibold mb-2">Connect Your Wallet</h3>
+              <p className="text-muted-foreground">
+                Connect your wallet to view notifications from accounts you follow
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -205,7 +217,7 @@ const NotificationsPage: React.FC = () => {
             </div>
             
             <div className="flex gap-2">
-              <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
+              <Select value={filterType} onValueChange={(value: "all" | "sent" | "received") => setFilterType(value)}>
                 <SelectTrigger className="w-32">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue />
@@ -217,7 +229,7 @@ const NotificationsPage: React.FC = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={filterRead} onValueChange={(value: any) => setFilterRead(value)}>
+              <Select value={filterRead} onValueChange={(value: "all" | "read" | "unread") => setFilterRead(value)}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -261,7 +273,12 @@ const NotificationsPage: React.FC = () => {
                       className={`transition-all hover:shadow-md cursor-pointer ${
                         !notification.isRead ? 'ring-2 ring-primary/20 bg-primary/5' : ''
                       }`}
-                      onClick={() => markAsRead(notification.id)}
+                      onClick={() => {
+                        const rawNotif = rawNotifications.find(n => n.id === notification.id);
+                        if (rawNotif && !notification.isRead) {
+                          markAsRead(rawNotif.consensus_ts);
+                        }
+                      }}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-4">

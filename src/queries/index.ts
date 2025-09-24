@@ -891,6 +891,66 @@ export const useFollowsQuery = () => {
 };
 
 /**
+ * Notifications Types and Queries
+ */
+export type GqlNotification = {
+  id: string;
+  account_id: string;
+  direction: "sent" | "received";
+  token: string | null;
+  amount: number | null;
+  consensus_ts: string;
+  created_at: string;
+};
+
+export type GqlNotificationLastSeen = {
+  user_id: string;
+  last_seen_consensus_ts: string;
+};
+
+const Q_NOTIFICATIONS = /* GraphQL */ `
+  query MyNotifications {
+    notifications(order_by: { consensus_ts: desc }, limit: 50) {
+      id
+      account_id
+      direction
+      token
+      amount
+      consensus_ts
+      created_at
+    }
+  }
+`;
+
+const Q_LAST_SEEN = /* GraphQL */ `
+  query LastSeen {
+    notification_last_seen(limit: 1) {
+      user_id
+      last_seen_consensus_ts
+    }
+  }
+`;
+
+export const useNotificationsQuery = () => {
+  return useGQLQuery<{ notifications: GqlNotification[] }>(
+    ["notifications", { limit: 50 }],
+    Q_NOTIFICATIONS,
+    undefined,
+    {
+      staleTime: 30_000, // 30 seconds
+    }
+  );
+};
+
+export const useNotificationLastSeenQuery = () => {
+  return useGQLQuery<{
+    notification_last_seen: GqlNotificationLastSeen[];
+  }>(["notification_last_seen"], Q_LAST_SEEN, undefined, {
+    staleTime: 30_000, // 30 seconds
+  });
+};
+
+/**
  * Comprehensive followed accounts functionality with React Query patterns
  */
 export const useFollowedAccountsActions = () => {

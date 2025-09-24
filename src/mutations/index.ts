@@ -136,3 +136,38 @@ export const useUnfollowMutation = () => {
     },
   });
 };
+
+/**
+ * Notification Mutations
+ */
+const M_MARK_SEEN = /* GraphQL */ `
+  mutation MarkSeen($ts: String!) {
+    insert_notification_last_seen_one(
+      object: { last_seen_consensus_ts: $ts }
+      on_conflict: {
+        constraint: notification_last_seen_pkey
+        update_columns: [last_seen_consensus_ts]
+      }
+    ) {
+      user_id
+      last_seen_consensus_ts
+    }
+  }
+`;
+
+export const useMarkNotificationSeenMutation = () => {
+  const queryClient = useQueryClient();
+  
+  return useGQLMutation<
+    { insert_notification_last_seen_one: { user_id: string; last_seen_consensus_ts: string } },
+    { ts: string }
+  >(M_MARK_SEEN, {
+    onSuccess: () => {
+      // Invalidate the last seen query to refetch the latest data
+      queryClient.invalidateQueries({ queryKey: ["notification_last_seen"] });
+    },
+    onError: (error) => {
+      console.error("Failed to mark notification as seen:", error);
+    },
+  });
+};

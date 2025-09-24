@@ -11,85 +11,33 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { useGQLMutation } from "@/mutations/index";
-import { useGQLQuery } from "@/queries/index";
+import { useMarkNotificationSeenMutation } from "@/mutations/index";
+import {
+  useNotificationsQuery,
+  useNotificationLastSeenQuery,
+  type GqlNotification,
+} from "@/queries/index";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-type GqlNotification = {
-  id: string;
-  account_id: string;
-  direction: "sent" | "received";
-  token: string | null;
-  amount: number | null;
-  consensus_ts: string;
-  created_at: string;
-};
-
-const Q_NOTIFICATIONS = /* GraphQL */ `
-  query MyNotifications {
-    notifications(order_by: { consensus_ts: desc }, limit: 50) {
-      id
-      account_id
-      direction
-      token
-      amount
-      consensus_ts
-      created_at
-    }
-  }
-`;
-
-const Q_LAST_SEEN = /* GraphQL */ `
-  query LastSeen {
-    notification_last_seen(limit: 1) {
-      user_id
-      last_seen_consensus_ts
-    }
-  }
-`;
-
-const M_MARK_SEEN = /* GraphQL */ `
-  mutation MarkSeen($ts: String!) {
-    insert_notification_last_seen_one(
-      object: { last_seen_consensus_ts: $ts }
-      on_conflict: {
-        constraint: notification_last_seen_pkey
-        update_columns: [last_seen_consensus_ts]
-      }
-    ) {
-      user_id
-      last_seen_consensus_ts
-    }
-  }
-`;
 
 export const NotificationsCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const { isConnected } = useWallet();
 
-  // Poll latest notifications (every 10s)
-  const { data: notifData } = useGQLQuery<{ notifications: GqlNotification[] }>(
-    ["notifications", { limit: 50 }],
-    Q_NOTIFICATIONS,
-    undefined
-  );
+  // Poll latest notifications
+  const { data: notifData } = useNotificationsQuery();
   const notifications = useMemo(
     () => notifData?.notifications ?? [],
     [notifData]
   );
 
   // Last seen pointer via GraphQL + React Query helper
-  const { data: lastSeenData, refetch: refetchLastSeen } = useGQLQuery<{
-    notification_last_seen: {
-      user_id: string;
-      last_seen_consensus_ts: string;
-    }[];
-  }>(["notification_last_seen"], Q_LAST_SEEN, undefined);
+  const { data: lastSeenData, refetch: refetchLastSeen } = useNotificationLastSeenQuery();
 
   const latestTs = notifications[0]?.consensus_ts;
   const lastSeenTs =
@@ -100,7 +48,7 @@ export const NotificationsCenter: React.FC = () => {
     return notifications.filter((n) => n.consensus_ts > lastSeenTs).length;
   }, [notifications, lastSeenTs]);
 
-  const markSeenMut = useGQLMutation(M_MARK_SEEN);
+  const markSeenMut = useMarkNotificationSeenMutation();
 
   const markAllAsRead = async () => {
     if (!latestTs) return;
