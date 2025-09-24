@@ -100,7 +100,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
     return null;
   };
 
-  const hideOverlayAccounts = new Set(["0.0.756953", "0.0.1050322"]);
+  const hideOverlayAccounts = new Set(["0.0.756953", "0.0.1050322", "0.0.123456", "0.0.789789", "0.0.345678"]);
   const showOverlay = !(accountId && hideOverlayAccounts.has(accountId));
 
   return (
