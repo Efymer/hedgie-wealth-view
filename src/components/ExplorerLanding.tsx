@@ -40,7 +40,7 @@ export const ExplorerLanding: React.FC<ExplorerLandingProps> = ({
               </h1>
               
               <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-                Comprehensive analytics and real-time insights into Hedera network accounts
+                Comprehensive analytics and real-time insights into Hedera network accounts. Follow accounts and get instant notifications for transactions.
               </p>
               
               <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
@@ -55,6 +55,10 @@ export const ExplorerLanding: React.FC<ExplorerLandingProps> = ({
                 <div className="flex items-center gap-1">
                   <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
                   <span>Transaction History</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-orange-500"></div>
+                  <span>Account Following & Notifications</span>
                 </div>
               </div>
             </div>
