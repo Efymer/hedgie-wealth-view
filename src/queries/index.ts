@@ -1,4 +1,63 @@
-import { useQuery, useQueries, useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery, useQueries, useInfiniteQuery, UseQueryOptions, QueryKey } from "@tanstack/react-query";
+import { graphQLFetch, GraphQLResponse } from "../mutations/index";
+
+/**
+ * GraphQL Query Hook
+ */
+export function useGQLQuery<TData = unknown, TError = Error>(
+  key: QueryKey,
+  query: string,
+  variables?: Record<string, unknown>,
+  options?: Omit<UseQueryOptions<TData, TError, TData, QueryKey>, "queryKey" | "queryFn">
+) {
+  return useQuery<TData, TError, TData, QueryKey>({
+    queryKey: key,
+    queryFn: async () => graphQLFetch<TData>(query, variables || {}),
+    ...(options || {}),
+  });
+}
+
+/**
+ * Example GraphQL Queries - you can add your specific GraphQL queries here
+ */
+export const useUsersQuery = (limit: number = 10) => {
+  return useGQLQuery<{ users: Array<{ id: string; account_id: string; created_at: string }> }>(
+    ["users", { limit }],
+    `
+    query GetUsers($limit: Int!) {
+      users(limit: $limit, order_by: { created_at: desc }) {
+        id
+        account_id
+        created_at
+      }
+    }
+    `,
+    { limit },
+    {
+      staleTime: 5 * 60_000, // 5 minutes
+    }
+  );
+};
+
+export const useUserByAccountQuery = (accountId: string) => {
+  return useGQLQuery<{ users: Array<{ id: string; account_id: string; public_key: string }> }>(
+    ["user", accountId],
+    `
+    query GetUserByAccount($account_id: String!) {
+      users(where: { account_id: { _eq: $account_id } }) {
+        id
+        account_id
+        public_key
+      }
+    }
+    `,
+    { account_id: accountId },
+    {
+      enabled: !!accountId,
+      staleTime: 5 * 60_000,
+    }
+  );
+};
 
 /**
  * Mirror Node + Price APIs

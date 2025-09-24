@@ -6,7 +6,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { useGQLQuery, useGQLMutation } from "@/lib/graphql";
+import { useGQLMutation } from "@/mutations/index";
+import { useGQLQuery } from "@/queries/index";
 
 type GqlNotification = {
   id: string;

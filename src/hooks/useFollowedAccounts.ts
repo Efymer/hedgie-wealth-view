@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useGQLQuery, useGQLMutation } from "@/lib/graphql";
+import { useGQLMutation } from "@/mutations/index";
+import { useGQLQuery } from "@/queries/index";
 
 export interface FollowedAccount {
   accountId: string;
