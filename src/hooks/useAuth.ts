@@ -1,13 +1,22 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useWallet } from "@buidlerlabs/hashgraph-react-wallets";
-import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
 
 /**
  * Authentication hook that checks both wallet connection and JWT token presence
  * This should be used to gate GraphQL operations that require authentication
  */
 export const useAuth = () => {
-  const { isConnected } = useWallet(HashpackConnector);
+  const { isConnected } = useWallet();
+
+  // Clear JWT token when wallet disconnects
+  useEffect(() => {
+    if (!isConnected) {
+      const token = localStorage.getItem("hasura_jwt");
+      if (token) {
+        localStorage.removeItem("hasura_jwt");
+      }
+    }
+  }, [isConnected]);
 
   const authState = useMemo(() => {
     // Check if wallet is connected

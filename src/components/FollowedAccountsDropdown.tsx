@@ -1,6 +1,5 @@
 import React from "react";
 import { Users, ExternalLink, UserMinus, Eye } from "lucide-react";
-import { useWallet } from "@buidlerlabs/hashgraph-react-wallets";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -13,16 +12,16 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useFollowedAccounts } from "@/hooks/useFollowedAccounts";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 export const FollowedAccountsDropdown: React.FC = () => {
   const { followedAccounts, unfollowAccount } = useFollowedAccounts();
-  const { isConnected } = useWallet();
+  const auth = useAuth();
   const navigate = useNavigate();
 
   const handleViewAccount = (accountId: string) => {
     navigate(`/explorer/${accountId}`);
   };
-
   const handleUnfollow = (accountId: string, accountName?: string) => {
     unfollowAccount(accountId);
     toast({
@@ -31,7 +30,7 @@ export const FollowedAccountsDropdown: React.FC = () => {
     });
   };
 
-  if (!isConnected) {
+  if (!auth.isAuthenticated) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>

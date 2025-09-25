@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import { Bell, User, ArrowUpRight, ArrowDownLeft, Search, Filter, Calendar } from "lucide-react";
-import { useWallet } from "@buidlerlabs/hashgraph-react-wallets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,7 @@ import {
 } from "@/queries/index";
 import { useMarkNotificationSeenMutation } from "@/mutations/index";
 import { parseConsensusTimestamp, formatRelativeTime } from "@/lib/hedera-utils";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NotificationData {
   id: string;
@@ -31,7 +31,7 @@ interface NotificationData {
 
 
 const NotificationsPage: React.FC = () => {
-  const { isConnected } = useWallet();
+  const auth = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "sent" | "received">("all");
   const [filterRead, setFilterRead] = useState<"all" | "read" | "unread">("all");
@@ -153,7 +153,7 @@ const NotificationsPage: React.FC = () => {
   }
 
   // Show connect wallet message
-  if (!isConnected) {
+  if (!auth.isAuthenticated) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
