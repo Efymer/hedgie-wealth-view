@@ -32,16 +32,20 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
     }
 
     toggleFollow(accountId, accountName);
-    
+
     if (following) {
       toast({
         title: "Notifications Disabled",
-        description: `You will no longer receive transaction notifications from ${accountName || accountId}`,
+        description: `You will no longer receive transaction notifications from ${
+          accountName || accountId
+        }`,
       });
     } else {
       toast({
         title: "Notifications Enabled",
-        description: `You will now receive notifications when ${accountName || accountId} makes transactions`,
+        description: `You will now receive notifications when ${
+          accountName || accountId
+        } makes transactions`,
       });
     }
   };
@@ -52,14 +56,19 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
       variant={following ? "default" : variant}
       size={size}
       className={`flex items-center space-x-2 transition-colors ${
-        following 
-          ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
-          : !auth.isAuthenticated 
-            ? "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground border-input" 
-            : "hover:bg-accent hover:text-accent-foreground border-input"
+        following
+          ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+          : !auth.isAuthenticated
+          ? "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground border-input"
+          : "hover:bg-accent hover:text-accent-foreground border-input"
       }`}
     >
-      {following ? (
+      {!auth.isAuthenticated ? (
+        <>
+          <UserPlus className="h-4 w-4" />
+          <span>Connect Wallet for Notifications</span>
+        </>
+      ) : following ? (
         <>
           <Check className="h-4 w-4" />
           <span>Notifications On</span>
@@ -67,7 +76,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
       ) : (
         <>
           <UserPlus className="h-4 w-4" />
-          <span>{!auth.isAuthenticated ? "Connect Wallet for Notifications" : "Get Notifications"}</span>
+          <span>Get Notifications</span>
         </>
       )}
     </Button>
