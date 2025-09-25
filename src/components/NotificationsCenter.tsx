@@ -20,13 +20,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, useAuthToken } from "@/hooks/useAuth";
+import { useIsAuthenticated } from "@/hooks/useAuth";
 
 export const NotificationsCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const auth = useAuth();
-  console.log(auth);
+  const isAuthenticated = useIsAuthenticated();
+  const token = useAuthToken();
+  const isAuthenticatedAndHasToken = isAuthenticated && !!token;
 
   // Poll latest notifications
   const { data: notifData } = useNotificationsQuery();
@@ -62,7 +64,7 @@ export const NotificationsCenter: React.FC = () => {
   };
 
   // Enhanced authentication check using the new useAuth hook
-  if (!auth.isAuthenticated) {
+  if (!isAuthenticatedAndHasToken) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
