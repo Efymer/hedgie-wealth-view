@@ -8,7 +8,7 @@ const COINGECKO_PRICE =
   "https://api.coingecko.com/api/v3/simple/price?ids=hedera-hashgraph&vs_currencies=usd";
 const HASHPACK_TOKEN_INFO =
   "https://hashpack-mirror.b-cdn.net/getTokenInfo?network=mainnet&token_ids=";
-const HASHPACK_PRICES = "https://api-lb.hashpack.app/prices";
+const HASHPACK_PRICES = "https://api.hashpack.app/prices";
 
 type RequestBody = { accounts?: unknown };
 type Req = { method?: string; query?: Record<string, unknown>; body?: RequestBody };

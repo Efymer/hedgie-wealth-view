@@ -95,7 +95,7 @@ export const useUserByAccountQuery = (accountId: string) => {
 const MIRROR_NODE = "https://mainnet.mirrornode.hedera.com";
 const COINGECKO_PRICE =
   "https://api.coingecko.com/api/v3/simple/price?ids=hedera-hashgraph&vs_currencies=usd&include_24hr_change=true";
-const HASHPACK_PRICES = "https://api-lb.hashpack.app/prices";
+const HASHPACK_PRICES = "https://api.hashpack.app/prices";
 const HASHPACK_TOKEN_INFO =
   "https://hashpack-mirror.b-cdn.net/getTokenInfo?network=mainnet&token_ids=";
 const HASHPACK_PRICE_CHANGES = "https://api.hashpack.app/price-changes";
