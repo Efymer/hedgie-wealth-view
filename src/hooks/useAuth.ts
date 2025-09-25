@@ -8,14 +8,14 @@ import { useLocalStorage } from "usehooks-ts";
  */
 export const useAuth = () => {
   const { isConnected } = useWallet();
-  
   // Use useLocalStorage to automatically listen for JWT token changes
-  const [jwtToken, setJwtToken] = useLocalStorage<string | null>("hasura_jwt", null);
+  // Note: We use string type to avoid JSON parsing since JWT tokens are base64 strings
+  const [jwtToken, setJwtToken] = useLocalStorage("hasura_jwt", "");
 
   // Clear JWT token when wallet disconnects
   useEffect(() => {
     if (!isConnected && jwtToken) {
-      setJwtToken(null);
+      setJwtToken("");
     }
   }, [isConnected, jwtToken, setJwtToken]);
 
@@ -30,8 +30,8 @@ export const useAuth = () => {
       };
     }
 
-    // Check if JWT token exists
-    if (!jwtToken) {
+    // Check if JWT token exists (empty string means no token)
+    if (!jwtToken || jwtToken === "") {
       return {
         isAuthenticated: false,
         hasWallet: true,
@@ -42,12 +42,12 @@ export const useAuth = () => {
 
     // Optionally check if token is expired (basic check)
     try {
-      const payload = JSON.parse(atob(jwtToken.split('.')[1]));
+      const payload = JSON.parse(atob(jwtToken.split(".")[1]));
       const currentTime = Math.floor(Date.now() / 1000);
-      
+
       if (payload.exp && payload.exp < currentTime) {
         // Token is expired, remove it
-        setJwtToken(null);
+        setJwtToken("");
         return {
           isAuthenticated: false,
           hasWallet: true,
@@ -57,7 +57,7 @@ export const useAuth = () => {
       }
     } catch (error) {
       // Invalid token format, remove it
-      setJwtToken(null);
+      setJwtToken("");
       return {
         isAuthenticated: false,
         hasWallet: true,
@@ -93,10 +93,10 @@ export const useIsAuthenticated = () => {
  */
 export const useAuthToken = () => {
   const { isAuthenticated } = useAuth();
-  
+
   if (!isAuthenticated) {
     return null;
   }
-  
+
   return localStorage.getItem("hasura_jwt");
 };
