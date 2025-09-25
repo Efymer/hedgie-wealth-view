@@ -161,7 +161,7 @@ export const useAccountInfo = (walletId: string) => {
     queryKey: ["account", walletId, "info"],
     queryFn: () => getAccountInfo(walletId),
     enabled: !!walletId,
-    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -810,6 +810,7 @@ export const useNetworth = (accountId: string, limit: number = 90) => {
     queryKey: ["networth", accountId, { limit }],
     queryFn: () => getNetworth(accountId, limit),
     enabled: !!accountId,
+    refetchOnWindowFocus: false,
   });
 };
 
