@@ -136,7 +136,6 @@ export { tinybarToHBAR, extractCIDFromBase64Metadata } from "@/lib/hedera-utils"
 type MirrorNodeAccount = {
   account: string;
   created_timestamp?: string;
-  // Staking-related fields (if present)
   staked_node_id?: number | null;
   staked_account_id?: string | null;
   decline_reward?: boolean | null;
