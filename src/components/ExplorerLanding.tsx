@@ -33,16 +33,18 @@ export const ExplorerLanding: React.FC<ExplorerLandingProps> = ({
                 </span>
                 Live Network Data
               </div>
-              
+
               <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tight">
                 <span className="gradient-text">Hedera</span>
                 <span className="text-foreground"> Account Explorer</span>
               </h1>
-              
+
               <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-                Comprehensive analytics and real-time insights into Hedera network accounts. Follow accounts and get instant notifications for transactions.
+                Comprehensive analytics and real-time insights into Hedera
+                network accounts. Follow accounts and get instant notifications
+                for transactions.
               </p>
-              
+
               <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>

@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { format, isToday, isYesterday, parseISO, startOfDay, formatDistanceToNow } from "date-fns";
+import { format, isToday, isYesterday, parseISO, startOfDay } from "date-fns";
 import {
   useNotificationsQuery,
   useNotificationLastSeenQuery,
   type GqlNotification,
 } from "@/queries/index";
 import { useMarkNotificationSeenMutation } from "@/mutations/index";
+import { parseConsensusTimestamp, formatRelativeTime } from "@/lib/hedera-utils";
 
 interface NotificationData {
   id: string;
@@ -27,18 +28,6 @@ interface NotificationData {
   isRead: boolean;
 }
 
-// Helper function to convert consensus timestamp to Date
-const parseConsensusTimestamp = (consensusTs: string): Date => {
-  // Consensus timestamp format: "1695777782.123456789"
-  const [seconds, nanos = "0"] = consensusTs.split(".");
-  const milliseconds = parseInt(seconds) * 1000 + Math.floor(parseInt(nanos.padEnd(9, "0")) / 1000000);
-  return new Date(milliseconds);
-};
-
-// Helper function to format relative time
-const formatRelativeTime = (date: Date): string => {
-  return formatDistanceToNow(date, { addSuffix: true });
-};
 
 
 const NotificationsPage: React.FC = () => {

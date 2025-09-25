@@ -4,9 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import {
   useAccountNFTs,
   useNFTMetadata,
-  extractCIDFromBase64Metadata,
   type AccountNFT,
 } from "@/queries";
+import { extractCIDFromBase64Metadata } from "@/lib/hedera-utils";
 import { useOnScreen } from "@/hooks/use-on-screen";
 import { NFTDetailsModal } from "./NFTDetailsModal";
 

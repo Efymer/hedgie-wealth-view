@@ -127,10 +127,8 @@ type HbarPriceResponse = {
 /**
  * Utilities
  */
-export const tinybarToHBAR = (tinybars: number | undefined | null): number => {
-  if (!tinybars) return 0;
-  return tinybars / 100_000_000;
-};
+import { extractCIDFromBase64Metadata as extractCID } from "@/lib/hedera-utils";
+export { tinybarToHBAR, extractCIDFromBase64Metadata } from "@/lib/hedera-utils";
 
 /**
  * Account Info (Mirror Node)
@@ -611,38 +609,6 @@ export const useAccountNFTs = (walletId: string) => {
   });
 };
 
-// Helper to extract CID from base64-encoded metadata containing an ipfs:// URI
-export const extractCIDFromBase64Metadata = (
-  metadataBase64?: string | null
-): string | null => {
-  if (!metadataBase64) return null;
-  try {
-    // Browser base64 decode (Vite app runs in browser)
-    if (typeof atob !== "function") return null;
-    const jsonStr = atob(metadataBase64);
-    // Attempt to parse JSON first; if it fails, fall back to raw string search
-    try {
-      const obj = JSON.parse(jsonStr);
-      const val: unknown =
-        (obj as Record<string, unknown>)?.["uri"] ??
-        (obj as Record<string, unknown>)?.["metadata"] ??
-        (obj as Record<string, unknown>)?.["ipfs"] ??
-        (obj as Record<string, unknown>)?.["image"];
-      if (typeof val === "string") {
-        const m = val.match(/ipfs:\/\/([^\s"']+)/i);
-        if (m?.[1]) return m[1];
-      }
-      // If JSON has no uri/image, still try raw string
-    } catch (_) {
-      // Not JSON, continue to raw extraction
-    }
-    const rawMatch = jsonStr.match(/ipfs:\/\/([^\s"']+)/i);
-    if (rawMatch?.[1]) return rawMatch[1];
-  } catch {
-    // ignore
-  }
-  return null;
-};
 
 // Given a CID, fetch JSON metadata via HashPack CDN gateway
 export const getNFTMetadata = async (
@@ -666,7 +632,7 @@ export const useNFTMetadata = (
   metadataBase64?: string | null,
   enabled: boolean = true
 ) => {
-  const cid = extractCIDFromBase64Metadata(metadataBase64);
+  const cid = extractCID(metadataBase64);
   return useQuery({
     queryKey: ["nft", "metadata", cid],
     queryFn: () => getNFTMetadata(cid),

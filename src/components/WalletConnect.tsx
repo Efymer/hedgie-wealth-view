@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Wallet, LogOut, Copy, Check } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Wallet, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -10,7 +10,6 @@ import { toast } from "@/hooks/use-toast";
 import {
   useAccountInfo,
   useAuthSignature,
-  UserRefusedToSignAuthError,
   useWallet,
 } from "@buidlerlabs/hashgraph-react-wallets";
 import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
@@ -122,7 +121,7 @@ export const WalletConnect: React.FC = () => {
           e instanceof Error ? e.message : "Unknown authentication error",
       });
     }
-  }, [accountId, disconnect, signAuth, accountInfo]);
+  }, [accountId, disconnect, signer, accountInfo]);
 
   // Trigger authentication after wallet connects and accountId is available
   useEffect(() => {
@@ -140,22 +139,6 @@ export const WalletConnect: React.FC = () => {
     });
   }, [disconnect]);
 
-  // const displayAddress = useMemo(() => {
-  //   if (wallet?.evmAddress) {
-  //     return `${wallet.evmAddress.slice(0, 6)}...${wallet.evmAddress.slice(-4)}`;
-  //   }
-  //   return wallet?.accountId;
-  // }, [wallet]);
-
-  // const copyAddress = async () => {
-  //   const value = wallet?.evmAddress || wallet?.accountId;
-  //   if (value) {
-  //     await navigator.clipboard.writeText(value);
-  //     setCopied(true);
-  //     toast({ title: "Address Copied", description: "Wallet address copied to clipboard" });
-  //     setTimeout(() => setCopied(false), 2000);
-  //   }
-  // };
 
   if (!isConnected || connecting) {
     return (
@@ -181,7 +164,6 @@ export const WalletConnect: React.FC = () => {
         >
           <div className="w-2 h-2 bg-green-500 rounded-full" />
           <Wallet className="h-4 w-4" />
-          {/* <span className="hidden sm:inline">{displayAddress}</span> */}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72" align="end">
@@ -191,15 +173,6 @@ export const WalletConnect: React.FC = () => {
             <span className="text-sm font-medium">Connected</span>
           </div>
 
-          {/* <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Address</span> */}
-          {/* <Button variant="ghost" size="sm" onClick={copyAddress} className="h-6 px-2">
-                {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-              </Button> */}
-          {/* </div> */}
-          {/* <p className="text-sm font-mono bg-muted p-2 rounded truncate">{wallet?.evmAddress || wallet?.accountId}</p> */}
-          {/* </div> */}
 
           <div className="space-y-2">
             <span className="text-sm text-muted-foreground">Account ID</span>
@@ -208,10 +181,6 @@ export const WalletConnect: React.FC = () => {
             </p>
           </div>
 
-          {/* <div className="space-y-2">
-            <span className="text-sm text-muted-foreground">Balance</span>
-            {/* <p className="text-sm font-medium">{wallet?.balanceHBAR ?? "-"} HBAR</p>
-          </div> */}
 
           <Button
             variant="outline"

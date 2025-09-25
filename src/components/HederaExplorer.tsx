@@ -6,12 +6,10 @@ import { TransactionHistory, Transaction } from "./TransactionHistory";
 import { Breadcrumb } from "./Breadcrumb";
 import { PortfolioDiversificationChart } from "./PortfolioDiversificationChart";
 import { NFTList } from "./NFTList";
-import { CounterpartyMap } from "./CounterpartyMap";
 import { FollowButton } from "./FollowButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import {
-  tinybarToHBAR,
   useHBARBalance,
   useHBARPrice,
   useTokenPrices,
@@ -23,6 +21,7 @@ import {
   MirrorNodeTransaction,
   useNetworth,
 } from "@/queries";
+import { tinybarToHBAR } from "@/lib/hedera-utils";
 import { NetWorthChart } from "./NetWorthChart";
 
 export const HederaExplorer: React.FC = () => {
@@ -292,7 +291,6 @@ export const HederaExplorer: React.FC = () => {
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="transactions">Transactions</TabsTrigger>
                 <TabsTrigger value="nfts">NFTs</TabsTrigger>
-                {/* <TabsTrigger value="network">Network</TabsTrigger> */}
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
@@ -353,9 +351,6 @@ export const HederaExplorer: React.FC = () => {
                 />
               </TabsContent>
 
-              {/* <TabsContent value="network">
-                <CounterpartyMap accountId={accountId} />
-              </TabsContent> */}
             </Tabs>
           </>
         )}
