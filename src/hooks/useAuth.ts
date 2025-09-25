@@ -1,5 +1,6 @@
 import { useMemo, useEffect } from "react";
 import { useWallet } from "@buidlerlabs/hashgraph-react-wallets";
+import { useLocalStorage } from "usehooks-ts";
 
 /**
  * Authentication hook that checks both wallet connection and JWT token presence
@@ -7,16 +8,16 @@ import { useWallet } from "@buidlerlabs/hashgraph-react-wallets";
  */
 export const useAuth = () => {
   const { isConnected } = useWallet();
+  
+  // Use useLocalStorage to automatically listen for JWT token changes
+  const [jwtToken, setJwtToken] = useLocalStorage<string | null>("hasura_jwt", null);
 
   // Clear JWT token when wallet disconnects
   useEffect(() => {
-    if (!isConnected) {
-      const token = localStorage.getItem("hasura_jwt");
-      if (token) {
-        localStorage.removeItem("hasura_jwt");
-      }
+    if (!isConnected && jwtToken) {
+      setJwtToken(null);
     }
-  }, [isConnected]);
+  }, [isConnected, jwtToken, setJwtToken]);
 
   const authState = useMemo(() => {
     // Check if wallet is connected
@@ -29,9 +30,8 @@ export const useAuth = () => {
       };
     }
 
-    // Check if JWT token exists in localStorage
-    const token = localStorage.getItem("hasura_jwt");
-    if (!token) {
+    // Check if JWT token exists
+    if (!jwtToken) {
       return {
         isAuthenticated: false,
         hasWallet: true,
@@ -42,12 +42,12 @@ export const useAuth = () => {
 
     // Optionally check if token is expired (basic check)
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = JSON.parse(atob(jwtToken.split('.')[1]));
       const currentTime = Math.floor(Date.now() / 1000);
       
       if (payload.exp && payload.exp < currentTime) {
         // Token is expired, remove it
-        localStorage.removeItem("hasura_jwt");
+        setJwtToken(null);
         return {
           isAuthenticated: false,
           hasWallet: true,
@@ -57,7 +57,7 @@ export const useAuth = () => {
       }
     } catch (error) {
       // Invalid token format, remove it
-      localStorage.removeItem("hasura_jwt");
+      setJwtToken(null);
       return {
         isAuthenticated: false,
         hasWallet: true,
@@ -73,7 +73,7 @@ export const useAuth = () => {
       hasToken: true,
       reason: "Authenticated",
     };
-  }, [isConnected]);
+  }, [isConnected, jwtToken, setJwtToken]);
 
   return authState;
 };
