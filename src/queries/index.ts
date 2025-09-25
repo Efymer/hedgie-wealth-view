@@ -13,9 +13,11 @@ import {
   useFollowMutation,
   useUnfollowMutation,
 } from "../mutations/index";
+import { useIsAuthenticated } from "../hooks/useAuth";
 
 /**
- * GraphQL Query Hook
+ * GraphQL Query Hook with Authentication Check
+ * Only executes GraphQL queries if user is authenticated (wallet connected + JWT token present)
  */
 export function useGQLQuery<TData = unknown, TError = Error>(
   key: QueryKey,
@@ -26,9 +28,12 @@ export function useGQLQuery<TData = unknown, TError = Error>(
     "queryKey" | "queryFn"
   >
 ) {
+  const isAuthenticated = useIsAuthenticated();
+  
   return useQuery<TData, TError, TData, QueryKey>({
     queryKey: key,
     queryFn: async () => graphQLFetch<TData>(query, variables || {}),
+    enabled: isAuthenticated && (options?.enabled !== false),
     ...(options || {}),
   });
 }
@@ -37,6 +42,8 @@ export function useGQLQuery<TData = unknown, TError = Error>(
  * Example GraphQL Queries - you can add your specific GraphQL queries here
  */
 export const useUsersQuery = (limit: number = 10) => {
+  const isAuthenticated = useIsAuthenticated();
+  
   return useGQLQuery<{
     users: Array<{ id: string; account_id: string; created_at: string }>;
   }>(
@@ -52,12 +59,15 @@ export const useUsersQuery = (limit: number = 10) => {
     `,
     { limit },
     {
+      enabled: isAuthenticated,
       staleTime: 5 * 60_000, // 5 minutes
     }
   );
 };
 
 export const useUserByAccountQuery = (accountId: string) => {
+  const isAuthenticated = useIsAuthenticated();
+  
   return useGQLQuery<{
     users: Array<{ id: string; account_id: string; public_key: string }>;
   }>(
@@ -73,7 +83,7 @@ export const useUserByAccountQuery = (accountId: string) => {
     `,
     { account_id: accountId },
     {
-      enabled: !!accountId,
+      enabled: isAuthenticated && !!accountId,
       staleTime: 5 * 60_000,
     }
   );
@@ -865,11 +875,14 @@ const Q_FOLLOWS = /* GraphQL */ `
 `;
 
 export const useFollowsQuery = () => {
+  const isAuthenticated = useIsAuthenticated();
+  
   const query = useGQLQuery<{ follows: GqlFollow[] }>(
     ["follows"],
     Q_FOLLOWS,
     {},
     {
+      enabled: isAuthenticated,
       staleTime: 30_000, // 30 seconds
     }
   );
@@ -932,20 +945,26 @@ const Q_LAST_SEEN = /* GraphQL */ `
 `;
 
 export const useNotificationsQuery = () => {
+  const isAuthenticated = useIsAuthenticated();
+  
   return useGQLQuery<{ notifications: GqlNotification[] }>(
     ["notifications", { limit: 50 }],
     Q_NOTIFICATIONS,
     undefined,
     {
+      enabled: isAuthenticated,
       staleTime: 30_000, // 30 seconds
     }
   );
 };
 
 export const useNotificationLastSeenQuery = () => {
+  const isAuthenticated = useIsAuthenticated();
+  
   return useGQLQuery<{
     notification_last_seen: GqlNotificationLastSeen[];
   }>(["notification_last_seen"], Q_LAST_SEEN, undefined, {
+    enabled: isAuthenticated,
     staleTime: 30_000, // 30 seconds
   });
 };
@@ -955,11 +974,16 @@ export const useNotificationLastSeenQuery = () => {
  */
 export const useFollowedAccountsActions = () => {
   const queryClient = useQueryClient();
+  const isAuthenticated = useIsAuthenticated();
   const upsertAccountMutation = useUpsertAccountMutation();
   const followMutation = useFollowMutation();
   const unfollowMutation = useUnfollowMutation();
 
   const followAccount = async (accountId: string, accountName?: string) => {
+    if (!isAuthenticated) {
+      throw new Error("Must be authenticated to follow accounts");
+    }
+    
     // Optimistic update - update the raw GraphQL data
     queryClient.setQueryData<{ follows: GqlFollow[] }>(["follows"], (old) => {
       if (!old?.follows) return old;
@@ -1007,6 +1031,10 @@ export const useFollowedAccountsActions = () => {
   };
 
   const unfollowAccount = async (accountId: string) => {
+    if (!isAuthenticated) {
+      throw new Error("Must be authenticated to unfollow accounts");
+    }
+    
     // Store previous state for rollback
     const previousData = queryClient.getQueryData<{ follows: GqlFollow[] }>(["follows"]);
 
@@ -1033,6 +1061,10 @@ export const useFollowedAccountsActions = () => {
   };
 
   const toggleFollow = async (accountId: string, accountName?: string) => {
+    if (!isAuthenticated) {
+      throw new Error("Must be authenticated to toggle follow status");
+    }
+    
     const currentData = queryClient.getQueryData<{ follows: GqlFollow[] }>(["follows"]);
 
     const isCurrentlyFollowing = currentData?.follows?.some((f) => f.account_id === accountId) ?? false;

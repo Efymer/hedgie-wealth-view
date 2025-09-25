@@ -3,6 +3,7 @@ import {
   UseMutationOptions,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useIsAuthenticated } from "../hooks/useAuth";
 
 // GraphQL Types
 export type GraphQLResponse<T> = {
@@ -45,15 +46,21 @@ export async function graphQLFetch<T = unknown>(
   return json.data as T;
 }
 
-// React Query mutation hook for GraphQL
+// React Query mutation hook for GraphQL with Authentication Check
 export function useGQLMutation<
   TData = unknown,
   TVariables extends Record<string, unknown> = Record<string, unknown>,
   TError = Error
 >(query: string, options?: UseMutationOptions<TData, TError, TVariables>) {
+  const isAuthenticated = useIsAuthenticated();
+  
   return useMutation<TData, TError, TVariables>({
-    mutationFn: async (vars: TVariables) =>
-      graphQLFetch<TData>(query, vars || {}),
+    mutationFn: async (vars: TVariables) => {
+      if (!isAuthenticated) {
+        throw new Error("Must be authenticated to perform GraphQL mutations");
+      }
+      return graphQLFetch<TData>(query, vars || {});
+    },
     ...(options || {}),
   });
 }
@@ -96,6 +103,8 @@ const M_UNFOLLOW = /* GraphQL */ `
 `;
 
 export const useUpsertAccountMutation = () => {
+  const isAuthenticated = useIsAuthenticated();
+  
   return useGQLMutation<
     { insert_accounts_one: { id: string } },
     { id: string; display_name?: string }
@@ -106,10 +115,18 @@ export const useUpsertAccountMutation = () => {
     onSuccess: () => {
       console.log("Upserted account");
     },
+    // Additional check to prevent mutation if not authenticated
+    onMutate: () => {
+      if (!isAuthenticated) {
+        throw new Error("Must be authenticated to upsert accounts");
+      }
+    },
   });
 };
 
 export const useFollowMutation = () => {
+  const isAuthenticated = useIsAuthenticated();
+  
   return useGQLMutation<
     { insert_follows_one: { id: string; followed_at: string } },
     { account_id: string }
@@ -120,10 +137,18 @@ export const useFollowMutation = () => {
     onSuccess: () => {
       console.log("Followed account");
     },
+    // Additional check to prevent mutation if not authenticated
+    onMutate: () => {
+      if (!isAuthenticated) {
+        throw new Error("Must be authenticated to follow accounts");
+      }
+    },
   });
 };
 
 export const useUnfollowMutation = () => {
+  const isAuthenticated = useIsAuthenticated();
+  
   return useGQLMutation<
     { delete_follows: { affected_rows: number } },
     { account_id: string }
@@ -133,6 +158,12 @@ export const useUnfollowMutation = () => {
     },
     onSuccess: () => {
       console.log("Unfollowed account");
+    },
+    // Additional check to prevent mutation if not authenticated
+    onMutate: () => {
+      if (!isAuthenticated) {
+        throw new Error("Must be authenticated to unfollow accounts");
+      }
     },
   });
 };
@@ -157,6 +188,7 @@ const M_MARK_SEEN = /* GraphQL */ `
 
 export const useMarkNotificationSeenMutation = () => {
   const queryClient = useQueryClient();
+  const isAuthenticated = useIsAuthenticated();
   
   return useGQLMutation<
     { insert_notification_last_seen_one: { user_id: string; last_seen_consensus_ts: string } },
@@ -168,6 +200,12 @@ export const useMarkNotificationSeenMutation = () => {
     },
     onError: (error) => {
       console.error("Failed to mark notification as seen:", error);
+    },
+    // Additional check to prevent mutation if not authenticated
+    onMutate: () => {
+      if (!isAuthenticated) {
+        throw new Error("Must be authenticated to mark notifications as seen");
+      }
     },
   });
 };
