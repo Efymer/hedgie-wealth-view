@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Bell, User, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useWallet } from "@buidlerlabs/hashgraph-react-wallets";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -15,7 +14,6 @@ import { useMarkNotificationSeenMutation } from "@/mutations/index";
 import {
   useNotificationsQuery,
   useNotificationLastSeenQuery,
-  type GqlNotification,
 } from "@/queries/index";
 import {
   Tooltip,
@@ -24,12 +22,11 @@ import {
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 
-
 export const NotificationsCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const { isConnected } = useWallet();
   const auth = useAuth();
+  console.log(auth);
 
   // Poll latest notifications
   const { data: notifData } = useNotificationsQuery();
@@ -39,7 +36,8 @@ export const NotificationsCenter: React.FC = () => {
   );
 
   // Last seen pointer via GraphQL + React Query helper
-  const { data: lastSeenData, refetch: refetchLastSeen } = useNotificationLastSeenQuery();
+  const { data: lastSeenData, refetch: refetchLastSeen } =
+    useNotificationLastSeenQuery();
 
   const latestTs = notifications[0]?.consensus_ts;
   const lastSeenTs =
