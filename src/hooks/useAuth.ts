@@ -7,6 +7,7 @@ import { useWallet } from "@buidlerlabs/hashgraph-react-wallets";
  */
 export const useAuth = () => {
   const { isConnected } = useWallet();
+  const token = localStorage.getItem("hasura_jwt");
 
   // Clear JWT token when wallet disconnects
   useEffect(() => {
@@ -30,7 +31,6 @@ export const useAuth = () => {
     }
 
     // Check if JWT token exists in localStorage
-    const token = localStorage.getItem("hasura_jwt");
     if (!token) {
       return {
         isAuthenticated: false,
@@ -73,7 +73,7 @@ export const useAuth = () => {
       hasToken: true,
       reason: "Authenticated",
     };
-  }, [isConnected]);
+  }, [isConnected, token]);
 
   return authState;
 };
