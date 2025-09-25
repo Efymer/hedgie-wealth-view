@@ -176,7 +176,7 @@ export const WalletConnect: React.FC = () => {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="flex items-center space-x-2 hover:bg-muted/80"
+          className="flex items-center space-x-2 hover:bg-accent/10 hover:text-accent-foreground transition-colors"
           size="sm"
         >
           <div className="w-2 h-2 bg-green-500 rounded-full" />
@@ -208,15 +208,15 @@ export const WalletConnect: React.FC = () => {
             </p>
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <span className="text-sm text-muted-foreground">Balance</span>
-            {/* <p className="text-sm font-medium">{wallet?.balanceHBAR ?? "-"} HBAR</p> */}
-          </div>
+            {/* <p className="text-sm font-medium">{wallet?.balanceHBAR ?? "-"} HBAR</p>
+          </div> */}
 
           <Button
             variant="outline"
             onClick={handleDisconnect}
-            className="w-full flex items-center space-x-2 text-destructive hover:text-destructive"
+            className="w-full flex items-center space-x-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
           >
             <LogOut className="h-4 w-4" />
             <span>Disconnect</span>
