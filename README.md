@@ -19,8 +19,6 @@ This is a Vite + React + TypeScript app styled with Tailwind CSS and shadcn/ui. 
 - Recharts
 - Vercel Analytics / Speed Insights (optional)
 
-Note: This project does not use Supabase.
-
 ## Getting Started
 
 ### Prerequisites
@@ -70,8 +68,7 @@ No environment variables are required for basic development. If you introduce th
 │  ├─ hooks/                 # Reusable hooks (e.g., use-toast, use-on-screen)
 │  ├─ lib/                   # Helpers and utilities
 │  ├─ pages/                 # Top-level pages and views
-│  ├─ queries/               # Data fetching/query utilities
-│  └─ integrations/          # Integration points (supabase removed)
+│  └─ queries/               # Data fetching/query utilities
 ├─ index.html                # Vite HTML entry
 ├─ tailwind.config.ts        # Tailwind config
 ├─ vite.config.ts            # Vite config
