@@ -18,9 +18,6 @@ export const useAuth = () => {
     }
   }, [isConnected]);
 
-  // Get JWT token to include in dependency array
-  const jwtToken = localStorage.getItem("hasura_jwt");
-
   const authState = useMemo(() => {
     // Check if wallet is connected
     if (!isConnected) {
@@ -33,7 +30,8 @@ export const useAuth = () => {
     }
 
     // Check if JWT token exists in localStorage
-    if (!jwtToken) {
+    const token = localStorage.getItem("hasura_jwt");
+    if (!token) {
       return {
         isAuthenticated: false,
         hasWallet: true,
@@ -44,9 +42,9 @@ export const useAuth = () => {
 
     // Optionally check if token is expired (basic check)
     try {
-      const payload = JSON.parse(atob(jwtToken.split(".")[1]));
+      const payload = JSON.parse(atob(token.split('.')[1]));
       const currentTime = Math.floor(Date.now() / 1000);
-
+      
       if (payload.exp && payload.exp < currentTime) {
         // Token is expired, remove it
         localStorage.removeItem("hasura_jwt");
@@ -75,7 +73,7 @@ export const useAuth = () => {
       hasToken: true,
       reason: "Authenticated",
     };
-  }, [isConnected, jwtToken]);
+  }, [isConnected]);
 
   return authState;
 };
@@ -95,10 +93,10 @@ export const useIsAuthenticated = () => {
  */
 export const useAuthToken = () => {
   const { isAuthenticated } = useAuth();
-
+  
   if (!isAuthenticated) {
     return null;
   }
-
+  
   return localStorage.getItem("hasura_jwt");
 };
