@@ -291,7 +291,7 @@ const NotificationsPage: React.FC = () => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-3 mb-1">
                               <h3 className="font-semibold truncate">
-                                {notification.accountName}
+                                {notification.accountName || notification.accountId}
                               </h3>
                               <Badge variant="secondary" className="text-xs">
                                 {notification.accountId}
@@ -312,7 +312,7 @@ const NotificationsPage: React.FC = () => {
                             <div className="flex items-center justify-between">
                               <p className="text-lg">
                                 <span className="font-semibold">
-                                  {notification.amount} {notification.token}
+                                  {notification.amount.toLocaleString()} {notification.token}
                                 </span>
                               </p>
                               

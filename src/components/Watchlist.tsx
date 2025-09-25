@@ -1,18 +1,13 @@
-import React, { useMemo, useState } from "react";
-import { Star, StarOff, Trash2, Plus, Search, ExternalLink } from "lucide-react";
+import React, { useState } from "react";
+import { Star, StarOff, Trash2, Plus, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useQueries } from "@tanstack/react-query";
-import { getHBARBalance, tinybarToHBAR } from "@/queries";
 
 interface WatchlistItem {
   id: string;
   address: string;
   name: string;
-  balance?: number;
-  value?: number;
-  change24h?: number;
   addedAt: string;
 }
 
@@ -26,27 +21,18 @@ const mockWatchlistItems: WatchlistItem[] = [
     id: "1",
     address: "0.0.123456",
     name: "Main Trading Account",
-    balance: 1250.75,
-    value: 4350.25,
-    change24h: 2.15,
     addedAt: "2024-01-15T10:30:00Z"
   },
   {
     id: "2",
     address: "0.0.789789",
     name: "DeFi Wallet",
-    balance: 850.30,
-    value: 2950.80,
-    change24h: -1.25,
     addedAt: "2024-01-13T09:45:00Z"
   },
   {
     id: "3",
     address: "0.0.345678",
     name: "Savings Account",
-    balance: 2150.45,
-    value: 6890.12,
-    change24h: 4.75,
     addedAt: "2024-01-12T16:20:00Z"
   }
 ];
@@ -83,28 +69,6 @@ export const Watchlist: React.FC<WatchlistProps> = ({
   const [newName, setNewName] = useState("");
   const { toast } = useToast();
 
-  // Live HBAR balances for each watchlist address
-  const accountIds = useMemo(() => items.map((i) => i.address), [items]);
-
-  const balanceQueries = useQueries({
-    queries: accountIds.map((id) => ({
-      queryKey: ["hbar", "balance", id],
-      queryFn: () => getHBARBalance(id),
-      enabled: !!id,
-      staleTime: 30_000,
-      gcTime: 5 * 60_000,
-    })),
-  });
-
-  const balancesMap = useMemo(() => {
-    const map = new Map<string, number>();
-    accountIds.forEach((id, idx) => {
-      const q = balanceQueries[idx];
-      const tiny = q?.data?.balance ?? 0;
-      map.set(id, tinybarToHBAR(tiny));
-    });
-    return map;
-  }, [accountIds, balanceQueries]);
 
   const handleAddItem = () => {
     if (!newAddress.trim() || !newName.trim()) {
@@ -130,9 +94,6 @@ export const Watchlist: React.FC<WatchlistProps> = ({
       id: Date.now().toString(),
       address: newAddress.trim(),
       name: newName.trim(),
-      balance: Math.random() * 1000 + 500, // Random balance between 500-1500 HBAR
-      value: Math.random() * 5000 + 1000, // Random USD value between $1000-$6000
-      change24h: (Math.random() - 0.5) * 10, // Random change between -5% and +5%
       addedAt: new Date().toISOString()
     };
 
@@ -160,28 +121,6 @@ export const Watchlist: React.FC<WatchlistProps> = ({
     });
   };
 
-  const formatValue = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
-  };
-
-  const formatBalance = (balance: number) => {
-    const formatted = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 6,
-    }).format(balance);
-    return `${formatted} HBAR`;
-  };
-
-  const formatChange = (change: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'percent',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(change / 100);
-  };
 
   return (
     <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
@@ -233,7 +172,7 @@ export const Watchlist: React.FC<WatchlistProps> = ({
           <div className="text-center py-8">
             <StarOff className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No accounts in your watchlist yet</p>
-            <p className="text-sm text-muted-foreground">Add Hedera accounts to track their balances</p>
+            <p className="text-sm text-muted-foreground">Add Hedera accounts to track</p>
           </div>
         ) : (
           items.map((item) => (
@@ -262,24 +201,6 @@ export const Watchlist: React.FC<WatchlistProps> = ({
                 </div>
 
                 <div className="flex items-center gap-4">
-                  {/* <div className="text-right">
-                    <p className="font-semibold">
-                      {formatBalance(balancesMap.get(item.address) ?? 0)}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm text-muted-foreground">
-                        {formatValue(item.value || 0)}
-                      </p>
-                      {item.change24h !== undefined && (
-                        <span className={`text-xs ${
-                          item.change24h >= 0 ? 'text-success' : 'text-destructive'
-                        }`}>
-                          {item.change24h >= 0 ? '+' : ''}{formatChange(item.change24h)}
-                        </span>
-                      )}
-                    </div>
-                  </div> */}
-                  
                   <Button
                     variant="ghost"
                     size="sm"
