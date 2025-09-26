@@ -118,7 +118,7 @@ export const HederaExplorer: React.FC = () => {
           decimals: t.decimals,
           usdValue,
           priceUsd: price,
-          priceChange24h: change,
+          priceChangeDay: change,
         };
       });
 
@@ -131,7 +131,7 @@ export const HederaExplorer: React.FC = () => {
       decimals: 8,
       usdValue: hbarBalance * hbarPrice,
       priceUsd: hbarPrice,
-      priceChange24h: hbarChange24h,
+      priceChangeDay: hbarChange24h,
     };
 
     const combined = [hbarToken, ...mapped];

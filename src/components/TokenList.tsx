@@ -21,7 +21,7 @@ interface Token {
   decimals: number;
   usdValue: number;
   priceUsd?: number;
-  priceChange24h?: number; // Daily price change from SaucerSwap API
+  priceChangeDay?: number; // Daily price change from SaucerSwap API
 }
 
 interface TokenListProps {
@@ -168,21 +168,21 @@ export const TokenList: React.FC<TokenListProps> = ({
                         {formatUSD(token.usdValue)}
                       </p>
                     </div>
-                    {token.priceChange24h !== undefined && (
+                    {token.priceChangeDay !== undefined && (
                       <div
                         className={`flex items-center gap-1 ${
-                          token.priceChange24h >= 0
+                          token.priceChangeDay >= 0
                             ? "text-success"
                             : "text-destructive"
                         }`}
                       >
-                        {token.priceChange24h >= 0 ? (
+                        {token.priceChangeDay >= 0 ? (
                           <TrendingUp className="h-3 w-3" />
                         ) : (
                           <TrendingDown className="h-3 w-3" />
                         )}
                         <span className="text-xs font-medium">
-                          {formatPercent(Math.abs(token.priceChange24h))}
+                          {formatPercent(Math.abs(token.priceChangeDay))}
                         </span>
                       </div>
                     )}
