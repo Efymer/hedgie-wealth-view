@@ -96,8 +96,8 @@ const MIRROR_NODE = "https://mainnet.mirrornode.hedera.com";
 const COINGECKO_PRICE =
   "https://api.coingecko.com/api/v3/simple/price?ids=hedera-hashgraph&vs_currencies=usd&include_24hr_change=true";
 const SAUCERSWAP_TOKENS = "https://api.saucerswap.finance/tokens";
-const HASHPACK_TOKEN_INFO =
-  "https://hashpack-mirror.b-cdn.net/getTokenInfo?network=mainnet&token_ids=";
+const SAUCERSWAP_FULL_TOKENS =
+  "https://api.saucerswap.finance/tokens/full";
 const SAUCERSWAP_DEFAULT_TOKENS =
   "https://api.saucerswap.finance/tokens/default";
 
@@ -348,34 +348,71 @@ type TokenInfo = {
   name: string;
   decimals: number;
   type?: "FUNGIBLE_COMMON" | "NON_FUNGIBLE_UNIQUE" | string;
+  price?: string;
+  priceUsd?: number;
+  dueDiligenceComplete?: boolean;
+  isFeeOnTransferToken?: boolean;
+  description?: string;
+  website?: string;
+  sentinelReport?: string;
+  twitterHandle?: string;
+  icon?: string;
 };
 
-// Batched token info fetch (HashPack mirror)
+// Batched token info fetch (SaucerSwap full tokens API)
 const getTokenInfosBatch = async (
   tokenIds: string[]
 ): Promise<Record<string, TokenInfo>> => {
   if (!tokenIds.length) return {};
-  const url = `${HASHPACK_TOKEN_INFO}${encodeURIComponent(tokenIds.join(","))}`;
-  const res = await fetch(url);
+  const res = await fetch(SAUCERSWAP_FULL_TOKENS, {
+    method: "GET",
+    headers: {
+      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+    },
+  });
   if (!res.ok) return {};
-  type TokenInfoResponse = Array<{
-    token_id?: string;
-    symbol?: string;
-    name?: string;
-    decimals?: string;
-    type?: "FUNGIBLE_COMMON" | "NON_FUNGIBLE_UNIQUE" | string;
-  }>;
-  const data = (await res.json()) as TokenInfoResponse;
+  
+  type SaucerSwapFullToken = {
+    id: string;
+    name: string;
+    symbol: string;
+    icon?: string;
+    decimals: number;
+    price?: string;
+    priceUsd?: number;
+    dueDiligenceComplete?: boolean;
+    isFeeOnTransferToken?: boolean;
+    description?: string;
+    website?: string;
+    sentinelReport?: string;
+    twitterHandle?: string;
+  };
+  
+  const data = (await res.json()) as SaucerSwapFullToken[];
   const map: Record<string, TokenInfo> = {};
-  (data || []).forEach((d) => {
-    const id = d.token_id as string;
-    if (!id) return;
+  
+  // Filter to only include tokens that are in our requested tokenIds
+  const tokenIdSet = new Set(tokenIds);
+  
+  (data || []).forEach((token) => {
+    const id = token.id;
+    if (!id || !tokenIdSet.has(id)) return;
+    
     map[id] = {
       token_id: id,
-      symbol: d.symbol ?? id,
-      name: d.name ?? id,
-      decimals: typeof d.decimals === "string" ? parseFloat(d.decimals) : 0,
-      type: d.type,
+      symbol: token.symbol ?? id,
+      name: token.name ?? id,
+      decimals: token.decimals ?? 0,
+      type: "FUNGIBLE_COMMON", // SaucerSwap only deals with fungible tokens
+      price: token.price,
+      priceUsd: token.priceUsd,
+      dueDiligenceComplete: token.dueDiligenceComplete,
+      isFeeOnTransferToken: token.isFeeOnTransferToken,
+      description: token.description,
+      website: token.website,
+      sentinelReport: token.sentinelReport,
+      twitterHandle: token.twitterHandle,
+      icon: token.icon,
     };
   });
   return map;

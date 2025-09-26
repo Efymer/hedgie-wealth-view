@@ -7,8 +7,7 @@ import Redis from "ioredis";
 const MIRROR_NODE = "https://mainnet.mirrornode.hedera.com";
 const COINGECKO_PRICE =
   "https://api.coingecko.com/api/v3/simple/price?ids=hedera-hashgraph&vs_currencies=usd";
-const HASHPACK_TOKEN_INFO =
-  "https://hashpack-mirror.b-cdn.net/getTokenInfo?network=mainnet&token_ids=";
+const SAUCERSWAP_FULL_TOKENS = "https://api.saucerswap.finance/tokens/full";
 const SAUCERSWAP_TOKENS = "https://api.saucerswap.finance/tokens";
 
 type RequestBody = { 
@@ -150,24 +149,36 @@ async function getTokenInfos(
   tokenIds: string[]
 ): Promise<Record<string, { decimals: number }>> {
   if (!tokenIds.length) return {};
-  const url = `${HASHPACK_TOKEN_INFO}${encodeURIComponent(tokenIds.join(","))}`;
-  log("getTokenInfos: fetching", { count: tokenIds.length, url });
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  
+  log("getTokenInfos: fetching", { count: tokenIds.length, url: SAUCERSWAP_FULL_TOKENS });
+  const res = await fetch(SAUCERSWAP_FULL_TOKENS, {
+    method: "GET",
+    headers: {
+      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+    },
+  });
   log("getTokenInfos: response", { ok: res.ok, status: res.status });
   if (!res.ok) return {};
-  const data = (await res.json()) as TokenInfoResponse;
+  
+  type SaucerSwapFullToken = {
+    id: string;
+    decimals: number;
+  };
+  
+  const data = (await res.json()) as SaucerSwapFullToken[];
   const map: Record<string, { decimals: number }> = {};
-  (data || []).forEach((t) => {
-    const id = t.token_id;
-    if (!id) return;
-    const dec =
-      typeof t.decimals === "string"
-        ? parseFloat(t.decimals)
-        : typeof t.decimals === "number"
-        ? t.decimals
-        : 0;
+  
+  // Filter to only include tokens that are in our requested tokenIds
+  const tokenIdSet = new Set(tokenIds);
+  
+  (data || []).forEach((token) => {
+    const id = token.id;
+    if (!id || !tokenIdSet.has(id)) return;
+    
+    const dec = token.decimals ?? 0;
     map[id] = { decimals: Number.isFinite(dec) ? dec : 0 };
   });
+  
   log("getTokenInfos: parsed", { count: Object.keys(map).length });
   return map;
 }
