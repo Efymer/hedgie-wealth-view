@@ -14,6 +14,7 @@ import { useMarkNotificationSeenMutation } from "@/mutations/index";
 import {
   useNotificationsQuery,
   useNotificationLastSeenQuery,
+  useAccountTokenDetails,
 } from "@/queries/index";
 import {
   Tooltip,
@@ -21,6 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { formatTokenBalance } from "@/lib/format";
 
 export const NotificationsCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +36,31 @@ export const NotificationsCenter: React.FC = () => {
     () => notifData?.notifications ?? [],
     [notifData]
   );
+
+  // Get unique token IDs from notifications for fetching decimals
+  const notificationTokenIds = useMemo(() => {
+    const tokenIds = notifications
+      .map(n => n.token)
+      .filter((token): token is string => Boolean(token) && token !== "HBAR");
+    return Array.from(new Set(tokenIds));
+  }, [notifications]);
+
+  // Fetch token details to get decimals (using a dummy account ID since we just need token info)
+  const { data: tokenDetails } = useAccountTokenDetails("0.0.1");
+  
+  // Build decimals map for token_id -> decimals
+  const tokenDecimalsMap = useMemo(() => {
+    const map = new Map<string, number>();
+    // Add HBAR decimals
+    map.set("HBAR", 8);
+    // Add other token decimals from token details
+    (tokenDetails ?? []).forEach((t) => {
+      if (t.token_id && typeof t.decimals === "number") {
+        map.set(t.token_id, t.decimals);
+      }
+    });
+    return map;
+  }, [tokenDetails]);
 
   // Last seen pointer via GraphQL + React Query helper
   const { data: lastSeenData, refetch: refetchLastSeen } =
@@ -165,7 +192,12 @@ export const NotificationsCenter: React.FC = () => {
                           <p className="text-sm mt-1">
                             {n.direction === "sent" ? "Sent" : "Received"}{" "}
                             <span className="font-medium">
-                              {n.amount ?? 0} {n.token ?? "HBAR"}
+                              {(() => {
+                                const token = n.token ?? "HBAR";
+                                const amount = n.amount ?? 0;
+                                const decimals = tokenDecimalsMap.get(token) ?? 0;
+                                return `${formatTokenBalance(amount, decimals)} ${token}`;
+                              })()}
                             </span>
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
