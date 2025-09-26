@@ -77,7 +77,7 @@ const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 
 // Authentication check
 function isAuthorized(adminKey?: string): boolean {
-  const expectedKey = process.env.HASURA_ADMIN_KEY;
+  const expectedKey = process.env.HASURA_ADMIN_SECRET;
   if (!expectedKey) {
     log("No ADMIN_KEY configured in environment");
     return false;
