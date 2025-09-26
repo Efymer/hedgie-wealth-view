@@ -8,7 +8,7 @@ const COINGECKO_PRICE =
   "https://api.coingecko.com/api/v3/simple/price?ids=hedera-hashgraph&vs_currencies=usd";
 const HASHPACK_TOKEN_INFO =
   "https://hashpack-mirror.b-cdn.net/getTokenInfo?network=mainnet&token_ids=";
-const HASHPACK_PRICES = "https://api.hashpack.app/prices";
+const SAUCERSWAP_TOKENS = "https://api.saucerswap.finance/tokens";
 
 type RequestBody = { accounts?: unknown };
 type Req = { method?: string; query?: Record<string, unknown>; body?: RequestBody };
@@ -136,23 +136,28 @@ async function getHBARPriceUSD(): Promise<number> {
   return price;
 }
 
-// HashPack prices API returns either a map or an array
+// SaucerSwap tokens API returns an array of token objects
 async function getTokenPrices(): Promise<Record<string, number>> {
-  log("getTokenPrices: fetching", { url: HASHPACK_PRICES });
-  const res = await fetch(HASHPACK_PRICES, { method: "POST" });
+  log("getTokenPrices: fetching", { url: SAUCERSWAP_TOKENS });
+  const res = await fetch(SAUCERSWAP_TOKENS, { 
+    method: "GET",
+    headers: {
+      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+    },
+  });
   log("getTokenPrices: response", { ok: res.ok, status: res.status });
   if (!res.ok) return {};
   const payload = (await res.json()) as PricesResponse;
   const out: Record<string, number> = {};
   if (Array.isArray(payload)) {
-    // Array form
+    // Array form - SaucerSwap format
     for (const item of payload) {
       const id = item.token_id || item.id;
       const p = item.priceUsd ?? item.price;
       if (id && typeof p === "number") out[id] = p;
     }
   } else if (payload && typeof payload === "object") {
-    // Map form
+    // Map form - fallback for compatibility
     for (const [id, p] of Object.entries(payload)) {
       if (typeof p === "number") out[id] = p;
     }

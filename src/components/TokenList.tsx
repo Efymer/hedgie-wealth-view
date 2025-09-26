@@ -21,7 +21,7 @@ interface Token {
   decimals: number;
   usdValue: number;
   priceUsd?: number;
-  priceChange24h?: number;
+  priceChange24h?: number; // Daily price change from SaucerSwap API
 }
 
 interface TokenListProps {

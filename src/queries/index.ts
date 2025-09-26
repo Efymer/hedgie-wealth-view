@@ -29,11 +29,11 @@ export function useGQLQuery<TData = unknown, TError = Error>(
   >
 ) {
   const isAuthenticated = useIsAuthenticated();
-  
+
   return useQuery<TData, TError, TData, QueryKey>({
     queryKey: key,
     queryFn: async () => graphQLFetch<TData>(query, variables || {}),
-    enabled: isAuthenticated && (options?.enabled !== false),
+    enabled: isAuthenticated && options?.enabled !== false,
     ...(options || {}),
   });
 }
@@ -43,7 +43,7 @@ export function useGQLQuery<TData = unknown, TError = Error>(
  */
 export const useUsersQuery = (limit: number = 10) => {
   const isAuthenticated = useIsAuthenticated();
-  
+
   return useGQLQuery<{
     users: Array<{ id: string; account_id: string; created_at: string }>;
   }>(
@@ -67,7 +67,7 @@ export const useUsersQuery = (limit: number = 10) => {
 
 export const useUserByAccountQuery = (accountId: string) => {
   const isAuthenticated = useIsAuthenticated();
-  
+
   return useGQLQuery<{
     users: Array<{ id: string; account_id: string; public_key: string }>;
   }>(
@@ -95,10 +95,11 @@ export const useUserByAccountQuery = (accountId: string) => {
 const MIRROR_NODE = "https://mainnet.mirrornode.hedera.com";
 const COINGECKO_PRICE =
   "https://api.coingecko.com/api/v3/simple/price?ids=hedera-hashgraph&vs_currencies=usd&include_24hr_change=true";
-const HASHPACK_PRICES = "https://api.hashpack.app/prices";
+const SAUCERSWAP_TOKENS = "https://api.saucerswap.finance/tokens";
 const HASHPACK_TOKEN_INFO =
   "https://hashpack-mirror.b-cdn.net/getTokenInfo?network=mainnet&token_ids=";
-const HASHPACK_PRICE_CHANGES = "https://api.hashpack.app/price-changes";
+const SAUCERSWAP_DEFAULT_TOKENS =
+  "https://api.saucerswap.finance/tokens/default";
 
 /**
  * Types
@@ -128,7 +129,10 @@ type HbarPriceResponse = {
  * Utilities
  */
 import { extractCIDFromBase64Metadata as extractCID } from "@/lib/hedera-utils";
-export { tinybarToHBAR, extractCIDFromBase64Metadata } from "@/lib/hedera-utils";
+export {
+  tinybarToHBAR,
+  extractCIDFromBase64Metadata,
+} from "@/lib/hedera-utils";
 
 /**
  * Account Info (Mirror Node)
@@ -432,8 +436,12 @@ export type TokenPricesResponse =
     }>;
 
 const getTokenPrices = async (): Promise<TokenPricesResponse> => {
-  // Axios equivalent: axios.post(HASHPACK_PRICES)
-  const res = await fetch(HASHPACK_PRICES, { method: "POST" });
+  const res = await fetch(SAUCERSWAP_TOKENS, {
+    method: "GET",
+    headers: {
+      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+    },
+  });
   if (!res.ok) return [] as unknown as TokenPricesResponse;
   return (await res.json()) as TokenPricesResponse;
 };
@@ -469,7 +477,12 @@ type HashPackTokenData = {
 
 const getAllTokensForAutocomplete = async (): Promise<TokenOption[]> => {
   try {
-    const res = await fetch(HASHPACK_PRICES, { method: "POST" });
+    const res = await fetch(SAUCERSWAP_TOKENS, {
+      method: "GET",
+      headers: {
+        "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+      },
+    });
     if (!res.ok) return [];
 
     const data = (await res.json()) as TokenPricesResponse;
@@ -512,30 +525,38 @@ export const useAllTokensForAutocomplete = () => {
 };
 
 /**
- * Token 24h Price Changes (HashPack API)
- * Returns a map of token_id => percent change (e.g., -15.08). Some entries can be null.
+ * Token 24h Price Changes (SaucerSwap API)
+ * Returns an array of default tokens with price change data
  */
-type TokenPriceChangesResponse = Record<string, number | null>;
+type SaucerSwapDefaultToken = {
+  id: string;
+  symbol: string;
+  priceUsd: number;
+  liquidityUsd: number;
+  priceChangeHour: number;
+  priceChangeDay: number;
+  priceChangeWeek: number;
+};
 
-const getTokenPriceChanges = async (
-  network: "mainnet" | "testnet" = "mainnet"
-): Promise<TokenPriceChangesResponse> => {
-  const res = await fetch(HASHPACK_PRICE_CHANGES, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ network }),
+type TokenPriceChangesResponse = SaucerSwapDefaultToken[];
+
+const getTokenPriceChanges = async (): Promise<TokenPriceChangesResponse> => {
+  const res = await fetch(SAUCERSWAP_DEFAULT_TOKENS, {
+    method: "GET",
+    headers: {
+      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+    },
   });
-  if (!res.ok) return {} as TokenPriceChangesResponse;
+  if (!res.ok) return [] as TokenPriceChangesResponse;
   return (await res.json()) as TokenPriceChangesResponse;
 };
 
 export const useTokenPriceChanges = (
   enabled: boolean = true,
-  network: "mainnet" | "testnet" = "mainnet"
 ) => {
   return useQuery({
-    queryKey: ["prices", "changes", network],
-    queryFn: () => getTokenPriceChanges(network),
+    queryKey: ["prices", "changes"],
+    queryFn: () => getTokenPriceChanges(),
     enabled,
     staleTime: 60_000,
   });
@@ -608,7 +629,6 @@ export const useAccountNFTs = (walletId: string) => {
     staleTime: 60_000,
   });
 };
-
 
 // Given a CID, fetch JSON metadata via HashPack CDN gateway
 export const getNFTMetadata = async (
@@ -843,7 +863,7 @@ const Q_FOLLOWS = /* GraphQL */ `
 
 export const useFollowsQuery = () => {
   const isAuthenticated = useIsAuthenticated();
-  
+
   const query = useGQLQuery<{ follows: GqlFollow[] }>(
     ["follows"],
     Q_FOLLOWS,
@@ -913,7 +933,7 @@ const Q_LAST_SEEN = /* GraphQL */ `
 
 export const useNotificationsQuery = () => {
   const isAuthenticated = useIsAuthenticated();
-  
+
   return useGQLQuery<{ notifications: GqlNotification[] }>(
     ["notifications", { limit: 50 }],
     Q_NOTIFICATIONS,
@@ -927,7 +947,7 @@ export const useNotificationsQuery = () => {
 
 export const useNotificationLastSeenQuery = () => {
   const isAuthenticated = useIsAuthenticated();
-  
+
   return useGQLQuery<{
     notification_last_seen: GqlNotificationLastSeen[];
   }>(["notification_last_seen"], Q_LAST_SEEN, undefined, {
@@ -950,14 +970,14 @@ export const useFollowedAccountsActions = () => {
     if (!isAuthenticated) {
       throw new Error("Must be authenticated to follow accounts");
     }
-    
+
     // Optimistic update - update the raw GraphQL data
     queryClient.setQueryData<{ follows: GqlFollow[] }>(["follows"], (old) => {
       if (!old?.follows) return old;
-      
+
       // Check if already following
       if (old.follows.some((f) => f.account_id === accountId)) return old;
-      
+
       // Add new follow
       return {
         follows: [
@@ -1001,9 +1021,11 @@ export const useFollowedAccountsActions = () => {
     if (!isAuthenticated) {
       throw new Error("Must be authenticated to unfollow accounts");
     }
-    
+
     // Store previous state for rollback
-    const previousData = queryClient.getQueryData<{ follows: GqlFollow[] }>(["follows"]);
+    const previousData = queryClient.getQueryData<{ follows: GqlFollow[] }>([
+      "follows",
+    ]);
 
     // Optimistic update - update the raw GraphQL data
     queryClient.setQueryData<{ follows: GqlFollow[] }>(["follows"], (old) => {
@@ -1031,10 +1053,13 @@ export const useFollowedAccountsActions = () => {
     if (!isAuthenticated) {
       throw new Error("Must be authenticated to toggle follow status");
     }
-    
-    const currentData = queryClient.getQueryData<{ follows: GqlFollow[] }>(["follows"]);
 
-    const isCurrentlyFollowing = currentData?.follows?.some((f) => f.account_id === accountId) ?? false;
+    const currentData = queryClient.getQueryData<{ follows: GqlFollow[] }>([
+      "follows",
+    ]);
+
+    const isCurrentlyFollowing =
+      currentData?.follows?.some((f) => f.account_id === accountId) ?? false;
 
     if (isCurrentlyFollowing) {
       await unfollowAccount(accountId);

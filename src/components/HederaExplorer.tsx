@@ -47,7 +47,7 @@ export const HederaExplorer: React.FC = () => {
     isError: isPriceError,
   } = useHBARPrice();
   const { data: tokenPrices } = useTokenPrices(accountId);
-  const { data: priceChanges } = useTokenPriceChanges(!!accountId, "mainnet");
+  const { data: priceChanges } = useTokenPriceChanges(!!accountId);
   const { data: tokenDetails, isLoading: isTokensLoading } =
     useAccountTokenDetails(accountId);
   const { data: accountInfo } = useAccountInfo(accountId);
@@ -106,8 +106,9 @@ export const HederaExplorer: React.FC = () => {
           ? t.balance / Math.pow(10, t.decimals)
           : t.balance;
         const usdValue = actualBalance * price;
-        const changeRaw = priceChanges?.[t.token_id];
-        const change = typeof changeRaw === "number" ? changeRaw : undefined;
+        // Find price change data from SaucerSwap array
+        const tokenPriceData = priceChanges?.find(token => token.id === t.token_id);
+        const change = tokenPriceData?.priceChangeDay;
 
         return {
           id: t.token_id,
