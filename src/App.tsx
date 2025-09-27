@@ -17,6 +17,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ReactWalletsProvider } from "@/providers/ReactWalletsProvider";
+import { CurrencyProvider } from "@/hooks/useCurrency";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,10 +30,11 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ReactWalletsProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+      <CurrencyProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
           <ScrollToTop />
           <div className="min-h-screen bg-background flex flex-col">
             <Navigation />
@@ -60,7 +62,8 @@ const App = () => (
             <SpeedInsights />
           </>
         )}
-      </TooltipProvider>
+        </TooltipProvider>
+      </CurrencyProvider>
     </ReactWalletsProvider>
   </QueryClientProvider>
 );

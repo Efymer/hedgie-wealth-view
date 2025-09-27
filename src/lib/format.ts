@@ -21,11 +21,31 @@ export const formatTokenBalance = (rawBalance: number, decimals: number, opts?: 
   return formatAmount(actual, { minimumFractionDigits: 0, maximumFractionDigits: 6, locale: opts?.locale });
 };
 
-export const formatUSD = (value: number, locale?: string) => {
+export const formatCurrency = (value: number, currency: 'USD' | 'EUR' = 'USD', locale?: string) => {
   const loc = locale || getBrowserLocale();
   return new Intl.NumberFormat(loc, {
     style: 'currency',
-    currency: 'USD',
+    currency,
+  }).format(value ?? 0);
+};
+
+export const formatUSD = (value: number, locale?: string) => {
+  return formatCurrency(value, 'USD', locale);
+};
+
+export const formatCurrencyWithDecimals = (
+  value: number,
+  decimals: number,
+  currency: 'USD' | 'EUR' = 'USD',
+  locale?: string
+) => {
+  const loc = locale || getBrowserLocale();
+  const fraction = Number.isFinite(decimals) ? Math.max(0, Math.floor(decimals)) : 2;
+  return new Intl.NumberFormat(loc, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: fraction,
+    maximumFractionDigits: fraction,
   }).format(value ?? 0);
 };
 
@@ -34,14 +54,7 @@ export const formatUSDWithDecimals = (
   decimals: number,
   locale?: string
 ) => {
-  const loc = locale || getBrowserLocale();
-  const fraction = Number.isFinite(decimals) ? Math.max(0, Math.floor(decimals)) : 2;
-  return new Intl.NumberFormat(loc, {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: fraction,
-    maximumFractionDigits: fraction,
-  }).format(value ?? 0);
+  return formatCurrencyWithDecimals(value, decimals, 'USD', locale);
 };
 
 // Expects a percentage value in the 0-100 range (e.g., 2.85 for +2.85%)
