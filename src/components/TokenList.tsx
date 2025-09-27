@@ -3,12 +3,11 @@ import { Coins, TrendingUp, TrendingDown } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
-  formatCurrency,
+  formatUSD,
   formatPercent,
   formatAmount,
-  formatCurrencyWithDecimals,
+  formatUSDWithDecimals,
 } from "@/lib/format";
-import { useCurrency } from "@/hooks/useCurrency";
 
 interface Token {
   id: string;
@@ -35,7 +34,6 @@ export const TokenList: React.FC<TokenListProps> = ({
   hideZeroUsd = true,
   onHideZeroUsdChange,
 }) => {
-  const { currency } = useCurrency();
   if (isLoading) {
     return (
       <div className="glass-card rounded-xl p-6 w-full max-w-4xl mx-auto">
@@ -118,7 +116,7 @@ export const TokenList: React.FC<TokenListProps> = ({
                     </div>
                     {typeof token.priceUsd === "number" && (
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        {formatCurrencyWithDecimals(token.priceUsd, token.decimals, currency)}
+                        {formatUSDWithDecimals(token.priceUsd, token.decimals)}
                       </p>
                     )}
                   </div>
@@ -134,7 +132,7 @@ export const TokenList: React.FC<TokenListProps> = ({
                         )}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {formatCurrency(token.usdValue, currency)}
+                        {formatUSD(token.usdValue)}
                       </p>
                     </div>
                     {token.priceChangeDay !== undefined && (

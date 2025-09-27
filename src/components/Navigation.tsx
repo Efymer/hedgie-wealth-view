@@ -1,15 +1,12 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Search, TrendingUp, Activity, Menu, X, Crown, Clock, DollarSign, Euro } from "lucide-react";
+import { Search, TrendingUp, Activity, Menu, X, Crown, Clock } from "lucide-react";
 import { NotificationsCenter } from "./NotificationsCenter";
 import { WalletConnect } from "./WalletConnect";
 import { FollowedAccountsDropdown } from "./FollowedAccountsDropdown";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { useCurrency } from "@/hooks/useCurrency";
 import {
   Sheet,
   SheetContent,
@@ -19,7 +16,6 @@ import {
 export const Navigation: React.FC = () => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
-  const { currency, setCurrency } = useCurrency();
 
   const NavigationLinks = () => (
     <>
@@ -111,30 +107,11 @@ export const Navigation: React.FC = () => {
               <SheetContent side="right" className="w-80">
                 <div className="flex flex-col space-y-4 mt-8">
                   <NavigationLinks />
-                  <div className="flex items-center justify-between px-4 py-2 rounded-lg bg-muted/30">
-                    <Label className="text-sm">Currency</Label>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className={`h-4 w-4 ${currency === 'USD' ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <Switch
-                        checked={currency === 'EUR'}
-                        onCheckedChange={(checked) => setCurrency(checked ? 'EUR' : 'USD')}
-                      />
-                      <Euro className={`h-4 w-4 ${currency === 'EUR' ? 'text-primary' : 'text-muted-foreground'}`} />
-                    </div>
-                  </div>
                 </div>
               </SheetContent>
             </Sheet>
           ) : (
             <div className="flex items-center space-x-3">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30">
-                <DollarSign className={`h-4 w-4 ${currency === 'USD' ? 'text-primary' : 'text-muted-foreground'}`} />
-                <Switch
-                  checked={currency === 'EUR'}
-                  onCheckedChange={(checked) => setCurrency(checked ? 'EUR' : 'USD')}
-                />
-                <Euro className={`h-4 w-4 ${currency === 'EUR' ? 'text-primary' : 'text-muted-foreground'}`} />
-              </div>
               <FollowedAccountsDropdown />
               <NotificationsCenter />
               <WalletConnect /> 
