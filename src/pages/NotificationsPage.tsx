@@ -24,7 +24,7 @@ import { format, isToday, isYesterday, parseISO, startOfDay } from "date-fns";
 import {
   useNotificationsQuery,
   useNotificationLastSeenQuery,
-  useAccountTokenDetails,
+  useTokenInfoForIds,
   type GqlNotification,
 } from "@/queries/index";
 import { useMarkNotificationSeenMutation } from "@/mutations/index";
@@ -73,27 +73,32 @@ const NotificationsPage: React.FC = () => {
   // Get unique token IDs from notifications for fetching decimals
   const notificationTokenIds = useMemo(() => {
     const tokenIds = rawNotifications
-      .map(n => n.token)
-      .filter((token): token is string => Boolean(token) && token !== "HBAR");
+      .map((n) => {
+        // For HBAR, there's no token_id in payload, so we skip it
+        if (n.token === "HBAR" || !n.payload?.token_id) return null;
+        return n.payload.token_id;
+      })
+      .filter((tokenId): tokenId is string => Boolean(tokenId));
     return Array.from(new Set(tokenIds));
   }, [rawNotifications]);
 
-  // Fetch token details to get decimals (using a dummy account ID since we just need token info)
-  const { data: tokenDetails } = useAccountTokenDetails("0.0.1");
-  
+  // Fetch token info for notification tokens to get decimals
+  const { data: notificationTokenInfo } =
+    useTokenInfoForIds(notificationTokenIds);
+
   // Build decimals map for token_id -> decimals
   const tokenDecimalsMap = useMemo(() => {
     const map = new Map<string, number>();
-    // Add HBAR decimals
+    // Add HBAR decimals (always 8)
     map.set("HBAR", 8);
-    // Add other token decimals from token details
-    (tokenDetails ?? []).forEach((t) => {
-      if (t.token_id && typeof t.decimals === "number") {
-        map.set(t.token_id, t.decimals);
+    // Add other token decimals from notification token info
+    (notificationTokenInfo ?? []).forEach((tokenInfo) => {
+      if (tokenInfo.token_id && typeof tokenInfo.decimals === "number") {
+        map.set(tokenInfo.token_id, tokenInfo.decimals);
       }
     });
     return map;
-  }, [tokenDetails]);
+  }, [notificationTokenInfo]);
 
   // Transform GraphQL notifications to component format
   const notifications: NotificationData[] = useMemo(() => {
@@ -383,8 +388,20 @@ const NotificationsPage: React.FC = () => {
                               <p className="text-lg">
                                 <span className="font-semibold">
                                   {(() => {
-                                    const decimals = tokenDecimalsMap.get(notification.token) ?? 0;
-                                    return `${formatTokenBalance(notification.amount, decimals)} ${notification.token}`;
+                                    const tokenSymbol = notification.token;
+                                    // For HBAR, use the symbol directly, for other tokens use token_id from payload
+                                    const rawNotif = rawNotifications.find(
+                                      (n) => n.id === notification.id
+                                    );
+                                    const tokenId =
+                                      rawNotif?.payload?.token_id ||
+                                      tokenSymbol;
+                                    const decimals =
+                                      tokenDecimalsMap.get(tokenId) ?? 0;
+                                    return `${formatTokenBalance(
+                                      notification.amount,
+                                      decimals
+                                    )} ${tokenSymbol}`;
                                   })()}
                                 </span>
                               </p>

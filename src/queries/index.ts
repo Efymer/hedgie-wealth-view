@@ -1,6 +1,5 @@
 import {
   useQuery,
-  useQueries,
   useInfiniteQuery,
   UseQueryOptions,
   QueryKey,
@@ -8,7 +7,6 @@ import {
 } from "@tanstack/react-query";
 import {
   graphQLFetch,
-  GraphQLResponse,
   useUpsertAccountMutation,
   useFollowMutation,
   useUnfollowMutation,
@@ -37,57 +35,6 @@ export function useGQLQuery<TData = unknown, TError = Error>(
     ...(options || {}),
   });
 }
-
-/**
- * Example GraphQL Queries - you can add your specific GraphQL queries here
- */
-export const useUsersQuery = (limit: number = 10) => {
-  const isAuthenticated = useIsAuthenticated();
-
-  return useGQLQuery<{
-    users: Array<{ id: string; account_id: string; created_at: string }>;
-  }>(
-    ["users", { limit }],
-    `
-    query GetUsers($limit: Int!) {
-      users(limit: $limit, order_by: { created_at: desc }) {
-        id
-        account_id
-        created_at
-      }
-    }
-    `,
-    { limit },
-    {
-      enabled: isAuthenticated,
-      staleTime: 5 * 60_000, // 5 minutes
-    }
-  );
-};
-
-export const useUserByAccountQuery = (accountId: string) => {
-  const isAuthenticated = useIsAuthenticated();
-
-  return useGQLQuery<{
-    users: Array<{ id: string; account_id: string; public_key: string }>;
-  }>(
-    ["user", accountId],
-    `
-    query GetUserByAccount($account_id: String!) {
-      users(where: { account_id: { _eq: $account_id } }) {
-        id
-        account_id
-        public_key
-      }
-    }
-    `,
-    { account_id: accountId },
-    {
-      enabled: isAuthenticated && !!accountId,
-      staleTime: 5 * 60_000,
-    }
-  );
-};
 
 /**
  * Mirror Node + Price APIs
@@ -358,11 +305,7 @@ type TokenInfo = {
   icon?: string;
 };
 
-// Batched token info fetch (SaucerSwap full tokens API)
-const getTokenInfosBatch = async (
-  tokenIds: string[]
-): Promise<Record<string, TokenInfo>> => {
-  if (!tokenIds.length) return {};
+const getTokenInfos = async (): Promise<Record<string, TokenInfo>> => {
   const res = await fetch(SAUCERSWAP_FULL_TOKENS, {
     method: "GET",
     headers: {
@@ -390,12 +333,9 @@ const getTokenInfosBatch = async (
   const data = (await res.json()) as SaucerSwapFullToken[];
   const map: Record<string, TokenInfo> = {};
 
-  // Filter to only include tokens that are in our requested tokenIds
-  const tokenIdSet = new Set(tokenIds);
-
   (data || []).forEach((token) => {
     const id = token.id;
-    if (!id || !tokenIdSet.has(id)) return;
+    if (!id) return;
 
     map[id] = {
       token_id: id,
@@ -428,14 +368,10 @@ const useAccountTokens = (walletId: string) => {
 
 export const useAccountTokenDetails = (walletId: string) => {
   const tokensQuery = useAccountTokens(walletId);
-  const tokenIds = Array.from(
-    new Set((tokensQuery.data ?? []).map((t) => t.token_id).filter(Boolean))
-  );
-
   const infosQuery = useQuery({
-    queryKey: ["token_infos", walletId, tokenIds.join(",")],
-    queryFn: () => getTokenInfosBatch(tokenIds),
-    enabled: !!walletId && tokenIds.length > 0,
+    queryKey: ["token_infos", walletId],
+    queryFn: () => getTokenInfos(),
+    enabled: !!walletId,
     staleTime: 10 * 60_000,
   });
 
@@ -695,7 +631,6 @@ export const useNFTMetadata = (
   });
 };
 
-
 /**
  * Token Balances (Mirror Node)
  * GET /api/v1/tokens/{tokenId}/balances
@@ -936,6 +871,9 @@ export type GqlNotification = {
   amount: number | null;
   consensus_ts: string;
   created_at: string;
+  payload: {
+    token_id: string;
+  };
 };
 
 export type GqlNotificationLastSeen = {
@@ -953,6 +891,7 @@ const Q_NOTIFICATIONS = /* GraphQL */ `
       amount
       consensus_ts
       created_at
+      payload
     }
   }
 `;
@@ -988,6 +927,28 @@ export const useNotificationLastSeenQuery = () => {
   }>(["notification_last_seen"], Q_LAST_SEEN, undefined, {
     enabled: isAuthenticated,
     staleTime: 30_000, // 30 seconds
+  });
+};
+
+/**
+ * Hook to fetch token information for specific token IDs from SaucerSwap API
+ * This is specifically designed for notifications where we need token decimals
+ * for tokens that may not be owned by the current user
+ */
+export const useTokenInfoForIds = (tokenIds: string[]) => {
+  return useQuery({
+    queryKey: ["tokenInfoForIds", tokenIds],
+    queryFn: async () => {
+      if (tokenIds.length === 0) return [];
+      
+      // Fetch all tokens from SaucerSwap and filter by requested IDs
+      const allTokens = await getTokenInfos();
+      return tokenIds
+        .map(id => allTokens[id])
+        .filter((token): token is TokenInfo => Boolean(token));
+    },
+    enabled: tokenIds.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 

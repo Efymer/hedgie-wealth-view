@@ -14,7 +14,7 @@ import { useMarkNotificationSeenMutation } from "@/mutations/index";
 import {
   useNotificationsQuery,
   useNotificationLastSeenQuery,
-  useAccountTokenDetails,
+  useTokenInfoForIds,
 } from "@/queries/index";
 import {
   Tooltip,
@@ -28,7 +28,6 @@ export const NotificationsCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const auth = useAuth();
-  console.log(auth);
 
   // Poll latest notifications
   const { data: notifData } = useNotificationsQuery();
@@ -36,34 +35,6 @@ export const NotificationsCenter: React.FC = () => {
     () => notifData?.notifications ?? [],
     [notifData]
   );
-
-  // Get unique token IDs from notifications for fetching decimals
-  const notificationTokenIds = useMemo(() => {
-    const tokenIds = notifications
-      .map(n => n.token)
-      .filter((token): token is string => Boolean(token) && token !== "HBAR");
-    return Array.from(new Set(tokenIds));
-  }, [notifications]);
-
-  // Fetch token details to get decimals (using a dummy account ID since we just need token info)
-  const { data: tokenDetails } = useAccountTokenDetails("0.0.1");
-  
-  // Build decimals map for token_id -> decimals
-  const tokenDecimalsMap = useMemo(() => {
-    const map = new Map<string, number>();
-    // Add HBAR decimals
-    map.set("HBAR", 8);
-    // Add other token decimals from token details
-    (tokenDetails ?? []).forEach((t) => {
-      console.log(t)
-      if (t.token_id && typeof t.decimals === "number") {
-        map.set(t.token_id, t.decimals);
-      }
-    });
-    return map;
-  }, [tokenDetails]);
-
-  console.log(tokenDecimalsMap)
 
   // Last seen pointer via GraphQL + React Query helper
   const { data: lastSeenData, refetch: refetchLastSeen } =
@@ -77,6 +48,35 @@ export const NotificationsCenter: React.FC = () => {
     if (!lastSeenTs) return notifications.length;
     return notifications.filter((n) => n.consensus_ts > lastSeenTs).length;
   }, [notifications, lastSeenTs]);
+
+  // Get unique token IDs from notifications for fetching decimals
+  const notificationTokenIds = useMemo(() => {
+    const tokenIds = notifications
+      .map(n => {
+        // For HBAR, there's no token_id in payload, so we skip it
+        if (n.token === "HBAR" || !n.payload?.token_id) return null;
+        return n.payload.token_id;
+      })
+      .filter((tokenId): tokenId is string => Boolean(tokenId));
+    return Array.from(new Set(tokenIds));
+  }, [notifications]);
+
+  // Fetch token info for notification tokens to get decimals
+  const { data: notificationTokenInfo } = useTokenInfoForIds(notificationTokenIds);
+  
+  // Build decimals map for token_id -> decimals
+  const tokenDecimalsMap = useMemo(() => {
+    const map = new Map<string, number>();
+    // Add HBAR decimals (always 8)
+    map.set("HBAR", 8);
+    // Add other token decimals from notification token info
+    (notificationTokenInfo ?? []).forEach((tokenInfo) => {
+      if (tokenInfo.token_id && typeof tokenInfo.decimals === "number") {
+        map.set(tokenInfo.token_id, tokenInfo.decimals);
+      }
+    });
+    return map;
+  }, [notificationTokenInfo]);
 
   const markSeenMut = useMarkNotificationSeenMutation();
 
@@ -196,11 +196,10 @@ export const NotificationsCenter: React.FC = () => {
                             {n.direction === "sent" ? "Sent" : "Received"}{" "}
                             <span className="font-medium">
                               {(() => {
-                                const token = n.token ?? "HBAR";
-                                const amount = n.amount ?? 0;
-                                const decimals = tokenDecimalsMap.get(token) ?? 0;
-                                console.log(token, amount, decimals)
-                                return `${formatTokenBalance(amount, decimals)} ${token}`;
+                                const tokenSymbol = n.token || "HBAR";
+                                const tokenId = n.payload?.token_id || tokenSymbol;
+                                const decimals = tokenDecimalsMap.get(tokenId) ?? 0;
+                                return `${formatTokenBalance(n.amount || 0, decimals)} ${tokenSymbol}`;
                               })()}
                             </span>
                           </p>
