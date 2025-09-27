@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -368,9 +367,6 @@ const NotificationsPage: React.FC = () => {
                                 {notification.accountName ||
                                   notification.accountId}
                               </h3>
-                              <Badge variant="secondary" className="text-xs">
-                                {notification.accountId}
-                              </Badge>
                               {notification.type === "sent" ? (
                                 <div className="flex items-center space-x-1 text-red-500">
                                   <ArrowUpRight className="h-4 w-4" />
