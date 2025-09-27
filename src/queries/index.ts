@@ -422,6 +422,9 @@ const useAccountTokens = (walletId: string) => {
 
 export const useAccountTokenDetails = (walletId: string) => {
   const tokensQuery = useAccountTokens(walletId);
+  const tokenIds = Array.from(
+    new Set((tokensQuery.data ?? []).map((t) => t.token_id).filter(Boolean))
+  );
 
   const infosQuery = useQuery({
     queryKey: ["token_infos", walletId],
@@ -435,7 +438,7 @@ export const useAccountTokenDetails = (walletId: string) => {
 
   const infoMap = infosQuery.data ?? {};
   console.log("infoMap", infoMap);
-  console.log("tokensQuery data", tokensQuery.data);
+  console.log("tokensQuery", tokensQuery);
 
   const details = (tokensQuery.data ?? []).map((t) => {
     const info = infoMap[t.token_id];
