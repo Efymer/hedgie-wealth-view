@@ -29,7 +29,6 @@ export const NotificationsCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const auth = useAuth();
-  const { data: accountId } = useAccountId();
 
   // Poll latest notifications
   const { data: notifData } = useNotificationsQuery();
@@ -48,6 +47,7 @@ export const NotificationsCenter: React.FC = () => {
 
   // Fetch token info specifically for tokens that appear in notifications
   const { data: notificationTokenInfo } = useTokenInfoForIds(notificationTokenIds);
+  console.log(notificationTokenInfo)
 
   const tokenDecimalsMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -59,6 +59,8 @@ export const NotificationsCenter: React.FC = () => {
         map.set(tokenInfo.token_id, tokenInfo.decimals);
       }
     });
+
+    console.log(map);
     return map;
   }, [notificationTokenInfo]);
 
