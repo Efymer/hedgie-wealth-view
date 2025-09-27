@@ -449,7 +449,6 @@ export const useAccountTokenDetails = (walletId: string) => {
     } as TokenInfo & { balance: number };
   });
 
-  console.log("details", details);
   return { data: details, isLoading, isError };
 };
 
