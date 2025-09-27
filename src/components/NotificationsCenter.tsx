@@ -8,14 +8,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { useMarkNotificationSeenMutation } from "@/mutations/index";
 import {
   useNotificationsQuery,
   useNotificationLastSeenQuery,
-  useTokenInfoForIds,
-} from "@/queries";
-import { useMarkNotificationSeenMutation } from "@/mutations";
+  useAccountTokenDetails,
+} from "@/queries/index";
 import {
   Tooltip,
   TooltipContent,
@@ -46,21 +46,23 @@ export const NotificationsCenter: React.FC = () => {
     return Array.from(new Set(tokenIds));
   }, [notifications]);
 
-  // Fetch token info specifically for tokens that appear in notifications
-  const { data: notificationTokenInfo } = useTokenInfoForIds(notificationTokenIds);
+  const { data: tokenDetails } = useAccountTokenDetails(accountId);
 
   const tokenDecimalsMap = useMemo(() => {
     const map = new Map<string, number>();
     // Add HBAR decimals
     map.set("HBAR", 8);
-    // Add decimals from notification tokens
-    Object.values(notificationTokenInfo ?? {}).forEach((tokenInfo) => {
-      if (tokenInfo?.token_id && typeof tokenInfo.decimals === "number") {
-        map.set(tokenInfo.token_id, tokenInfo.decimals);
+    // Add other token decimals from token details
+    (tokenDetails ?? []).forEach((t) => {
+      console.log(t)
+      if (t.token_id && typeof t.decimals === "number") {
+        map.set(t.token_id, t.decimals);
       }
     });
     return map;
-  }, [notificationTokenInfo]);
+  }, [tokenDetails]);
+
+  console.log(tokenDecimalsMap)
 
   // Last seen pointer via GraphQL + React Query helper
   const { data: lastSeenData, refetch: refetchLastSeen } =
