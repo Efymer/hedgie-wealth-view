@@ -197,7 +197,7 @@ export const NotificationsCenter: React.FC = () => {
                             {n.direction === "sent" ? "Sent" : "Received"}{" "}
                             <span className="font-medium">
                               {(() => {
-                                const token = n.token ?? "HBAR";
+                                const token = n.payload.token_id ?? "HBAR";
                                 const amount = n.amount ?? 0;
                                 const decimals = tokenDecimalsMap.get(token) ?? 0;
                                 console.log(token, amount, decimals)
