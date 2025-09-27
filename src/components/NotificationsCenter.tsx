@@ -52,7 +52,7 @@ export const NotificationsCenter: React.FC = () => {
   // Get unique token IDs from notifications for fetching decimals
   const notificationTokenIds = useMemo(() => {
     const tokenIds = notifications
-      .map(n => {
+      .map((n) => {
         // For HBAR, there's no token_id in payload, so we skip it
         if (n.token === "HBAR" || !n.payload?.token_id) return null;
         return n.payload.token_id;
@@ -62,8 +62,9 @@ export const NotificationsCenter: React.FC = () => {
   }, [notifications]);
 
   // Fetch token info for notification tokens to get decimals
-  const { data: notificationTokenInfo } = useTokenInfoForIds(notificationTokenIds);
-  
+  const { data: notificationTokenInfo } =
+    useTokenInfoForIds(notificationTokenIds);
+
   // Build decimals map for token_id -> decimals
   const tokenDecimalsMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -198,22 +199,27 @@ export const NotificationsCenter: React.FC = () => {
                               {(() => {
                                 const tokenSymbol = n.token || "HBAR";
                                 const amount = n.amount || 0;
-                                
+
                                 // For HBAR, use hardcoded 8 decimals
                                 if (tokenSymbol === "HBAR") {
-                                  const formattedAmount = formatAmount(
-                                    amount / Math.pow(10, 8),
-                                    { minimumFractionDigits: 3, maximumFractionDigits: 3 }
-                                  );
+                                  const formattedAmount = formatAmount(amount, {
+                                    minimumFractionDigits: 3,
+                                    maximumFractionDigits: 3,
+                                  });
                                   return `${formattedAmount} ${tokenSymbol}`;
                                 }
-                                
+
                                 // For other tokens, use proper decimals from SaucerSwap
-                                const tokenId = n.payload?.token_id || tokenSymbol;
-                                const decimals = tokenDecimalsMap.get(tokenId) ?? 0;
+                                const tokenId =
+                                  n.payload?.token_id || tokenSymbol;
+                                const decimals =
+                                  tokenDecimalsMap.get(tokenId) ?? 0;
                                 const formattedAmount = formatAmount(
                                   amount / Math.pow(10, decimals),
-                                  { minimumFractionDigits: 3, maximumFractionDigits: 3 }
+                                  {
+                                    minimumFractionDigits: 3,
+                                    maximumFractionDigits: 3,
+                                  }
                                 );
                                 return `${formattedAmount} ${tokenSymbol}`;
                               })()}

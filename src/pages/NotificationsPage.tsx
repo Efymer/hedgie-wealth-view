@@ -394,8 +394,11 @@ const NotificationsPage: React.FC = () => {
                                     // For HBAR, use hardcoded 8 decimals
                                     if (tokenSymbol === "HBAR") {
                                       const formattedAmount = formatAmount(
-                                        amount / Math.pow(10, 8),
-                                        { minimumFractionDigits: 3, maximumFractionDigits: 3 }
+                                        amount,
+                                        {
+                                          minimumFractionDigits: 3,
+                                          maximumFractionDigits: 3,
+                                        }
                                       );
                                       return `${formattedAmount} ${tokenSymbol}`;
                                     }
@@ -411,7 +414,10 @@ const NotificationsPage: React.FC = () => {
                                       tokenDecimalsMap.get(tokenId) ?? 0;
                                     const formattedAmount = formatAmount(
                                       amount / Math.pow(10, decimals),
-                                      { minimumFractionDigits: 3, maximumFractionDigits: 3 }
+                                      {
+                                        minimumFractionDigits: 3,
+                                        maximumFractionDigits: 3,
+                                      }
                                     );
                                     return `${formattedAmount} ${tokenSymbol}`;
                                   })()}
