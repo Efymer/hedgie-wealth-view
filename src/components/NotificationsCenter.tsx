@@ -55,12 +55,15 @@ export const NotificationsCenter: React.FC = () => {
     map.set("HBAR", 8);
     // Add other token decimals from token details
     (tokenDetails ?? []).forEach((t) => {
+      console.log(t)
       if (t.token_id && typeof t.decimals === "number") {
         map.set(t.token_id, t.decimals);
       }
     });
     return map;
   }, [tokenDetails]);
+
+  console.log(tokenDecimalsMap)
 
   // Last seen pointer via GraphQL + React Query helper
   const { data: lastSeenData, refetch: refetchLastSeen } =

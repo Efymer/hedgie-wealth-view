@@ -96,8 +96,7 @@ const MIRROR_NODE = "https://mainnet.mirrornode.hedera.com";
 const COINGECKO_PRICE =
   "https://api.coingecko.com/api/v3/simple/price?ids=hedera-hashgraph&vs_currencies=usd&include_24hr_change=true";
 const SAUCERSWAP_TOKENS = "https://api.saucerswap.finance/tokens";
-const SAUCERSWAP_FULL_TOKENS =
-  "https://api.saucerswap.finance/tokens/full";
+const SAUCERSWAP_FULL_TOKENS = "https://api.saucerswap.finance/tokens/full";
 const SAUCERSWAP_DEFAULT_TOKENS =
   "https://api.saucerswap.finance/tokens/default";
 
@@ -371,7 +370,7 @@ const getTokenInfosBatch = async (
     },
   });
   if (!res.ok) return {};
-  
+
   type SaucerSwapFullToken = {
     id: string;
     name: string;
@@ -387,17 +386,17 @@ const getTokenInfosBatch = async (
     sentinelReport?: string;
     twitterHandle?: string;
   };
-  
+
   const data = (await res.json()) as SaucerSwapFullToken[];
   const map: Record<string, TokenInfo> = {};
-  
+
   // Filter to only include tokens that are in our requested tokenIds
   const tokenIdSet = new Set(tokenIds);
-  
+
   (data || []).forEach((token) => {
     const id = token.id;
     if (!id || !tokenIdSet.has(id)) return;
-    
+
     map[id] = {
       token_id: id,
       symbol: token.symbol ?? id,
@@ -588,9 +587,7 @@ const getTokenPriceChanges = async (): Promise<TokenPriceChangesResponse> => {
   return (await res.json()) as TokenPriceChangesResponse;
 };
 
-export const useTokenPriceChanges = (
-  enabled: boolean = true,
-) => {
+export const useTokenPriceChanges = (enabled: boolean = true) => {
   return useQuery({
     queryKey: ["prices", "changes"],
     queryFn: () => getTokenPriceChanges(),
@@ -697,6 +694,7 @@ export const useNFTMetadata = (
     staleTime: 10 * 60_000,
   });
 };
+
 
 /**
  * Token Balances (Mirror Node)

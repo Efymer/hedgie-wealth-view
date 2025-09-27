@@ -147,17 +147,8 @@ export const HederaExplorer: React.FC = () => {
     priceChanges,
   ]);
 
-  const nfts = useMemo(() => {
-    return (tokenDetails ?? [])
-      .filter((t: { type?: string }) => t.type === "NON_FUNGIBLE_UNIQUE")
-      .map((t) => ({
-        id: t.token_id,
-        symbol: t.symbol,
-        name: t.name,
-        balance: t.balance,
-        type: t.type,
-      }));
-  }, [tokenDetails]);
+  // NFT data is now handled directly by NFTList component using useAccountNFTs
+  // No need to filter from tokenDetails since it no longer contains NFT info
 
   const usdValue = useMemo(() => {
     // Sum USD value from tokens (HBAR is included as a token above)
@@ -182,7 +173,6 @@ export const HederaExplorer: React.FC = () => {
     });
     return map;
   }, [tokenDetails]);
-  console.log(nfts);
 
 
   // Map Mirror Node transactions to TransactionHistory's expected shape
@@ -349,7 +339,7 @@ export const HederaExplorer: React.FC = () => {
 
               <TabsContent value="nfts">
                 <NFTList
-                  nfts={nfts}
+                  nfts={[]}
                   isLoading={isTokensLoading}
                   accountId={accountId}
                 />

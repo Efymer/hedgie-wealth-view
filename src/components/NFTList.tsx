@@ -24,6 +24,23 @@ interface NFTListProps {
   accountId?: string; // when provided, component will fetch NFTs and ignore nfts prop
 }
 
+// Type for NFT modal data
+interface NFTModalData {
+  id: string;
+  name: string;
+  symbol?: string;
+  serialNumber?: string;
+  image?: string;
+  description?: string;
+  tokenId?: string;
+  isForSale?: boolean;
+  price?: string;
+  lastSalePrice?: string;
+  owner?: string;
+  creator?: string;
+  attributes?: Array<{ trait_type: string; value: string }>;
+}
+
 // Mock data for SentX marketplace status
 const getMockSaleStatus = (tokenId: string) => {
   const hash = tokenId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
@@ -33,7 +50,7 @@ const getMockSaleStatus = (tokenId: string) => {
   return { isForSale, price };
 };
 
-const NFTCard: React.FC<{ nft: NFT; onOpenModal: (nft: any) => void }> = ({ nft, onOpenModal }) => {
+const NFTCard: React.FC<{ nft: NFT; onOpenModal: (nft: NFTModalData) => void }> = ({ nft, onOpenModal }) => {
   const mockStatus = getMockSaleStatus(nft.id);
   const handleClick = () => {
     onOpenModal({
@@ -87,7 +104,7 @@ const NFTCard: React.FC<{ nft: NFT; onOpenModal: (nft: any) => void }> = ({ nft,
 };
 
 // NFT item that resolves metadata->image for an account NFT row
-const AccountNFTItem: React.FC<{ item: AccountNFT; onOpenModal: (nft: any) => void; name: string }> = ({ item, onOpenModal, name }) => {
+const AccountNFTItem: React.FC<{ item: AccountNFT; onOpenModal: (nft: NFTModalData) => void }> = ({ item, onOpenModal }) => {
   const { ref, isIntersecting } = useOnScreen<HTMLDivElement>({ rootMargin: "200px 0px" });
   const metaQuery = useNFTMetadata(item.metadata as string | undefined, isIntersecting);
 
@@ -131,20 +148,30 @@ const AccountNFTItem: React.FC<{ item: AccountNFT; onOpenModal: (nft: any) => vo
 
   const mockStatus = getMockSaleStatus(item.token_id);
   
+  // Extract name from metadata, fallback to token ID
+  const nftName = useMemo(() => {
+    const metadata = metaQuery.data as unknown as { 
+      name?: string; 
+      title?: string;
+    } | null;
+    return metadata?.name || metadata?.title || `NFT ${item.token_id}`;
+  }, [metaQuery.data, item.token_id]);
+  
   const handleClick = () => {
     const metadata = metaQuery.data as unknown as { 
       name?: string; 
+      title?: string;
       description?: string; 
       attributes?: Array<{ trait_type: string; value: string }> 
     } | null;
 
     onOpenModal({
       id: item.token_id,
-      name: name,
+      name: nftName,
       tokenId: item.token_id,
       serialNumber: item.serial_number.toString(),
       image: media.url,
-      description: metadata?.description || `${name} NFT from token ${item.token_id}.`,
+      description: metadata?.description || `${nftName} NFT from token ${item.token_id}.`,
       isForSale: mockStatus.isForSale,
       price: mockStatus.price,
       lastSalePrice: "89",
@@ -192,7 +219,7 @@ const AccountNFTItem: React.FC<{ item: AccountNFT; onOpenModal: (nft: any) => vo
 
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-sm truncate">{name}</h3>
+          <h3 className="font-semibold text-sm truncate">{nftName}</h3>
           <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
         <p className="text-xs text-muted-foreground truncate">Serial #{item.serial_number}</p>
@@ -209,15 +236,14 @@ export const NFTList: React.FC<NFTListProps> = ({
   isLoading = false,
   accountId,
 }) => {
-  const [selectedNFT, setSelectedNFT] = useState<any>(null);
+  const [selectedNFT, setSelectedNFT] = useState<NFTModalData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const accountNFTsQuery = useAccountNFTs(accountId || "");
 
-  const handleOpenModal = (nft: any) => {
+  const handleOpenModal = (nft: NFTModalData) => {
     setSelectedNFT(nft);
     setIsModalOpen(true);
   };
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedNFT(null);
@@ -274,7 +300,6 @@ export const NFTList: React.FC<NFTListProps> = ({
             <AccountNFTItem 
               key={`${it.token_id}:${it.serial_number}`}
               item={it}
-              name={nfts.find((nft) => nft.id === it.token_id)?.name}
               onOpenModal={handleOpenModal}
             />
           ))}
@@ -283,7 +308,7 @@ export const NFTList: React.FC<NFTListProps> = ({
         <NFTDetailsModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          nft={selectedNFT || {}}
+          nft={selectedNFT || { id: '', name: '' }}
         />
       </div>
     );
@@ -325,7 +350,7 @@ export const NFTList: React.FC<NFTListProps> = ({
       <NFTDetailsModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        nft={selectedNFT || {}}
+        nft={selectedNFT || { id: '', name: '' }}
       />
     </div>
   );
