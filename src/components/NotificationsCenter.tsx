@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { formatTokenBalance } from "@/lib/format";
+import { formatAmount } from "@/lib/format";
 
 export const NotificationsCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -197,9 +197,21 @@ export const NotificationsCenter: React.FC = () => {
                             <span className="font-medium">
                               {(() => {
                                 const tokenSymbol = n.token || "HBAR";
+                                const amount = n.amount || 0;
+                                
+                                // For HBAR, amount is already formatted, don't apply additional formatting
+                                if (tokenSymbol === "HBAR") {
+                                  return `${amount} ${tokenSymbol}`;
+                                }
+                                
+                                // For other tokens, use proper decimals from SaucerSwap
                                 const tokenId = n.payload?.token_id || tokenSymbol;
                                 const decimals = tokenDecimalsMap.get(tokenId) ?? 0;
-                                return `${formatTokenBalance(n.amount || 0, decimals)} ${tokenSymbol}`;
+                                const formattedAmount = formatAmount(
+                                  amount / Math.pow(10, decimals),
+                                  { minimumFractionDigits: 3, maximumFractionDigits: 3 }
+                                );
+                                return `${formattedAmount} ${tokenSymbol}`;
                               })()}
                             </span>
                           </p>

@@ -33,7 +33,7 @@ import {
   formatRelativeTime,
 } from "@/lib/hedera-utils";
 import { useAuth } from "@/hooks/useAuth";
-import { formatTokenBalance } from "@/lib/format";
+import { formatAmount } from "@/lib/format";
 
 interface NotificationData {
   id: string;
@@ -389,7 +389,14 @@ const NotificationsPage: React.FC = () => {
                                 <span className="font-semibold">
                                   {(() => {
                                     const tokenSymbol = notification.token;
-                                    // For HBAR, use the symbol directly, for other tokens use token_id from payload
+                                    const amount = notification.amount;
+
+                                    // For HBAR, amount is already formatted, don't apply additional formatting
+                                    if (tokenSymbol === "HBAR") {
+                                      return `${amount} ${tokenSymbol}`;
+                                    }
+
+                                    // For other tokens, use proper decimals from SaucerSwap
                                     const rawNotif = rawNotifications.find(
                                       (n) => n.id === notification.id
                                     );
@@ -398,10 +405,11 @@ const NotificationsPage: React.FC = () => {
                                       tokenSymbol;
                                     const decimals =
                                       tokenDecimalsMap.get(tokenId) ?? 0;
-                                    return `${formatTokenBalance(
-                                      notification.amount,
-                                      decimals
-                                    )} ${tokenSymbol}`;
+                                    const formattedAmount = formatAmount(
+                                      amount / Math.pow(10, decimals),
+                                      { minimumFractionDigits: 3, maximumFractionDigits: 3 }
+                                    );
+                                    return `${formattedAmount} ${tokenSymbol}`;
                                   })()}
                                 </span>
                               </p>
