@@ -359,7 +359,10 @@ type TokenInfo = {
 };
 
 // Batched token info fetch (SaucerSwap full tokens API)
-const getTokenInfosBatch = async (): Promise<Record<string, TokenInfo>> => {
+const getTokenInfosBatch = async (
+  tokenIds: string[]
+): Promise<Record<string, TokenInfo>> => {
+  if (!tokenIds.length) return {};
   const res = await fetch(SAUCERSWAP_FULL_TOKENS, {
     method: "GET",
     headers: {
@@ -387,9 +390,12 @@ const getTokenInfosBatch = async (): Promise<Record<string, TokenInfo>> => {
   const data = (await res.json()) as SaucerSwapFullToken[];
   const map: Record<string, TokenInfo> = {};
 
+  // Filter to only include tokens that are in our requested tokenIds
+  const tokenIdSet = new Set(tokenIds);
+
   (data || []).forEach((token) => {
     const id = token.id;
-    if (!id) return;
+    if (!id || !tokenIdSet.has(id)) return;
 
     map[id] = {
       token_id: id,
@@ -427,9 +433,9 @@ export const useAccountTokenDetails = (walletId: string) => {
   );
 
   const infosQuery = useQuery({
-    queryKey: ["token_infos", walletId],
-    queryFn: () => getTokenInfosBatch(),
-    enabled: !!walletId,
+    queryKey: ["token_infos", walletId, tokenIds.join(",")],
+    queryFn: () => getTokenInfosBatch(tokenIds),
+    enabled: !!walletId && tokenIds.length > 0,
     staleTime: 10 * 60_000,
   });
 
@@ -437,8 +443,8 @@ export const useAccountTokenDetails = (walletId: string) => {
   const isError = tokensQuery.isError || infosQuery.isError;
 
   const infoMap = infosQuery.data ?? {};
-  console.log("infoMap", infoMap);
-  console.log("tokensQuery", tokensQuery);
+  console.log("infoMap", infoMap)
+  console.log("tokensQuery", tokensQuery)
 
   const details = (tokensQuery.data ?? []).map((t) => {
     const info = infoMap[t.token_id];
@@ -691,6 +697,7 @@ export const useNFTMetadata = (
     staleTime: 10 * 60_000,
   });
 };
+
 
 /**
  * Token Balances (Mirror Node)
