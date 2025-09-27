@@ -949,9 +949,6 @@ export type GqlNotification = {
   id: string;
   account_id: string;
   direction: "sent" | "received";
-  payload: {
-    token_id?: string;
-  }
   token: string | null;
   amount: number | null;
   consensus_ts: string;
@@ -973,7 +970,6 @@ const Q_NOTIFICATIONS = /* GraphQL */ `
       amount
       consensus_ts
       created_at
-      payload
     }
   }
 `;
