@@ -40,31 +40,29 @@ export const NotificationsCenter: React.FC = () => {
   // Get unique token IDs from notifications for fetching decimals
   const notificationTokenIds = useMemo(() => {
     const tokenIds = notifications
-      .map(n => n.payload.token_id ?? "HBAR")
+      .map((n) => n.payload.token_id ?? "HBAR")
       .filter((token): token is string => Boolean(token));
     return Array.from(new Set(tokenIds));
   }, [notifications]);
 
-  console.log("notificationTokenIds", notificationTokenIds)
+  console.log("notificationTokenIds", notificationTokenIds);
 
   // Fetch token info specifically for tokens that appear in notifications
-  const { data: notificationTokenInfo } = useTokenInfoForIds(notificationTokenIds);
-  console.log("notificationTokenInfo", notificationTokenInfo)
+  const { data: notificationTokenInfo } =
+    useTokenInfoForIds(notificationTokenIds);
+  console.log("notificationTokenInfo", notificationTokenInfo);
 
   const tokenInfoArray = useMemo(() => {
-    const tokens: Array<{ token_id: string; name: string; decimals: number }> = [];
-    
+    const tokens: Array<{ token_id: string; name: string; decimals: number }> =
+      [];
+
     // Add HBAR info
     tokens.push({ token_id: "HBAR", name: "HBAR", decimals: 8 });
-    
-    // Add notification tokens info
+
+    // Add notification tokens info (already simplified from the hook)
     Object.values(notificationTokenInfo ?? {}).forEach((tokenInfo) => {
       if (tokenInfo?.token_id && typeof tokenInfo.decimals === "number") {
-        tokens.push({
-          token_id: tokenInfo.token_id,
-          name: tokenInfo.name || tokenInfo.symbol || tokenInfo.token_id,
-          decimals: tokenInfo.decimals
-        });
+        tokens.push(tokenInfo);
       }
     });
 
@@ -205,11 +203,21 @@ export const NotificationsCenter: React.FC = () => {
                               {(() => {
                                 const tokenId = n.payload.token_id ?? "HBAR";
                                 const amount = n.amount ?? 0;
-                                const tokenInfo = tokenInfoArray.find(t => t.token_id === tokenId);
+                                const tokenInfo = tokenInfoArray.find(
+                                  (t) => t.token_id === tokenId
+                                );
                                 const decimals = tokenInfo?.decimals ?? 0;
                                 const tokenName = tokenInfo?.name ?? tokenId;
-                                console.log(tokenId, amount, decimals, tokenName)
-                                return `${formatTokenBalance(amount, decimals)} ${tokenName}`;
+                                console.log(
+                                  tokenId,
+                                  amount,
+                                  decimals,
+                                  tokenName
+                                );
+                                return `${formatTokenBalance(
+                                  amount,
+                                  decimals
+                                )} ${tokenName}`;
                               })()}
                             </span>
                           </p>
