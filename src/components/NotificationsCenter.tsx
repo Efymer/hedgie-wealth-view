@@ -196,6 +196,7 @@ export const NotificationsCenter: React.FC = () => {
                                 const token = n.token ?? "HBAR";
                                 const amount = n.amount ?? 0;
                                 const decimals = tokenDecimalsMap.get(token) ?? 0;
+                                console.log(token, amount, decimals)
                                 return `${formatTokenBalance(amount, decimals)} ${token}`;
                               })()}
                             </span>

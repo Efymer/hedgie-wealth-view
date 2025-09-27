@@ -60,6 +60,7 @@ export const HederaExplorer: React.FC = () => {
   const hbarPrice = priceData?.usd;
   const hbarChange24h = priceData?.usdChange24h ?? 0;
 
+
   const createdAt = useMemo(() => {
     const ts = accountInfo?.created_timestamp; // e.g., "1562591528.000123456"
     if (!ts) return undefined;
@@ -181,6 +182,8 @@ export const HederaExplorer: React.FC = () => {
     });
     return map;
   }, [tokenDetails]);
+  console.log(nfts);
+
 
   // Map Mirror Node transactions to TransactionHistory's expected shape
   const mappedTransactions: Transaction[] = useMemo(() => {
