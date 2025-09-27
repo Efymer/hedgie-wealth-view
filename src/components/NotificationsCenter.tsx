@@ -23,13 +23,12 @@ import {
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { formatTokenBalance } from "@/lib/format";
-import { useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
 
 export const NotificationsCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const auth = useAuth();
-  const { data: accountId } = useAccountId();
+  console.log(auth);
 
   // Poll latest notifications
   const { data: notifData } = useNotificationsQuery();
@@ -46,9 +45,12 @@ export const NotificationsCenter: React.FC = () => {
     return Array.from(new Set(tokenIds));
   }, [notifications]);
 
-  const { data: tokenDetails } = useAccountTokenDetails(accountId);
-
+  // Fetch token details to get decimals (using a dummy account ID since we just need token info)
+  const { data: tokenDetails } = useAccountTokenDetails("0.0.1");
+  
+  // Build decimals map for token_id -> decimals
   const tokenDecimalsMap = useMemo(() => {
+    console.log(tokenDetails);
     const map = new Map<string, number>();
     // Add HBAR decimals
     map.set("HBAR", 8);
