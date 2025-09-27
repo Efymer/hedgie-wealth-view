@@ -51,25 +51,19 @@ export const NotificationsCenter: React.FC = () => {
   const { data: notificationTokenInfo } = useTokenInfoForIds(notificationTokenIds);
   console.log("notificationTokenInfo", notificationTokenInfo)
 
-  const tokenInfoArray = useMemo(() => {
-    const tokens: Array<{ token_id: string; name: string; decimals: number }> = [];
-    
-    // Add HBAR info
-    tokens.push({ token_id: "HBAR", name: "HBAR", decimals: 8 });
-    
-    // Add notification tokens info
+  const tokenDecimalsMap = useMemo(() => {
+    const map = new Map<string, number>();
+    // Add HBAR decimals
+    map.set("HBAR", 8);
+    // Add decimals from notification tokens
     Object.values(notificationTokenInfo ?? {}).forEach((tokenInfo) => {
       if (tokenInfo?.token_id && typeof tokenInfo.decimals === "number") {
-        tokens.push({
-          token_id: tokenInfo.token_id,
-          name: tokenInfo.name || tokenInfo.symbol || tokenInfo.token_id,
-          decimals: tokenInfo.decimals
-        });
+        map.set(tokenInfo.token_id, tokenInfo.decimals);
       }
     });
 
-    console.log("tokenInfoArray", tokens);
-    return tokens;
+    console.log("map", map);
+    return map;
   }, [notificationTokenInfo]);
 
   // Last seen pointer via GraphQL + React Query helper
@@ -203,13 +197,11 @@ export const NotificationsCenter: React.FC = () => {
                             {n.direction === "sent" ? "Sent" : "Received"}{" "}
                             <span className="font-medium">
                               {(() => {
-                                const tokenId = n.payload.token_id ?? "HBAR";
+                                const token = n.payload.token_id ?? "HBAR";
                                 const amount = n.amount ?? 0;
-                                const tokenInfo = tokenInfoArray.find(t => t.token_id === tokenId);
-                                const decimals = tokenInfo?.decimals ?? 0;
-                                const tokenName = tokenInfo?.name ?? tokenId;
-                                console.log(tokenId, amount, decimals, tokenName)
-                                return `${formatTokenBalance(amount, decimals)} ${tokenName}`;
+                                const decimals = tokenDecimalsMap.get(token) ?? 0;
+                                console.log(token, amount, decimals)
+                                return `${formatTokenBalance(amount, decimals)} ${token}`;
                               })()}
                             </span>
                           </p>
