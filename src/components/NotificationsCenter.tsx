@@ -40,8 +40,8 @@ export const NotificationsCenter: React.FC = () => {
   // Get unique token IDs from notifications for fetching decimals
   const notificationTokenIds = useMemo(() => {
     const tokenIds = notifications
-      .map(n => n.token)
-      .filter((token): token is string => Boolean(token) && token !== "HBAR");
+      .map(n => n.payload.token_id ?? "HBAR")
+      .filter((token): token is string => Boolean(token));
     return Array.from(new Set(tokenIds));
   }, [notifications]);
 
