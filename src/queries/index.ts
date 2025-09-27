@@ -443,9 +443,6 @@ export const useAccountTokenDetails = (walletId: string) => {
   const isError = tokensQuery.isError || infosQuery.isError;
 
   const infoMap = infosQuery.data ?? {};
-  console.log("infoMap", infoMap)
-  console.log("tokensQuery", tokensQuery)
-
   const details = (tokensQuery.data ?? []).map((t) => {
     const info = infoMap[t.token_id];
     return {
