@@ -453,6 +453,31 @@ export const useAccountTokenDetails = (walletId: string) => {
   return { data: details, isLoading, isError };
 };
 
+// Hook to get token info for specific token IDs (useful for notifications)
+export const useTokenInfoForIds = (tokenIds: string[]) => {
+  return useQuery({
+    queryKey: ["token_infos_for_ids", tokenIds.sort().join(",")],
+    queryFn: async () => {
+      if (!tokenIds.length) return {};
+      
+      // Fetch all tokens from SaucerSwap
+      const allTokens = await getTokenInfosBatch();
+      
+      // Filter to only include the tokens we need
+      const filteredTokens: Record<string, TokenInfo> = {};
+      tokenIds.forEach(tokenId => {
+        if (allTokens[tokenId]) {
+          filteredTokens[tokenId] = allTokens[tokenId];
+        }
+      });
+      
+      return filteredTokens;
+    },
+    enabled: tokenIds.length > 0,
+    staleTime: 10 * 60_000,
+  });
+};
+
 /**
  * Token Prices (HashPack API)
  */
