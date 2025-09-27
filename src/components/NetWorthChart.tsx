@@ -120,6 +120,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
     "0.0.123456",
     "0.0.789789",
     "0.0.345678",
+    "0.0.1503903",
   ]);
   const showOverlay = !(accountId && hideOverlayAccounts.has(accountId));
 
