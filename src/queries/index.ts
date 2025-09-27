@@ -457,24 +457,19 @@ export const useTokenInfoForIds = (tokenIds: string[]) => {
     queryKey: ["token_infos_for_ids", tokenIds.sort().join(",")],
     queryFn: async () => {
       if (!tokenIds.length) return {};
-
+      
       // Fetch all tokens from SaucerSwap
       const allTokens = await getTokenInfosBatch();
-
-      // Filter and simplify to only include the data we need
-      const simplifiedTokens: Record<string, { token_id: string; name: string; decimals: number }> = {};
-      tokenIds.forEach((tokenId) => {
-        const tokenInfo = allTokens[tokenId];
-        if (tokenInfo) {
-          simplifiedTokens[tokenId] = {
-            token_id: tokenInfo.token_id,
-            name: tokenInfo.name || tokenInfo.symbol || tokenInfo.token_id,
-            decimals: tokenInfo.decimals || 0,
-          };
+      
+      // Filter to only include the tokens we need
+      const filteredTokens: Record<string, TokenInfo> = {};
+      tokenIds.forEach(tokenId => {
+        if (allTokens[tokenId]) {
+          filteredTokens[tokenId] = allTokens[tokenId];
         }
       });
-
-      return simplifiedTokens;
+      
+      return filteredTokens;
     },
     enabled: tokenIds.length > 0,
     staleTime: 10 * 60_000,
@@ -956,7 +951,7 @@ export type GqlNotification = {
   direction: "sent" | "received";
   payload: {
     token_id?: string;
-  };
+  }
   token: string | null;
   amount: number | null;
   consensus_ts: string;
