@@ -45,11 +45,9 @@ export const NotificationsCenter: React.FC = () => {
     return Array.from(new Set(tokenIds));
   }, [notifications]);
 
-  console.log("notificationTokenIds", notificationTokenIds)
-
   // Fetch token info specifically for tokens that appear in notifications
   const { data: notificationTokenInfo } = useTokenInfoForIds(notificationTokenIds);
-  console.log("notificationTokenInfo", notificationTokenInfo)
+  console.log(notificationTokenInfo)
 
   const tokenDecimalsMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -62,7 +60,7 @@ export const NotificationsCenter: React.FC = () => {
       }
     });
 
-    console.log("map", map);
+    console.log(map);
     return map;
   }, [notificationTokenInfo]);
 
