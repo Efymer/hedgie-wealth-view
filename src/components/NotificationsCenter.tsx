@@ -50,7 +50,6 @@ export const NotificationsCenter: React.FC = () => {
   
   // Build decimals map for token_id -> decimals
   const tokenDecimalsMap = useMemo(() => {
-    console.log(tokenDetails);
     const map = new Map<string, number>();
     // Add HBAR decimals
     map.set("HBAR", 8);
