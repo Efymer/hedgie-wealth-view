@@ -199,9 +199,13 @@ export const NotificationsCenter: React.FC = () => {
                                 const tokenSymbol = n.token || "HBAR";
                                 const amount = n.amount || 0;
                                 
-                                // For HBAR, amount is already formatted, don't apply additional formatting
+                                // For HBAR, use hardcoded 8 decimals
                                 if (tokenSymbol === "HBAR") {
-                                  return `${amount} ${tokenSymbol}`;
+                                  const formattedAmount = formatAmount(
+                                    amount / Math.pow(10, 8),
+                                    { minimumFractionDigits: 3, maximumFractionDigits: 3 }
+                                  );
+                                  return `${formattedAmount} ${tokenSymbol}`;
                                 }
                                 
                                 // For other tokens, use proper decimals from SaucerSwap
