@@ -8,7 +8,10 @@ interface AccountSearchProps {
   isLoading?: boolean;
 }
 
-export const AccountSearch: React.FC<AccountSearchProps> = ({ onSearch, isLoading = false }) => {
+export const AccountSearch: React.FC<AccountSearchProps> = ({
+  onSearch,
+  isLoading = false,
+}) => {
   const [accountId, setAccountId] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,7 +39,7 @@ export const AccountSearch: React.FC<AccountSearchProps> = ({ onSearch, isLoadin
           Enter a Hedera account ID to view balances and token holdings
         </p>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="flex gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -49,8 +52,8 @@ export const AccountSearch: React.FC<AccountSearchProps> = ({ onSearch, isLoadin
             disabled={isLoading}
           />
         </div>
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={!accountId.trim() || isLoading}
           className="h-12 px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
           style={{ boxShadow: "var(--shadow-primary)" }}

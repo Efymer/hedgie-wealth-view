@@ -10,13 +10,18 @@ export const Footer: React.FC = () => {
           <div className="col-span-1 md:col-span-2 space-y-4">
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">H</span>
+                <span className="text-primary-foreground font-bold text-sm">
+                  H
+                </span>
               </div>
-              <span className="text-lg font-semibold text-foreground">hbarwatch.io</span>
+              <span className="text-lg font-semibold text-foreground">
+                hbarwatch.io
+              </span>
             </div>
             <p className="text-muted-foreground text-sm max-w-md leading-relaxed">
-              Professional analytics and portfolio tracking for the Hedera network. 
-              Monitor accounts, analyze token holdings, and track market movements with real-time data.
+              Professional analytics and portfolio tracking for the Hedera
+              network. Monitor accounts, analyze token holdings, and track
+              market movements with real-time data.
             </p>
           </div>
 
@@ -25,12 +30,18 @@ export const Footer: React.FC = () => {
             <h3 className="text-sm font-semibold text-foreground">Platform</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/explorer" className="text-muted-foreground hover:text-primary transition-colors">
+                <a
+                  href="/explorer"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Account Explorer
                 </a>
               </li>
               <li>
-                <a href="/top-holders" className="text-muted-foreground hover:text-primary transition-colors">
+                <a
+                  href="/top-holders"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Top Holders
                 </a>
               </li>
@@ -46,9 +57,9 @@ export const Footer: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-foreground">Connect</h3>
             <div className="flex space-x-3">
-              <a 
-                href="https://x.com/hbarwatchio" 
-                target="_blank" 
+              <a
+                href="https://x.com/hbarwatchio"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-lg bg-muted/50 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-200"
                 aria-label="Follow us on Twitter"

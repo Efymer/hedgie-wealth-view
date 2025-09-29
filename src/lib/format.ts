@@ -16,11 +16,6 @@ export const formatAmount = (value: number, opts?: { minimumFractionDigits?: num
   }).format(value ?? 0);
 };
 
-export const formatTokenBalance = (rawBalance: number, decimals: number, opts?: { locale?: string }) => {
-  const actual = (rawBalance ?? 0) / Math.pow(10, Number.isFinite(decimals) ? decimals : 0);
-  return formatAmount(actual, { minimumFractionDigits: 0, maximumFractionDigits: 6, locale: opts?.locale });
-};
-
 export const formatUSD = (value: number, locale?: string) => {
   const loc = locale || getBrowserLocale();
   return new Intl.NumberFormat(loc, {

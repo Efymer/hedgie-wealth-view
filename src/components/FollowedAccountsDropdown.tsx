@@ -8,7 +8,11 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useFollowedAccounts } from "@/hooks/useFollowedAccounts";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -25,8 +29,10 @@ export const FollowedAccountsDropdown: React.FC = () => {
   const handleUnfollow = (accountId: string, accountName?: string) => {
     unfollowAccount(accountId);
     toast({
-      title: "Notifications Disabled", 
-      description: `You will no longer receive transaction notifications from ${accountName || accountId}`,
+      title: "Notifications Disabled",
+      description: `You will no longer receive transaction notifications from ${
+        accountName || accountId
+      }`,
     });
   };
 
@@ -34,7 +40,12 @@ export const FollowedAccountsDropdown: React.FC = () => {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="sm" className="relative p-2 opacity-50 cursor-not-allowed" disabled>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="relative p-2 opacity-50 cursor-not-allowed"
+            disabled
+          >
             <Users className="h-5 w-5" />
           </Button>
         </TooltipTrigger>
@@ -56,17 +67,18 @@ export const FollowedAccountsDropdown: React.FC = () => {
           <Users className="h-5 w-5" />
           {followedAccounts.length > 0 && (
             <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-              {followedAccounts.length > 9 ? '9+' : followedAccounts.length}
+              {followedAccounts.length > 9 ? "9+" : followedAccounts.length}
             </span>
           )}
         </Button>
       </PopoverTrigger>
-      
+
       <PopoverContent className="w-80 p-0" align="end">
         <div className="p-4 border-b">
           <h3 className="font-semibold">Transaction Notifications</h3>
           <p className="text-sm text-muted-foreground">
-            Receiving notifications from {followedAccounts.length} account{followedAccounts.length !== 1 ? 's' : ''}
+            Receiving notifications from {followedAccounts.length} account
+            {followedAccounts.length !== 1 ? "s" : ""}
           </p>
         </div>
 
@@ -97,10 +109,11 @@ export const FollowedAccountsDropdown: React.FC = () => {
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
-                          Notifications enabled {new Date(account.followedAt).toLocaleDateString()}
+                          Notifications enabled{" "}
+                          {new Date(account.followedAt).toLocaleDateString()}
                         </p>
                       </div>
-                      
+
                       <div className="flex items-center space-x-1 ml-2">
                         <Button
                           variant="ghost"
@@ -113,7 +126,12 @@ export const FollowedAccountsDropdown: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleUnfollow(account.accountId, account.accountName)}
+                          onClick={() =>
+                            handleUnfollow(
+                              account.accountId,
+                              account.accountName
+                            )
+                          }
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                         >
                           <UserMinus className="h-3 w-3" />
@@ -121,7 +139,7 @@ export const FollowedAccountsDropdown: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {index < followedAccounts.length - 1 && (
                     <Separator className="my-1" />
                   )}

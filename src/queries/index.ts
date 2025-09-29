@@ -582,33 +582,6 @@ export type TokenBalancesResponse = {
   links?: { next?: string | null };
 };
 
-export const getTokenBalances = async (
-  tokenId: string,
-  limit: number = 100
-): Promise<TokenBalanceEntry[]> => {
-  if (!tokenId) return [];
-  const url = `${MIRROR_NODE}/api/v1/tokens/${encodeURIComponent(
-    tokenId
-  )}/balances?order=desc&limit=${limit}`;
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) return [];
-  const data = (await res.json()) as TokenBalancesResponse;
-  return data?.balances ?? [];
-};
-
-export const useTokenBalances = (
-  tokenId: string,
-  limit: number = 100,
-  enabled: boolean = true
-) => {
-  return useQuery({
-    queryKey: ["token", tokenId, "balances", { limit }],
-    queryFn: () => getTokenBalances(tokenId, limit),
-    enabled: !!tokenId && enabled,
-    staleTime: 60_000,
-  });
-};
-
 export const getTopTokenHolders = async (
   tokenId: string,
   topN: number = 100

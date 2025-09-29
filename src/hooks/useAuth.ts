@@ -86,17 +86,3 @@ export const useIsAuthenticated = () => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated;
 };
-
-/**
- * Hook that returns the JWT token if the user is authenticated
- * Returns null if not authenticated
- */
-export const useAuthToken = () => {
-  const { isAuthenticated } = useAuth();
-  
-  if (!isAuthenticated) {
-    return null;
-  }
-  
-  return localStorage.getItem("hasura_jwt");
-};
