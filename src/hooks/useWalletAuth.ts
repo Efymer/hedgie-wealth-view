@@ -88,6 +88,9 @@ export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
           description: "You are now signed in",
         });
         onSuccess?.();
+        
+        // Reload the website after successful authentication
+        window.location.reload();
       }
 
       setAuthenticating(false);
