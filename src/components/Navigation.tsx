@@ -107,6 +107,14 @@ export const Navigation: React.FC = () => {
               <SheetContent side="right" className="w-80">
                 <div className="flex flex-col space-y-4 mt-8">
                   <NavigationLinks />
+                  
+                  <div className="border-t border-border pt-4 space-y-4">
+                    <div className="flex flex-col space-y-3">
+                      <FollowedAccountsDropdown />
+                      <NotificationsCenter />
+                      <WalletConnect />
+                    </div>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
