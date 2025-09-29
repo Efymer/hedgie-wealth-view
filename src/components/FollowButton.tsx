@@ -81,12 +81,12 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
         onClick={handleClick}
         variant={following ? "default" : variant}
         size={size}
-        className={`flex items-center space-x-2 transition-colors border ${
+        className={`flex items-center space-x-2 transition-colors ${
           following
-            ? "bg-primary hover:bg-primary/90 text-primary-foreground border-primary"
+            ? "bg-primary hover:bg-primary/90 text-primary-foreground"
             : !auth.isAuthenticated
-            ? "bg-accent/10 text-foreground border-accent hover:bg-accent hover:text-accent-foreground"
-            : "bg-accent/10 text-foreground border-accent hover:bg-accent hover:text-accent-foreground"
+            ? "bg-accent text-accent-foreground hover:bg-accent/90 border border-accent"
+            : "bg-accent text-accent-foreground hover:bg-accent/90 border border-accent"
         }`}
       >
         {!auth.isAuthenticated ? (
