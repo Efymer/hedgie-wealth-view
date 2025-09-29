@@ -9,13 +9,12 @@ import { useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
 import { Buffer } from "buffer";
 
 interface UseWalletAuthOptions {
-  autoAuthenticate?: boolean;
   onSuccess?: () => void;
   onError?: (error: Error) => void;
 }
 
 export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
-  const { autoAuthenticate = true, onSuccess, onError } = options;
+  const {onSuccess, onError } = options;
   const [connecting, setConnecting] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
 
@@ -31,8 +30,6 @@ export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
 
   const authenticate = useCallback(async () => {
     try {
-      setAuthenticating(true);
-
       if (!accountId) throw new Error("No account ID available");
 
       // Try to get public key in different ways

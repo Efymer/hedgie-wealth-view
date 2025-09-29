@@ -42,10 +42,7 @@ export function useGQLQuery<TData = unknown, TError = Error>(
 const MIRROR_NODE = "https://mainnet.mirrornode.hedera.com";
 const COINGECKO_PRICE =
   "https://api.coingecko.com/api/v3/simple/price?ids=hedera-hashgraph&vs_currencies=usd&include_24hr_change=true";
-const SAUCERSWAP_TOKENS = "https://api.saucerswap.finance/tokens";
-const SAUCERSWAP_FULL_TOKENS = "https://api.saucerswap.finance/tokens/full";
-const SAUCERSWAP_DEFAULT_TOKENS =
-  "https://api.saucerswap.finance/tokens/default";
+// SaucerSwap API endpoints are now handled by serverless functions in /api/tokens/
 
 /**
  * Types
@@ -306,55 +303,15 @@ type TokenInfo = {
 };
 
 const getTokenInfos = async (): Promise<Record<string, TokenInfo>> => {
-  const res = await fetch(SAUCERSWAP_FULL_TOKENS, {
+  const base = import.meta.env.MODE === "development" ? "" : "";
+  const res = await fetch(`${base}/api/tokens/info`, {
     method: "GET",
     headers: {
-      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+      "Accept": "application/json",
     },
   });
   if (!res.ok) return {};
-
-  type SaucerSwapFullToken = {
-    id: string;
-    name: string;
-    symbol: string;
-    icon?: string;
-    decimals: number;
-    price?: string;
-    priceUsd?: number;
-    dueDiligenceComplete?: boolean;
-    isFeeOnTransferToken?: boolean;
-    description?: string;
-    website?: string;
-    sentinelReport?: string;
-    twitterHandle?: string;
-  };
-
-  const data = (await res.json()) as SaucerSwapFullToken[];
-  const map: Record<string, TokenInfo> = {};
-
-  (data || []).forEach((token) => {
-    const id = token.id;
-    if (!id) return;
-
-    map[id] = {
-      token_id: id,
-      symbol: token.symbol ?? id,
-      name: token.name ?? id,
-      decimals: token.decimals ?? 0,
-      type: "FUNGIBLE_COMMON", // SaucerSwap only deals with fungible tokens
-      price: token.price,
-      priceUsd: token.priceUsd,
-      dueDiligenceComplete: token.dueDiligenceComplete,
-      isFeeOnTransferToken: token.isFeeOnTransferToken,
-      description: token.description,
-      website: token.website,
-      sentinelReport: token.sentinelReport,
-      twitterHandle: token.twitterHandle,
-      icon: token.icon,
-    };
-  });
-  return map;
+  return (await res.json()) as Record<string, TokenInfo>;
 };
 
 const useAccountTokens = (walletId: string) => {
@@ -408,10 +365,11 @@ export type TokenPricesResponse =
     }>;
 
 const getTokenPrices = async (): Promise<TokenPricesResponse> => {
-  const res = await fetch(SAUCERSWAP_TOKENS, {
+  const base = import.meta.env.MODE === "development" ? "" : "";
+  const res = await fetch(`${base}/api/tokens/prices`, {
     method: "GET",
     headers: {
-      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+      "Accept": "application/json",
     },
   });
   if (!res.ok) return [] as unknown as TokenPricesResponse;
@@ -449,38 +407,15 @@ type HashPackTokenData = {
 
 const getAllTokensForAutocomplete = async (): Promise<TokenOption[]> => {
   try {
-    const res = await fetch(SAUCERSWAP_TOKENS, {
+    const base = import.meta.env.MODE === "development" ? "" : "";
+    const res = await fetch(`${base}/api/tokens/autocomplete`, {
       method: "GET",
       headers: {
-        "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+        "Accept": "application/json",
       },
     });
     if (!res.ok) return [];
-
-    const data = (await res.json()) as TokenPricesResponse;
-
-    if (Array.isArray(data)) {
-      return data
-        .map((token: HashPackTokenData) => ({
-          token_id: (token.id || token.token_id || "") as string,
-          symbol: (token.symbol || token.token_id || token.id || "") as string,
-          name: (token.name ||
-            token.symbol ||
-            token.token_id ||
-            token.id ||
-            "") as string,
-          priceUsd: token.priceUsd || token.price || 0,
-        }))
-        .filter((token) => token.token_id && token.symbol);
-    } else {
-      // If it's a Record format, we can't get names without additional API calls
-      return Object.keys(data).map((tokenId) => ({
-        token_id: tokenId,
-        symbol: tokenId,
-        name: tokenId,
-        priceUsd: data[tokenId],
-      }));
-    }
+    return (await res.json()) as TokenOption[];
   } catch (error) {
     console.error("Failed to fetch tokens for autocomplete:", error);
     return [];
@@ -513,10 +448,11 @@ type SaucerSwapDefaultToken = {
 type TokenPriceChangesResponse = SaucerSwapDefaultToken[];
 
 const getTokenPriceChanges = async (): Promise<TokenPriceChangesResponse> => {
-  const res = await fetch(SAUCERSWAP_DEFAULT_TOKENS, {
+  const base = import.meta.env.MODE === "development" ? "" : "";
+  const res = await fetch(`${base}/api/tokens/price-changes`, {
     method: "GET",
     headers: {
-      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+      "Accept": "application/json",
     },
   });
   if (!res.ok) return [] as TokenPriceChangesResponse;

@@ -25,7 +25,6 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
   const following = isFollowing(accountId);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const { connectAndAuthenticate, isLoading } = useWalletAuth({
-    autoAuthenticate: true,
     onSuccess: () => {
       setShowConnectModal(false);
       // After successful authentication, trigger the follow action
