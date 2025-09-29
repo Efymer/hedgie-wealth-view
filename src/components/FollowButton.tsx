@@ -96,12 +96,12 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
         ) : following ? (
           <>
             <Check className="h-4 w-4" />
-            <span>Notifications On</span>
+            <span>Following</span>
           </>
         ) : (
           <>
             <UserPlus className="h-4 w-4" />
-            <span>Get Notifications</span>
+            <span>Follow</span>
           </>
         )}
       </Button>
