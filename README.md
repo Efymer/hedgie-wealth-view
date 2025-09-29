@@ -135,7 +135,6 @@ npm run preview
 │  │  ├─ NetWorthChart.tsx        # Portfolio value charts
 │  │  ├─ NotificationsCenter.tsx  # Notification management
 │  │  ├─ TokenList.tsx            # Token holdings display
-│  │  ├─ TopHoldersModal.tsx      # Top holders exploration
 │  │  ├─ TransactionHistory.tsx   # Transaction list and filtering
 │  │  ├─ WalletConnect.tsx        # Wallet connection interface
 │  │  └─ Watchlist.tsx            # Account watchlist management
