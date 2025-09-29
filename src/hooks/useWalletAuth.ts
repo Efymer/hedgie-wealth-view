@@ -18,21 +18,21 @@ export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
   const { autoAuthenticate = true, onSuccess, onError } = options;
   const [connecting, setConnecting] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
-  
+
   const {
     connect: connectHashpack,
     isConnected,
     disconnect,
     signer,
   } = useWallet(HashpackConnector);
-  
+
   const { data: accountId } = useAccountId();
   const { data: accountInfo } = useAccountInfo();
 
   const authenticate = useCallback(async () => {
     try {
       setAuthenticating(true);
-      
+
       if (!accountId) throw new Error("No account ID available");
 
       // Try to get public key in different ways
@@ -97,17 +97,18 @@ export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
       setConnecting(false);
     } catch (e) {
       console.error("Authentication error:", e);
-      const error = e instanceof Error ? e : new Error("Unknown authentication error");
-      
+      const error =
+        e instanceof Error ? e : new Error("Unknown authentication error");
+
       disconnect();
       setAuthenticating(false);
       setConnecting(false);
-      
+
       toast({
         title: "Authentication Failed",
         description: error.message,
       });
-      
+
       onError?.(error);
       throw error;
     }
@@ -116,23 +117,24 @@ export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
   const connectAndAuthenticate = useCallback(async () => {
     try {
       setConnecting(true);
-      
+
       // Step 1: Connect the wallet
       await connectHashpack();
-      
+
       toast({
         title: "Wallet Connected",
         description: "Please sign the authentication challenge",
       });
     } catch (e) {
       setConnecting(false);
-      const error = e instanceof Error ? e : new Error("Failed to connect wallet");
-      
+      const error =
+        e instanceof Error ? e : new Error("Failed to connect wallet");
+
       toast({
         title: "Connection Failed",
         description: error.message,
       });
-      
+
       onError?.(error);
       throw error;
     }
@@ -149,10 +151,10 @@ export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
 
   // Auto-authenticate after wallet connects and accountId is available
   useEffect(() => {
-    if (autoAuthenticate && isConnected && accountId && connecting && accountInfo?.key?.key) {
+    if (isConnected && accountId && connecting && accountInfo?.key?.key) {
       authenticate();
     }
-  }, [autoAuthenticate, isConnected, accountId, connecting, authenticate, accountInfo]);
+  }, [isConnected, accountId, connecting, authenticate, accountInfo]);
 
   return {
     // State
@@ -162,12 +164,12 @@ export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
     connecting,
     authenticating,
     isLoading: connecting || authenticating,
-    
+
     // Actions
     connectAndAuthenticate,
     authenticate,
     disconnect: disconnectWallet,
-    
+
     // Raw wallet functions (for advanced usage)
     signer,
   };
