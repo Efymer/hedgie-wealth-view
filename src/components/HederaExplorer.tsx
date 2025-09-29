@@ -268,16 +268,18 @@ export const HederaExplorer: React.FC = () => {
         {!accountId ? null : (
           <>
             <div className="flex items-center justify-between">
-              <div>
+              <div className="hidden md:block">
                 <h2 className="text-2xl font-bold">Account {accountId}</h2>
                 <p className="text-muted-foreground">
                   Track activity and portfolio for this account
                 </p>
               </div>
-              <FollowButton
-                accountId={accountId}
-                accountName={`Account ${accountId}`}
-              />
+              <div className="hidden md:block">
+                <FollowButton
+                  accountId={accountId}
+                  accountName={`Account ${accountId}`}
+                />
+              </div>
             </div>
 
             <Tabs defaultValue="overview" className="space-y-6">
