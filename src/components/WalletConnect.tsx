@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Wallet, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,192 +6,93 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { toast } from "@/hooks/use-toast";
-import {
-  useAccountInfo,
-  useAuthSignature,
-  useWallet,
-} from "@buidlerlabs/hashgraph-react-wallets";
-import { HashpackConnector } from "@buidlerlabs/hashgraph-react-wallets/connectors";
-import { useAccountId } from "@buidlerlabs/hashgraph-react-wallets";
-import { Buffer } from "buffer";
+import { useWalletAuth } from "@/hooks/useWalletAuth";
+import { WalletConnectModal } from "@/components/WalletConnectModal";
 
 export const WalletConnect: React.FC = () => {
-  const [connecting, setConnecting] = useState(false);
+  const [showConnectModal, setShowConnectModal] = useState(false);
   const {
-    connect: connectHashpack,
     isConnected,
+    accountId,
+    isLoading,
+    connectAndAuthenticate,
     disconnect,
-    signer,
-  } = useWallet(HashpackConnector);
-  const { data: accountId } = useAccountId();
-  const { signAuth } = useAuthSignature(HashpackConnector);
-  const { data: accountInfo } = useAccountInfo();
+  } = useWalletAuth({
+    onSuccess: () => {
+      setShowConnectModal(false);
+    },
+  });
 
-  const handleConnectHashpack = async (e: React.MouseEvent) => {
+  const handleConnect = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    setConnecting(true);
-    try {
-      // Step 1: Connect the wallet
-      await connectHashpack();
-      toast({
-        title: "Wallet Connected",
-        description: "Please sign the authentication challenge",
-      });
-    } catch (e) {
-      setConnecting(false);
-      toast({
-        title: "Connection Failed",
-        description:
-          e instanceof Error ? e.message : "Failed to connect wallet",
-      });
-    }
+    setShowConnectModal(true);
   };
 
-  const handleAuthenticate = useCallback(async () => {
-    try {
-      if (!accountId) throw new Error("No account ID available");
+  const handleModalConnect = async () => {
+    await connectAndAuthenticate();
+  };
 
-      // Try to get public key in different ways
-      const publicKey =
-        accountInfo?.key?.key || accountInfo?.publicKey || accountInfo?.key;
-
-      const challengeResp = await fetch("/api/auth/challenge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accountId,
-          publicKey: publicKey,
-        }),
-      });
-
-      if (!challengeResp.ok) {
-        const error = await challengeResp.json();
-        throw new Error(error?.error || "Failed to get challenge");
-      }
-
-      const { nonceId, message } = await challengeResp.json();
-
-      const messageBytes = new TextEncoder().encode(message);
-
-      const [{ signature }] = await signer.sign([messageBytes]);
-
-      if (!signature) {
-        throw new Error("Failed to get signature from wallet");
-      }
-
-      const loginPayload = {
-        nonceId,
-        accountId,
-        publicKey: publicKey,
-        signature: Buffer.from(signature).toString("base64"),
-      };
-
-      const loginResp = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loginPayload),
-      });
-
-      if (!loginResp.ok) {
-        const error = await loginResp.json();
-        throw new Error(error?.error || "Authentication failed");
-      }
-
-      const { token } = await loginResp.json();
-
-      // Step 4: Store JWT
-      if (token) {
-        localStorage.setItem("hasura_jwt", token);
-        toast({
-          title: "Authentication Successful",
-          description: "You are now signed in",
-        });
-      }
-
-      setConnecting(false);
-    } catch (e) {
-      console.error("Authentication error:", e);
-      disconnect();
-      setConnecting(false);
-      toast({
-        title: "Authentication Failed",
-        description:
-          e instanceof Error ? e.message : "Unknown authentication error",
-      });
-    }
-  }, [accountId, disconnect, signer, accountInfo]);
-
-  // Trigger authentication after wallet connects and accountId is available
-  useEffect(() => {
-    if (isConnected && accountId && connecting && accountInfo?.key?.key) {
-      handleAuthenticate();
-    }
-  }, [isConnected, accountId, connecting, handleAuthenticate, accountInfo]);
-
-  const handleDisconnect = useCallback(() => {
-    disconnect();
-    localStorage.removeItem("hasura_jwt");
-    toast({
-      title: "Wallet Disconnected",
-      description: "Your wallet has been disconnected",
-    });
-  }, [disconnect]);
-
-
-  if (!isConnected || connecting) {
-    return (
-      <Button
-        onClick={handleConnectHashpack}
-        className="flex items-center space-x-2"
-        size="sm"
-        disabled={connecting}
-      >
-        <Wallet className="h-4 w-4" />
-        <span>{connecting ? "Connecting..." : "Connect Wallet"}</span>
-      </Button>
-    );
-  }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <>
+      {!isConnected || isLoading ? (
         <Button
-          variant="outline"
-          className="flex items-center space-x-2 hover:bg-accent/10 hover:text-accent-foreground transition-colors"
+          onClick={handleConnect}
+          className="flex items-center space-x-2"
           size="sm"
+          disabled={isLoading}
         >
-          <div className="w-2 h-2 bg-green-500 rounded-full" />
           <Wallet className="h-4 w-4" />
+          <span>{isLoading ? "Connecting..." : "Connect Wallet"}</span>
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-72" align="end">
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full" />
-            <span className="text-sm font-medium">Connected</span>
-          </div>
+      ) : (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="flex items-center space-x-2 hover:bg-accent/10 hover:text-accent-foreground transition-colors"
+              size="sm"
+            >
+              <div className="w-2 h-2 bg-green-500 rounded-full" />
+              <Wallet className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72" align="end">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full" />
+                <span className="text-sm font-medium">Connected</span>
+              </div>
 
+              <div className="space-y-2">
+                <span className="text-sm text-muted-foreground">Account ID</span>
+                <p className="text-sm font-mono bg-muted p-2 rounded">
+                  {accountId}
+                </p>
+              </div>
 
-          <div className="space-y-2">
-            <span className="text-sm text-muted-foreground">Account ID</span>
-            <p className="text-sm font-mono bg-muted p-2 rounded">
-              {accountId}
-            </p>
-          </div>
+              <Button
+                variant="outline"
+                onClick={disconnect}
+                className="w-full flex items-center space-x-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Disconnect</span>
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
 
-
-          <Button
-            variant="outline"
-            onClick={handleDisconnect}
-            className="w-full flex items-center space-x-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Disconnect</span>
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+      <WalletConnectModal
+        open={showConnectModal}
+        onOpenChange={setShowConnectModal}
+        onConnect={handleModalConnect}
+        isLoading={isLoading}
+        title="Connect Your Wallet"
+        description="Connect your Hedera wallet to access all features of the application, including notifications and account following."
+      />
+    </>
   );
 };
