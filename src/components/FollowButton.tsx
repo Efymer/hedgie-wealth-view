@@ -85,8 +85,8 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
           following
             ? "bg-primary hover:bg-primary/90 text-primary-foreground"
             : !auth.isAuthenticated
-            ? "bg-accent/20 text-accent border-accent/30 hover:bg-accent/30 hover:text-accent-foreground"
-            : "bg-accent/20 text-accent border-accent/30 hover:bg-accent hover:text-accent-foreground"
+            ? "bg-accent/80 text-white border-accent hover:bg-accent hover:text-white"
+            : "bg-accent/80 text-white border-accent hover:bg-accent hover:text-white"
         }`}
       >
         {!auth.isAuthenticated ? (
