@@ -1,4 +1,4 @@
-# Hedgie Wealth View
+# HBARWatch
 
 A comprehensive Hedera network explorer and portfolio tracker that provides wallet analytics, social features, and real-time insights for the Hedera ecosystem.
 
