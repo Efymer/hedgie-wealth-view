@@ -223,7 +223,6 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
                 if (n.data.account === accountId) return "You";
                 return `${n.name}\n↑ ${n.data.sentCount} sent | ↓ ${n.data.receivedCount} received`;
               }}
-              nodeCanvasObject={nodeCanvasObject}
               nodeVal="val"
               nodeColor="color"
               nodeRelSize={4}
