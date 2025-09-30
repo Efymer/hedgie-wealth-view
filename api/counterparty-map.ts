@@ -207,7 +207,9 @@ export default async function handler(req: Req, res: Res) {
     const topSentTo = [...data].sort((a, b) => b.sentCount - a.sentCount)[0];
     const topReceivedFrom = [...data].sort((a, b) => b.receivedCount - a.receivedCount)[0];
 
-    res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=600");
+    // Cache for 15 minutes (900 seconds) - counterparty data changes slowly
+    const ttl = 900;
+    res.setHeader("Cache-Control", `public, max-age=${ttl}, s-maxage=${ttl}, stale-while-revalidate=${ttl}`);
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.status(200).json({
       data,
