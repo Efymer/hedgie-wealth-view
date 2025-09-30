@@ -103,6 +103,11 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
 
   const nodeCanvasObject = useCallback(
     (node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
+      // Guard against undefined or invalid coordinates during initialization
+      if (!node.x || !node.y || !isFinite(node.x) || !isFinite(node.y)) {
+        return;
+      }
+
       const label = node.name;
       const fontSize = 12 / globalScale;
       ctx.font = `${fontSize}px Sans-Serif`;
@@ -117,11 +122,11 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
 
       // Create radial gradient for node
       const gradient = ctx.createRadialGradient(
-        node.x!,
-        node.y!,
+        node.x,
+        node.y,
         0,
-        node.x!,
-        node.y!,
+        node.x,
+        node.y,
         node.val
       );
       
@@ -133,7 +138,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
 
       // Draw main circle with gradient
       ctx.beginPath();
-      ctx.arc(node.x!, node.y!, node.val, 0, 2 * Math.PI, false);
+      ctx.arc(node.x, node.y, node.val, 0, 2 * Math.PI, false);
       ctx.fillStyle = gradient;
       ctx.fill();
 
@@ -145,18 +150,18 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
 
       // Add inner highlight for glossy effect
       const highlightGradient = ctx.createRadialGradient(
-        node.x! - node.val * 0.3,
-        node.y! - node.val * 0.3,
+        node.x - node.val * 0.3,
+        node.y - node.val * 0.3,
         0,
-        node.x!,
-        node.y!,
+        node.x,
+        node.y,
         node.val * 0.8
       );
       highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
       highlightGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
       
       ctx.beginPath();
-      ctx.arc(node.x!, node.y!, node.val * 0.8, 0, 2 * Math.PI, false);
+      ctx.arc(node.x, node.y, node.val * 0.8, 0, 2 * Math.PI, false);
       ctx.fillStyle = highlightGradient;
       ctx.fill();
 
@@ -165,8 +170,8 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
 
       // Draw label background with rounded corners
       const padding = fontSize * 0.3;
-      const bgX = node.x! - bckgDimensions[0] / 2 - padding;
-      const bgY = node.y! + node.val + 4;
+      const bgX = node.x - bckgDimensions[0] / 2 - padding;
+      const bgY = node.y + node.val + 4;
       const bgWidth = bckgDimensions[0] + padding * 2;
       const bgHeight = bckgDimensions[1] + padding;
       const radius = 4 / globalScale;
@@ -195,7 +200,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
       ctx.textBaseline = "middle";
       ctx.fillStyle = "#ffffff";
       ctx.font = `600 ${fontSize}px Sans-Serif`;
-      ctx.fillText(label, node.x!, bgY + bgHeight / 2);
+      ctx.fillText(label, node.x, bgY + bgHeight / 2);
     },
     []
   );
