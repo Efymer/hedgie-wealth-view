@@ -202,7 +202,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
           </p>
         </CardHeader>
         <CardContent>
-          <div className="h-96 rounded-lg bg-secondary/5 overflow-hidden">
+          <div className="h-[600px] rounded-lg bg-secondary/5 overflow-hidden">
             <ForceGraph2D
               graphData={graphData}
               nodeLabel={(node: unknown) => {
@@ -213,15 +213,17 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
               nodeCanvasObject={nodeCanvasObject}
               nodeVal="val"
               nodeColor="color"
+              nodeRelSize={8}
               linkColor={() => "rgba(148, 163, 184, 0.3)"}
               linkWidth={2}
               onNodeHover={handleNodeHover}
-              cooldownTicks={100}
-              d3AlphaDecay={0.02}
-              d3VelocityDecay={0.3}
+              warmupTicks={100}
+              cooldownTicks={0}
+              d3AlphaDecay={0.01}
+              d3VelocityDecay={0.2}
               backgroundColor="transparent"
-              width={800}
-              height={384}
+              width={1000}
+              height={600}
             />
           </div>
         </CardContent>
