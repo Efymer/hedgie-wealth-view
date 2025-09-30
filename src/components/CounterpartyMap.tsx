@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useMemo, useCallback, useState, useRef, useEffect } from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,8 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
   const summary = useMemo(() => data?.meta?.summary, [data?.meta?.summary]);
 
   const [hoveredNode, setHoveredNode] = useState<CounterpartyMapItem | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fgRef = useRef<any>();
 
   function getColorByType(type: string): string {
     switch (type) {
@@ -84,6 +86,25 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
 
     return { nodes, links };
   }, [counterparties, accountId]);
+
+  useEffect(() => {
+    if (fgRef.current) {
+      // Configure D3 forces for better spacing
+      const fg = fgRef.current;
+      
+      // Set link distance to spread nodes apart
+      fg.d3Force('link').distance(200);
+      
+      // Set charge force to push nodes away from each other
+      fg.d3Force('charge').strength(-800);
+      
+      // Add collision force to prevent overlap
+      fg.d3Force('collision', fg.d3.forceCollide().radius(50));
+      
+      // Reheat simulation to apply new forces
+      fg.d3ReheatSimulation();
+    }
+  }, [graphData]);
 
   const handleNodeHover = useCallback((node: GraphNode | null) => {
     setHoveredNode(node?.data || null);
@@ -204,6 +225,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
         <CardContent>
           <div className="h-[600px] rounded-lg bg-secondary/5 overflow-hidden">
             <ForceGraph2D
+              ref={fgRef}
               graphData={graphData}
               nodeLabel={(node: unknown) => {
                 const n = node as GraphNode;
