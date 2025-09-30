@@ -1,5 +1,5 @@
-import React, { useMemo, useCallback, useState } from "react";
-import { ForceGraph2D } from "react-force-graph";
+import React, { useMemo, useEffect, useRef, useState } from "react";
+import * as d3 from "d3";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCounterpartyMap, type CounterpartyMapItem } from "@/queries";
@@ -20,6 +20,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
 
   const summary = useMemo(() => data?.meta?.summary, [data?.meta?.summary]);
 
+  const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredNode, setHoveredNode] = useState<CounterpartyMapItem | null>(null);
 
   function getColorByType(type: string): string {
@@ -37,27 +38,25 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
     }
   }
 
-  interface GraphNode {
+  interface D3Node extends d3.SimulationNodeDatum {
     id: string;
     name: string;
-    val: number;
+    radius: number;
     color: string;
     data: CounterpartyMapItem;
-    x?: number;
-    y?: number;
   }
 
-  interface GraphLink {
-    source: string;
-    target: string;
+  interface D3Link extends d3.SimulationLinkDatum<D3Node> {
+    source: string | D3Node;
+    target: string | D3Node;
   }
 
   const graphData = useMemo(() => {
-    const nodes: GraphNode[] = [
+    const nodes: D3Node[] = [
       {
         id: accountId,
         name: "You",
-        val: 40,
+        radius: 30,
         color: "#8b5cf6",
         data: {
           account: accountId,
@@ -71,13 +70,13 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
       ...counterparties.slice(0, 20).map((cp) => ({
         id: cp.account,
         name: cp.label,
-        val: Math.max(8, Math.min(25, 8 + cp.transactionCount * 0.3)),
+        radius: Math.max(12, Math.min(25, 12 + cp.transactionCount * 0.3)),
         color: getColorByType(cp.type),
         data: cp,
       })),
     ];
 
-    const links: GraphLink[] = counterparties.slice(0, 20).map((cp) => ({
+    const links: D3Link[] = counterparties.slice(0, 20).map((cp) => ({
       source: accountId,
       target: cp.account,
     }));
@@ -85,44 +84,95 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
     return { nodes, links };
   }, [counterparties, accountId]);
 
-  const handleNodeHover = useCallback((node: GraphNode | null) => {
-    setHoveredNode(node?.data || null);
-  }, []);
+  useEffect(() => {
+    if (!svgRef.current || graphData.nodes.length === 0) return;
 
-  const nodeCanvasObject = useCallback(
-    (node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-      const label = node.name;
-      const fontSize = 12 / globalScale;
-      ctx.font = `${fontSize}px Sans-Serif`;
-      const textWidth = ctx.measureText(label).width;
-      const bckgDimensions = [textWidth, fontSize].map((n) => n + fontSize * 0.2);
+    const width = 800;
+    const height = 384;
 
-      // Draw node circle
-      ctx.beginPath();
-      ctx.arc(node.x!, node.y!, node.val, 0, 2 * Math.PI, false);
-      ctx.fillStyle = node.color;
-      ctx.fill();
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2 / globalScale;
-      ctx.stroke();
+    // Clear previous content
+    d3.select(svgRef.current).selectAll("*").remove();
 
-      // Draw label background
-      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-      ctx.fillRect(
-        node.x! - bckgDimensions[0] / 2,
-        node.y! + node.val + 2,
-        bckgDimensions[0],
-        bckgDimensions[1]
-      );
+    const svg = d3.select(svgRef.current)
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", [0, 0, width, height]);
 
-      // Draw label text
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(label, node.x!, node.y! + node.val + 2 + bckgDimensions[1] / 2);
-    },
-    []
-  );
+    // Create force simulation
+    const simulation = d3.forceSimulation<D3Node>(graphData.nodes)
+      .force("link", d3.forceLink<D3Node, D3Link>(graphData.links).id(d => d.id).distance(150))
+      .force("charge", d3.forceManyBody().strength(-300))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("collision", d3.forceCollide<D3Node>().radius(d => d.radius + 5));
+
+    // Create links
+    const link = svg.append("g")
+      .selectAll("line")
+      .data(graphData.links)
+      .join("line")
+      .attr("stroke", "rgba(148, 163, 184, 0.3)")
+      .attr("stroke-width", 2);
+
+    // Create node groups
+    const node = svg.append("g")
+      .selectAll("g")
+      .data(graphData.nodes)
+      .join("g")
+      .style("cursor", "pointer")
+      .call(d3.drag<SVGGElement, D3Node>()
+        .on("start", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on("drag", (event, d) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on("end", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        }));
+
+    // Add circles to nodes
+    node.append("circle")
+      .attr("r", d => d.radius)
+      .attr("fill", d => d.color)
+      .attr("stroke", "#ffffff")
+      .attr("stroke-width", 2);
+
+    // Add labels to nodes
+    node.append("text")
+      .text(d => d.name.length > 12 ? d.name.slice(0, 12) + "..." : d.name)
+      .attr("text-anchor", "middle")
+      .attr("dy", d => d.radius + 15)
+      .attr("fill", "currentColor")
+      .attr("font-size", "12px")
+      .attr("font-weight", "500");
+
+    // Add hover events
+    node.on("mouseenter", (event, d) => {
+      setHoveredNode(d.data);
+    }).on("mouseleave", () => {
+      setHoveredNode(null);
+    });
+
+    // Update positions on each tick
+    simulation.on("tick", () => {
+      link
+        .attr("x1", d => (d.source as D3Node).x!)
+        .attr("y1", d => (d.source as D3Node).y!)
+        .attr("x2", d => (d.target as D3Node).x!)
+        .attr("y2", d => (d.target as D3Node).y!);
+
+      node.attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+
+    return () => {
+      simulation.stop();
+    };
+  }, [graphData]);
 
   if (isLoading) {
     return (
@@ -202,27 +252,22 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
           </p>
         </CardHeader>
         <CardContent>
-          <div className="h-96 rounded-lg bg-secondary/5 overflow-hidden">
-            <ForceGraph2D
-              graphData={graphData}
-              nodeLabel={(node: unknown) => {
-                const n = node as GraphNode;
-                if (n.data.account === accountId) return "You";
-                return `${n.name}\n↑ ${n.data.sentCount} sent | ↓ ${n.data.receivedCount} received`;
-              }}
-              nodeCanvasObject={nodeCanvasObject}
-              nodeVal="val"
-              nodeColor="color"
-              linkColor={() => "rgba(148, 163, 184, 0.3)"}
-              linkWidth={2}
-              onNodeHover={handleNodeHover}
-              cooldownTicks={100}
-              d3AlphaDecay={0.02}
-              d3VelocityDecay={0.3}
-              backgroundColor="transparent"
-              width={800}
-              height={384}
+          <div className="relative h-96 rounded-lg bg-secondary/5 overflow-hidden">
+            <svg
+              ref={svgRef}
+              className="w-full h-full"
+              style={{ maxWidth: "100%", height: "384px" }}
             />
+            {hoveredNode && hoveredNode.account !== accountId && (
+              <div className="absolute bottom-4 left-4 bg-popover text-popover-foreground p-3 rounded-lg shadow-lg border">
+                <div className="font-semibold">{hoveredNode.label}</div>
+                <div className="text-xs text-muted-foreground">{hoveredNode.account}</div>
+                <div className="text-sm mt-1 space-y-1">
+                  <div className="text-orange-500">↑ {hoveredNode.sentCount} sent</div>
+                  <div className="text-green-500">↓ {hoveredNode.receivedCount} received</div>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
