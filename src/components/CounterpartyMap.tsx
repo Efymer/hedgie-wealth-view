@@ -121,7 +121,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
       fg.d3Force("center").strength(0.1);
       
       // Zoom in slightly for better initial view
-      fg.zoom(2);
+      fg.zoom(5);
     }
   }, [graphData]);
 
