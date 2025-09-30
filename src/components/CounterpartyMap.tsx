@@ -1,4 +1,10 @@
-import React, { useMemo, useCallback, useState, useRef, useEffect } from "react";
+import React, {
+  useMemo,
+  useCallback,
+  useState,
+  useRef,
+  useEffect,
+} from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +16,9 @@ interface CounterpartyMapProps {
 
 // Data shape imported from queries as CounterpartyMapItem
 
-export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) => {
+export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
+  accountId,
+}) => {
   const { data, isLoading, isError } = useCounterpartyMap(accountId, 1000);
 
   const counterparties: CounterpartyMapItem[] = useMemo(
@@ -20,7 +28,9 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
 
   const summary = useMemo(() => data?.meta?.summary, [data?.meta?.summary]);
 
-  const [hoveredNode, setHoveredNode] = useState<CounterpartyMapItem | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<CounterpartyMapItem | null>(
+    null
+  );
   const fgRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
@@ -35,8 +45,8 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
     };
 
     updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
   function getColorByType(type: string): string {
@@ -74,7 +84,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
       {
         id: accountId,
         name: "You",
-        val: 40,
+        val: 20,
         color: "#8b5cf6",
         data: {
           account: accountId,
@@ -107,9 +117,9 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
     if (fgRef.current) {
       const fg = fgRef.current;
       // Access the d3 force simulation and configure spacing
-      fg.d3Force('charge').strength(-500);
-      fg.d3Force('link').distance(120);
-      fg.d3Force('center').strength(0.05);
+      fg.d3Force("charge").strength(-500);
+      fg.d3Force("link").distance(120);
+      fg.d3Force("center").strength(0.05);
     }
   }, [graphData]);
 
@@ -128,7 +138,9 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
       const fontSize = 12 / globalScale;
       ctx.font = `${fontSize}px Sans-Serif`;
       const textWidth = ctx.measureText(label).width;
-      const bckgDimensions = [textWidth, fontSize].map((n) => n + fontSize * 0.2);
+      const bckgDimensions = [textWidth, fontSize].map(
+        (n) => n + fontSize * 0.2
+      );
 
       // Add outer glow
       ctx.shadowColor = node.color;
@@ -145,7 +157,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
         node.y,
         node.val
       );
-      
+
       // Lighter center, darker edges for depth
       const baseColor = node.color;
       gradient.addColorStop(0, `${baseColor}ff`);
@@ -175,7 +187,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
       );
       highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
       highlightGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-      
+
       ctx.beginPath();
       ctx.arc(node.x, node.y, node.val * 0.8, 0, 2 * Math.PI, false);
       ctx.fillStyle = highlightGradient;
@@ -197,7 +209,12 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
       ctx.lineTo(bgX + bgWidth - radius, bgY);
       ctx.quadraticCurveTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + radius);
       ctx.lineTo(bgX + bgWidth, bgY + bgHeight - radius);
-      ctx.quadraticCurveTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - radius, bgY + bgHeight);
+      ctx.quadraticCurveTo(
+        bgX + bgWidth,
+        bgY + bgHeight,
+        bgX + bgWidth - radius,
+        bgY + bgHeight
+      );
       ctx.lineTo(bgX + radius, bgY + bgHeight);
       ctx.quadraticCurveTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - radius);
       ctx.lineTo(bgX, bgY + radius);
@@ -294,12 +311,13 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
             </Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Interactive force-directed graph showing your most frequent counterparties. 
-            Bubble size represents transaction frequency. Hover over nodes for details.
+            Interactive force-directed graph showing your most frequent
+            counterparties. Bubble size represents transaction frequency. Hover
+            over nodes for details.
           </p>
         </CardHeader>
         <CardContent>
-          <div 
+          <div
             ref={containerRef}
             className="h-[800px] rounded-lg bg-secondary/5 overflow-hidden"
           >
@@ -308,8 +326,8 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
               graphData={graphData}
               nodeLabel={(node: unknown) => {
                 const n = node as GraphNode;
-                if (n.data.account === accountId) return "You";
-                return `${n.name}\n↑ ${n.data.sentCount} sent | ↓ ${n.data.receivedCount} received`;
+                if (n.data.account === accountId) return accountId;
+                return `↑ ${n.data.sentCount} sent | ↓ ${n.data.receivedCount} received`;
               }}
               nodeCanvasObject={nodeCanvasObject}
               nodeVal="val"
@@ -363,7 +381,9 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
                         ↑ {counterparty.sentCount} sent
                       </span>
                     )}
-                    {counterparty.sentCount > 0 && counterparty.receivedCount > 0 && " · "}
+                    {counterparty.sentCount > 0 &&
+                      counterparty.receivedCount > 0 &&
+                      " · "}
                     {counterparty.receivedCount > 0 && (
                       <span className="text-green-500">
                         ↓ {counterparty.receivedCount} received
