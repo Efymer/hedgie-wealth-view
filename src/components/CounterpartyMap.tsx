@@ -22,6 +22,22 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
 
   const [hoveredNode, setHoveredNode] = useState<CounterpartyMapItem | null>(null);
   const fgRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
+
+  // Update dimensions when container size changes
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
+        setDimensions({ width, height });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
   function getColorByType(type: string): string {
     switch (type) {
@@ -283,7 +299,10 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
           </p>
         </CardHeader>
         <CardContent>
-          <div className="h-[600px] rounded-lg bg-secondary/5 overflow-hidden">
+          <div 
+            ref={containerRef}
+            className="h-[800px] rounded-lg bg-secondary/5 overflow-hidden"
+          >
             <ForceGraph2D
               ref={fgRef}
               graphData={graphData}
@@ -305,8 +324,8 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
               d3VelocityDecay={0.2}
               d3AlphaMin={0.001}
               backgroundColor="transparent"
-              width={1000}
-              height={600}
+              width={dimensions.width}
+              height={dimensions.height}
             />
           </div>
         </CardContent>
