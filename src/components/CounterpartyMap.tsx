@@ -351,50 +351,81 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
         </CardContent>
       </Card>
 
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Top Counterparties</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {counterparties.slice(0, 10).map((counterparty, index) => (
-              <div
-                key={counterparty.account}
-                className="flex items-center justify-between p-3 rounded-lg bg-secondary/10"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-medium text-sm">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <div className="font-medium">{counterparty.label}</div>
-                  </div>
-                </div>
-                <div className="text-right flex flex-col gap-1">
-                  <div className="font-medium">
-                    {counterparty.transactionCount} txns
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {counterparty.sentCount > 0 && (
-                      <span className="text-orange-500">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Sent To */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-orange-500">↑</span> Top Sent To
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {counterparties
+                .filter((cp) => cp.sentCount > 0)
+                .sort((a, b) => b.sentCount - a.sentCount)
+                .slice(0, 10)
+                .map((counterparty, index) => (
+                  <div
+                    key={counterparty.account}
+                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/10"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/20 text-orange-500 font-medium text-sm">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <div className="font-medium">{counterparty.label}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-orange-500">
                         ↑ {counterparty.sentCount} sent
-                      </span>
-                    )}
-                    {counterparty.sentCount > 0 &&
-                      counterparty.receivedCount > 0 &&
-                      " · "}
-                    {counterparty.receivedCount > 0 && (
-                      <span className="text-green-500">
-                        ↓ {counterparty.receivedCount} received
-                      </span>
-                    )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Received From */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-green-500">↓</span> Top Received From
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {counterparties
+                .filter((cp) => cp.receivedCount > 0)
+                .sort((a, b) => b.receivedCount - a.receivedCount)
+                .slice(0, 10)
+                .map((counterparty, index) => (
+                  <div
+                    key={counterparty.account}
+                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/10"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-500/20 text-green-500 font-medium text-sm">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <div className="font-medium">{counterparty.label}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-green-500">
+                        ↓ {counterparty.receivedCount} received
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
