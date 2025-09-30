@@ -109,29 +109,93 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
       const textWidth = ctx.measureText(label).width;
       const bckgDimensions = [textWidth, fontSize].map((n) => n + fontSize * 0.2);
 
-      // Draw node circle
+      // Add outer glow
+      ctx.shadowColor = node.color;
+      ctx.shadowBlur = 15 / globalScale;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Create radial gradient for node
+      const gradient = ctx.createRadialGradient(
+        node.x!,
+        node.y!,
+        0,
+        node.x!,
+        node.y!,
+        node.val
+      );
+      
+      // Lighter center, darker edges for depth
+      const baseColor = node.color;
+      gradient.addColorStop(0, `${baseColor}ff`);
+      gradient.addColorStop(0.5, baseColor);
+      gradient.addColorStop(1, `${baseColor}cc`);
+
+      // Draw main circle with gradient
       ctx.beginPath();
       ctx.arc(node.x!, node.y!, node.val, 0, 2 * Math.PI, false);
-      ctx.fillStyle = node.color;
+      ctx.fillStyle = gradient;
       ctx.fill();
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2 / globalScale;
+
+      // Add highlight ring
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+      ctx.lineWidth = 2.5 / globalScale;
       ctx.stroke();
 
-      // Draw label background
-      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-      ctx.fillRect(
-        node.x! - bckgDimensions[0] / 2,
-        node.y! + node.val + 2,
-        bckgDimensions[0],
-        bckgDimensions[1]
+      // Add inner highlight for glossy effect
+      const highlightGradient = ctx.createRadialGradient(
+        node.x! - node.val * 0.3,
+        node.y! - node.val * 0.3,
+        0,
+        node.x!,
+        node.y!,
+        node.val * 0.8
       );
+      highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+      highlightGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+      
+      ctx.beginPath();
+      ctx.arc(node.x!, node.y!, node.val * 0.8, 0, 2 * Math.PI, false);
+      ctx.fillStyle = highlightGradient;
+      ctx.fill();
+
+      // Reset shadow for label
+      ctx.shadowBlur = 0;
+
+      // Draw label background with rounded corners
+      const padding = fontSize * 0.3;
+      const bgX = node.x! - bckgDimensions[0] / 2 - padding;
+      const bgY = node.y! + node.val + 4;
+      const bgWidth = bckgDimensions[0] + padding * 2;
+      const bgHeight = bckgDimensions[1] + padding;
+      const radius = 4 / globalScale;
+
+      ctx.beginPath();
+      ctx.moveTo(bgX + radius, bgY);
+      ctx.lineTo(bgX + bgWidth - radius, bgY);
+      ctx.quadraticCurveTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + radius);
+      ctx.lineTo(bgX + bgWidth, bgY + bgHeight - radius);
+      ctx.quadraticCurveTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - radius, bgY + bgHeight);
+      ctx.lineTo(bgX + radius, bgY + bgHeight);
+      ctx.quadraticCurveTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - radius);
+      ctx.lineTo(bgX, bgY + radius);
+      ctx.quadraticCurveTo(bgX, bgY, bgX + radius, bgY);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.fill();
+
+      // Add subtle border to label
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.lineWidth = 1 / globalScale;
+      ctx.stroke();
 
       // Draw label text
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = "#ffffff";
-      ctx.fillText(label, node.x!, node.y! + node.val + 2 + bckgDimensions[1] / 2);
+      ctx.font = `600 ${fontSize}px Sans-Serif`;
+      ctx.fillText(label, node.x!, bgY + bgHeight / 2);
     },
     []
   );

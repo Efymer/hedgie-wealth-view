@@ -1,5 +1,5 @@
 import { useQueries } from "@tanstack/react-query";
-import { getTokenBalances, getTokenInfo, MirrorNodeTokenInfo, TokenBalanceEntry } from "@/queries";
+import { getTopTokenHolders, getTokenInfo, MirrorNodeTokenInfo, TokenBalanceEntry } from "@/queries";
 
 export interface WhaleData {
   tokenId: string;
@@ -28,7 +28,7 @@ export const useWhaleStatus = (
       },
       {
         queryKey: ["token", tokenId, "balances", { limit: topN }],
-        queryFn: () => getTokenBalances(tokenId as string, topN),
+        queryFn: () => getTopTokenHolders(tokenId as string, topN),
         enabled,
         staleTime: 60_000,
       },
@@ -77,7 +77,7 @@ export const useWhaleDetection = (
       queryFn: async () => {
         const [info, balances] = await Promise.all([
           getTokenInfo(tokenId),
-          getTokenBalances(tokenId, topN),
+          getTopTokenHolders(tokenId, topN),
         ]);
         if (!info) return { tokenId, isWhale: false } as WhaleData;
         const idx = (balances ?? []).findIndex((b) => b.account === accountId);
