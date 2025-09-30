@@ -21,8 +21,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
   const summary = useMemo(() => data?.meta?.summary, [data?.meta?.summary]);
 
   const [hoveredNode, setHoveredNode] = useState<CounterpartyMapItem | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const fgRef = useRef<any>();
+  const fgRef = useRef<any>(null);
 
   function getColorByType(type: string): string {
     switch (type) {
@@ -87,22 +86,14 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
     return { nodes, links };
   }, [counterparties, accountId]);
 
+  // Configure D3 forces after graph data changes
   useEffect(() => {
     if (fgRef.current) {
-      // Configure D3 forces for better spacing
       const fg = fgRef.current;
-      
-      // Set link distance to spread nodes apart
-      fg.d3Force('link').distance(200);
-      
-      // Set charge force to push nodes away from each other
-      fg.d3Force('charge').strength(-800);
-      
-      // Add collision force to prevent overlap
-      fg.d3Force('collision', fg.d3.forceCollide().radius(50));
-      
-      // Reheat simulation to apply new forces
-      fg.d3ReheatSimulation();
+      // Access the d3 force simulation and configure spacing
+      fg.d3Force('charge').strength(-500);
+      fg.d3Force('link').distance(120);
+      fg.d3Force('center').strength(0.05);
     }
   }, [graphData]);
 
@@ -235,7 +226,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
               nodeCanvasObject={nodeCanvasObject}
               nodeVal="val"
               nodeColor="color"
-              nodeRelSize={8}
+              nodeRelSize={4}
               linkColor={() => "rgba(148, 163, 184, 0.3)"}
               linkWidth={2}
               onNodeHover={handleNodeHover}
@@ -243,6 +234,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
               cooldownTicks={0}
               d3AlphaDecay={0.01}
               d3VelocityDecay={0.2}
+              d3AlphaMin={0.001}
               backgroundColor="transparent"
               width={1000}
               height={600}
