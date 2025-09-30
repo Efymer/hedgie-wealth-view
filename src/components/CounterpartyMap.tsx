@@ -88,7 +88,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
         color: "#8b5cf6",
         data: {
           account: accountId,
-          label: "You",
+          label: accountId,
           sentCount: 0,
           receivedCount: 0,
           transactionCount: 0,
@@ -366,9 +366,6 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
                   </div>
                   <div>
                     <div className="font-medium">{counterparty.label}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {counterparty.account}
-                    </div>
                   </div>
                 </div>
                 <div className="text-right flex flex-col gap-1">
@@ -403,32 +400,6 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
                 </Badge>
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Legend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-blue-500"></div>
-              <span className="text-sm">Exchange</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-green-500"></div>
-              <span className="text-sm">DeFi/DApp</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
-              <span className="text-sm">Wallet</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-purple-500"></div>
-              <span className="text-sm">Treasury</span>
-            </div>
           </div>
         </CardContent>
       </Card>
