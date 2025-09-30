@@ -1,9 +1,8 @@
 import React, { useMemo, useCallback, useState, useRef, useEffect } from "react";
-import ForceGraph3D from "react-force-graph-3d";
+import ForceGraph2D from "react-force-graph-2d";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCounterpartyMap, type CounterpartyMapItem } from "@/queries";
-import * as THREE from "three";
 
 interface CounterpartyMapProps {
   accountId: string;
@@ -102,49 +101,40 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
     setHoveredNode(node?.data || null);
   }, []);
 
-  const nodeThreeObject = useCallback((node: GraphNode) => {
-    // Create a sphere for each node
-    const geometry = new THREE.SphereGeometry(node.val, 16, 16);
-    const material = new THREE.MeshLambertMaterial({
-      color: node.color,
-      transparent: true,
-      opacity: 0.9,
-    });
-    const sphere = new THREE.Mesh(geometry, material);
+  const nodeCanvasObject = useCallback(
+    (node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
+      const label = node.name;
+      const fontSize = 12 / globalScale;
+      ctx.font = `${fontSize}px Sans-Serif`;
+      const textWidth = ctx.measureText(label).width;
+      const bckgDimensions = [textWidth, fontSize].map((n) => n + fontSize * 0.2);
 
-    // Add label sprite
-    const sprite = new THREE.Sprite(
-      new THREE.SpriteMaterial({
-        map: createTextTexture(node.name),
-        transparent: true,
-      })
-    );
-    sprite.scale.set(node.val * 3, node.val * 1.5, 1);
-    sprite.position.set(0, node.val + 10, 0);
-    sphere.add(sprite);
+      // Draw node circle
+      ctx.beginPath();
+      ctx.arc(node.x!, node.y!, node.val, 0, 2 * Math.PI, false);
+      ctx.fillStyle = node.color;
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2 / globalScale;
+      ctx.stroke();
 
-    return sphere;
-  }, []);
+      // Draw label background
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.fillRect(
+        node.x! - bckgDimensions[0] / 2,
+        node.y! + node.val + 2,
+        bckgDimensions[0],
+        bckgDimensions[1]
+      );
 
-  const createTextTexture = (text: string) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return new THREE.Texture();
-
-    canvas.width = 256;
-    canvas.height = 64;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.font = 'Bold 24px Arial';
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-
-    const texture = new THREE.Texture(canvas);
-    texture.needsUpdate = true;
-    return texture;
-  };
+      // Draw label text
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(label, node.x!, node.y! + node.val + 2 + bckgDimensions[1] / 2);
+    },
+    []
+  );
 
   if (isLoading) {
     return (
@@ -219,13 +209,13 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
             </Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Interactive 3D force-directed graph showing your most frequent counterparties. 
-            Sphere size represents transaction frequency. Click and drag to rotate, scroll to zoom.
+            Interactive force-directed graph showing your most frequent counterparties. 
+            Bubble size represents transaction frequency. Hover over nodes for details.
           </p>
         </CardHeader>
         <CardContent>
           <div className="h-[600px] rounded-lg bg-secondary/5 overflow-hidden">
-            <ForceGraph3D
+            <ForceGraph2D
               ref={fgRef}
               graphData={graphData}
               nodeLabel={(node: unknown) => {
@@ -233,23 +223,21 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({ accountId }) =
                 if (n.data.account === accountId) return "You";
                 return `${n.name}\n↑ ${n.data.sentCount} sent | ↓ ${n.data.receivedCount} received`;
               }}
-              nodeThreeObject={nodeThreeObject}
+              nodeCanvasObject={nodeCanvasObject}
               nodeVal="val"
+              nodeColor="color"
+              nodeRelSize={4}
               linkColor={() => "rgba(148, 163, 184, 0.3)"}
               linkWidth={2}
-              linkOpacity={0.5}
               onNodeHover={handleNodeHover}
               warmupTicks={100}
               cooldownTicks={0}
               d3AlphaDecay={0.01}
               d3VelocityDecay={0.2}
               d3AlphaMin={0.001}
-              backgroundColor="rgba(0,0,0,0)"
+              backgroundColor="transparent"
               width={1000}
               height={600}
-              showNavInfo={false}
-              enableNodeDrag={true}
-              enableNavigationControls={true}
             />
           </div>
         </CardContent>
