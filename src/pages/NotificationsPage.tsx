@@ -393,7 +393,7 @@ const NotificationsPage: React.FC = () => {
                                         amount,
                                         {
                                           minimumFractionDigits: 3,
-                                          maximumFractionDigits: 3,
+                                          maximumFractionDigits: 8,
                                         }
                                       );
                                       return `${formattedAmount} ${tokenSymbol}`;
