@@ -25,13 +25,13 @@ function isHederaOwnedAccount(accountId: string): boolean {
   // Check explicit list
   if (HEDERA_OWNED_ACCOUNTS.has(accountId)) return true;
   
-  // // Filter out system accounts (0.0.1 to 0.0.1000 are typically system/treasury)
-  // const parts = accountId.split('.');
-  // if (parts.length === 3 && parts[0] === '0' && parts[1] === '0') {
-  //   const num = parseInt(parts[2], 10);
-  //   // Accounts 1-750 are generally Hedera system accounts
-  //   if (num >= 1 && num <= 750) return true;
-  // }
+  // Filter out system accounts (0.0.1 to 0.0.1000 are typically system/treasury)
+  const parts = accountId.split('.');
+  if (parts.length === 3 && parts[0] === '0' && parts[1] === '0') {
+    const num = parseInt(parts[2], 10);
+    // Accounts 1-750 are generally Hedera system accounts
+    if (num >= 1 && num <= 750) return true;
+  }
   
   return false;
 }
