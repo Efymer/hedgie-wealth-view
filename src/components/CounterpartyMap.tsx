@@ -83,7 +83,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
     const nodes: GraphNode[] = [
       {
         id: accountId,
-        name: "You",
+        name: accountId,
         val: 20,
         color: "#8b5cf6",
         data: {
