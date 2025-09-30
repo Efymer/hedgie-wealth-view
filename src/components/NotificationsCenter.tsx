@@ -204,7 +204,7 @@ export const NotificationsCenter: React.FC = () => {
                                 if (tokenSymbol === "HBAR") {
                                   const formattedAmount = formatAmount(amount, {
                                     minimumFractionDigits: 3,
-                                    maximumFractionDigits: 3,
+                                    maximumFractionDigits: 8,
                                   });
                                   return `${formattedAmount} ${tokenSymbol}`;
                                 }
