@@ -13,6 +13,29 @@ type Res = {
   setHeader: (name: string, value: string) => void;
 };
 
+// Hedera-owned accounts to filter out (fee collection, staking rewards, etc.)
+const HEDERA_OWNED_ACCOUNTS = new Set([
+  "0.0.98",   // Fee collection account
+  "0.0.800",  // Staking reward account
+  "0.0.801",  // Node reward account
+]);
+
+// Helper function to check if account is Hedera-owned
+function isHederaOwnedAccount(accountId: string): boolean {
+  // Check explicit list
+  if (HEDERA_OWNED_ACCOUNTS.has(accountId)) return true;
+  
+  // // Filter out system accounts (0.0.1 to 0.0.1000 are typically system/treasury)
+  // const parts = accountId.split('.');
+  // if (parts.length === 3 && parts[0] === '0' && parts[1] === '0') {
+  //   const num = parseInt(parts[2], 10);
+  //   // Accounts 1-750 are generally Hedera system accounts
+  //   if (num >= 1 && num <= 750) return true;
+  // }
+  
+  return false;
+}
+
 // Simple tag map for known services (extend as needed)
 const TAGS: Record<string, { label: string; type: "exchange" | "dapp" | "wallet" | "treasury" }> = {
   "0.0.456858": { label: "USDC Treasury", type: "treasury" },
@@ -147,14 +170,16 @@ export default async function handler(req: Req, res: Res) {
         }
       }
 
-      // Update aggregation
+      // Update aggregation (filter out Hedera-owned accounts)
       for (const cp of sentTo) {
+        if (isHederaOwnedAccount(cp)) continue;
         if (!agg[cp]) agg[cp] = { account: cp, sentCount: 0, receivedCount: 0, totalCount: 0 };
         agg[cp].sentCount += 1;
         agg[cp].totalCount += 1;
       }
 
       for (const cp of receivedFrom) {
+        if (isHederaOwnedAccount(cp)) continue;
         if (!agg[cp]) agg[cp] = { account: cp, sentCount: 0, receivedCount: 0, totalCount: 0 };
         agg[cp].receivedCount += 1;
         agg[cp].totalCount += 1;
