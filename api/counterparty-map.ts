@@ -1,6 +1,7 @@
 // Vercel serverless function to build counterparty map data for an account
 // Endpoint: /api/counterparty-map?accountId=0.0.xxxx&limit=1000
-// It aggregates counterparties by counting transactions involving the given account.
+// It aggregates counterparties by counting transactions involving the given account,
+// tracking both sends and receives separately.
 
 const MIRROR_NODE = "https://mainnet.mirrornode.hedera.com";
 
@@ -14,10 +15,12 @@ type Res = {
 
 // Simple tag map for known services (extend as needed)
 const TAGS: Record<string, { label: string; type: "exchange" | "dapp" | "wallet" | "treasury" }> = {
-  "0.0.456858": { label: "USDC", type: "dapp" },
+  "0.0.456858": { label: "USDC Treasury", type: "treasury" },
   "0.0.731861": { label: "SaucerSwap", type: "dapp" },
   "0.0.882001": { label: "HeliSwap", type: "dapp" },
   "0.0.990077": { label: "Pangolin", type: "dapp" },
+  "0.0.1004": { label: "Binance", type: "exchange" },
+  "0.0.1006": { label: "Bittrex", type: "exchange" },
 };
 
 type MirrorNodeTransfer = { account: string; amount: number };
@@ -74,7 +77,9 @@ export default async function handler(req: Req, res: Res) {
 
     type CounterAgg = {
       account: string;
-      transactionCount: number;
+      sentCount: number;
+      receivedCount: number;
+      totalCount: number;
     };
 
     const agg: Record<string, CounterAgg> = {};
@@ -93,42 +98,72 @@ export default async function handler(req: Req, res: Res) {
         hbarByAccount[t.account] = (hbarByAccount[t.account] || 0) + (t.amount || 0);
       }
 
-      // Determine if the user is a sender in this transaction (HBAR or tokens)
-      const isHBARSender = (hbarByAccount[accountId] ?? 0) < 0;
-      const isTokenSender = tokenTransfers.some((t) => t.account === accountId && (t.amount ?? 0) < 0);
+      // Determine user's net flow for this transaction
+      const userHbarNet = hbarByAccount[accountId] ?? 0;
+      const userTokenNet = tokenTransfers
+        .filter((t) => t.account === accountId)
+        .reduce((sum, t) => sum + (t.amount ?? 0), 0);
 
-      // Only include transactions initiated by the user (outgoing)
-      if (!(isHBARSender || isTokenSender)) {
-        continue;
-      }
+      // Collect counterparties that received value from the user (sent to)
+      const sentTo = new Set<string>();
+      // Collect counterparties that sent value to the user (received from)
+      const receivedFrom = new Set<string>();
 
-      // Collect counterparties that received value from the user
-      const recipients = new Set<string>();
-
-      // HBAR recipients: positive net amount (exclude the user)
+      // HBAR flows
       for (const [acct, amt] of Object.entries(hbarByAccount)) {
-        if (acct !== accountId && (amt ?? 0) > 0) {
-          recipients.add(acct);
+        if (acct === accountId) continue;
+        
+        // If user sent HBAR (negative) and this account received (positive)
+        if (userHbarNet < 0 && amt > 0) {
+          sentTo.add(acct);
+        }
+        // If user received HBAR (positive) and this account sent (negative)
+        if (userHbarNet > 0 && amt < 0) {
+          receivedFrom.add(acct);
         }
       }
 
-      // Token recipients: positive amount entries (exclude the user)
-      for (const tt of tokenTransfers) {
-        if (tt.account !== accountId && (tt.amount ?? 0) > 0) {
-          recipients.add(tt.account);
+      // Token flows
+      const userTokenTransfers = tokenTransfers.filter((t) => t.account === accountId);
+      const otherTokenTransfers = tokenTransfers.filter((t) => t.account !== accountId);
+
+      for (const userTx of userTokenTransfers) {
+        const userAmount = userTx.amount ?? 0;
+        const tokenId = userTx.token_id;
+
+        // Find counterparties for this token
+        for (const otherTx of otherTokenTransfers) {
+          if (otherTx.token_id !== tokenId) continue;
+          const otherAmount = otherTx.amount ?? 0;
+
+          // User sent tokens (negative) and other received (positive)
+          if (userAmount < 0 && otherAmount > 0) {
+            sentTo.add(otherTx.account);
+          }
+          // User received tokens (positive) and other sent (negative)
+          if (userAmount > 0 && otherAmount < 0) {
+            receivedFrom.add(otherTx.account);
+          }
         }
       }
 
-      // Increment counts for recipients only
-      for (const cp of recipients) {
-        if (!agg[cp]) agg[cp] = { account: cp, transactionCount: 0 };
-        agg[cp].transactionCount += 1;
+      // Update aggregation
+      for (const cp of sentTo) {
+        if (!agg[cp]) agg[cp] = { account: cp, sentCount: 0, receivedCount: 0, totalCount: 0 };
+        agg[cp].sentCount += 1;
+        agg[cp].totalCount += 1;
+      }
+
+      for (const cp of receivedFrom) {
+        if (!agg[cp]) agg[cp] = { account: cp, sentCount: 0, receivedCount: 0, totalCount: 0 };
+        agg[cp].receivedCount += 1;
+        agg[cp].totalCount += 1;
       }
     }
 
     // Transform into expected shape
     const data = Object.values(agg)
-      .sort((a, b) => b.transactionCount - a.transactionCount)
+      .sort((a, b) => b.totalCount - a.totalCount)
       .map((entry) => {
         const tag = TAGS[entry.account];
         const label = tag?.label || entry.account;
@@ -136,15 +171,16 @@ export default async function handler(req: Req, res: Res) {
         return {
           account: entry.account,
           label,
-          transactionCount: entry.transactionCount,
+          sentCount: entry.sentCount,
+          receivedCount: entry.receivedCount,
+          transactionCount: entry.totalCount,
           type,
-        } as {
-          account: string;
-          label: string;
-          transactionCount: number;
-          type: "exchange" | "dapp" | "wallet" | "treasury";
         };
       });
+
+    // Find top send and receive counterparties
+    const topSentTo = [...data].sort((a, b) => b.sentCount - a.sentCount)[0];
+    const topReceivedFrom = [...data].sort((a, b) => b.receivedCount - a.receivedCount)[0];
 
     res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=600");
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -154,6 +190,18 @@ export default async function handler(req: Req, res: Res) {
         accountId,
         transactionsProcessed: transactions.length,
         counterparties: data.length,
+        summary: {
+          topSentTo: topSentTo ? {
+            account: topSentTo.account,
+            label: topSentTo.label,
+            count: topSentTo.sentCount,
+          } : null,
+          topReceivedFrom: topReceivedFrom ? {
+            account: topReceivedFrom.account,
+            label: topReceivedFrom.label,
+            count: topReceivedFrom.receivedCount,
+          } : null,
+        },
       },
     });
   } catch (err: unknown) {

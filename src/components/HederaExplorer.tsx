@@ -7,6 +7,7 @@ import { Breadcrumb } from "./Breadcrumb";
 import { PortfolioDiversificationChart } from "./PortfolioDiversificationChart";
 import { NFTList } from "./NFTList";
 import { FollowButton } from "./FollowButton";
+import { CounterpartyMap } from "./CounterpartyMap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import {
@@ -283,9 +284,10 @@ export const HederaExplorer: React.FC = () => {
             </div>
 
             <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                <TabsTrigger value="network">Network</TabsTrigger>
                 <TabsTrigger value="nfts">NFTs</TabsTrigger>
               </TabsList>
 
@@ -337,6 +339,10 @@ export const HederaExplorer: React.FC = () => {
                   onLoadMore={() => txInfinite.fetchNextPage()}
                   isLoadingMore={txInfinite.isFetchingNextPage}
                 />
+              </TabsContent>
+
+              <TabsContent value="network">
+                <CounterpartyMap accountId={accountId} />
               </TabsContent>
 
               <TabsContent value="nfts">

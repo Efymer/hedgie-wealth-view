@@ -653,6 +653,8 @@ export const useTokenInfo = (tokenId: string, enabled: boolean = true) => {
 export type CounterpartyMapItem = {
   account: string;
   label: string;
+  sentCount: number;
+  receivedCount: number;
   transactionCount: number;
   type: "exchange" | "dapp" | "wallet" | "treasury";
 };
@@ -663,6 +665,18 @@ export type CounterpartyMapResponse = {
     accountId: string;
     transactionsProcessed: number;
     counterparties: number;
+    summary: {
+      topSentTo: {
+        account: string;
+        label: string;
+        count: number;
+      } | null;
+      topReceivedFrom: {
+        account: string;
+        label: string;
+        count: number;
+      } | null;
+    };
   };
 };
 
