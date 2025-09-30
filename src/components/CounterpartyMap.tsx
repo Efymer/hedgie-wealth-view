@@ -28,9 +28,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
 
   const summary = useMemo(() => data?.meta?.summary, [data?.meta?.summary]);
 
-  const [hoveredNode, setHoveredNode] = useState<CounterpartyMapItem | null>(
-    null
-  );
+  const [_, setHoveredNode] = useState<CounterpartyMapItem | null>(null);
   const fgRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
@@ -117,9 +115,13 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
     if (fgRef.current) {
       const fg = fgRef.current;
       // Access the d3 force simulation and configure spacing
-      fg.d3Force("charge").strength(-500);
-      fg.d3Force("link").distance(120);
-      fg.d3Force("center").strength(0.05);
+      // Reduced charge and link distance for more compact, zoomed-in appearance
+      fg.d3Force("charge").strength(-300);
+      fg.d3Force("link").distance(80);
+      fg.d3Force("center").strength(0.1);
+      
+      // Zoom in slightly for better initial view
+      fg.zoom(1.5);
     }
   }, [graphData]);
 
@@ -355,7 +357,7 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {counterparties.slice(0, 5).map((counterparty, index) => (
+            {counterparties.slice(0, 10).map((counterparty, index) => (
               <div
                 key={counterparty.account}
                 className="flex items-center justify-between p-3 rounded-lg bg-secondary/10"
@@ -388,16 +390,6 @@ export const CounterpartyMap: React.FC<CounterpartyMapProps> = ({
                     )}
                   </div>
                 </div>
-                <Badge
-                  variant="secondary"
-                  className="ml-2"
-                  style={{
-                    backgroundColor: `${getColorByType(counterparty.type)}20`,
-                    color: getColorByType(counterparty.type),
-                  }}
-                >
-                  {counterparty.type}
-                </Badge>
               </div>
             ))}
           </div>
