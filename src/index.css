@@ -173,11 +173,6 @@
     background-clip: text;
   }
 
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient 8s ease infinite;
-  }
-
   .shimmer {
     @apply relative overflow-hidden;
   }
@@ -187,15 +182,6 @@
     content: '';
     animation: shimmer 2s infinite;
     transform: translateX(-100%);
-  }
-
-  @keyframes gradient {
-    0%, 100% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
   }
 
   @keyframes shimmer {
