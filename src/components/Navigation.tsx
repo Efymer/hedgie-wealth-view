@@ -4,6 +4,7 @@ import { Search, TrendingUp, Activity, Menu, X, Crown, Clock } from "lucide-reac
 import { NotificationsCenter } from "./NotificationsCenter";
 import { WalletConnect } from "./WalletConnect";
 import { FollowedAccountsDropdown } from "./FollowedAccountsDropdown";
+import { ThemeToggle } from "./ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -112,6 +113,7 @@ export const Navigation: React.FC = () => {
             </Sheet>
           ) : (
             <div className="flex items-center space-x-3">
+              <ThemeToggle />
               <FollowedAccountsDropdown />
               <NotificationsCenter />
               <WalletConnect /> 
