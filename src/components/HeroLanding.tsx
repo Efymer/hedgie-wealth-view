@@ -413,10 +413,6 @@ export const HeroLanding = () => {
                 </motion.span>
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-              
-              <div className="glass-card p-2 rounded-lg">
-                <WalletConnect />
-              </div>
             </div>
           </div>
         </motion.div>
