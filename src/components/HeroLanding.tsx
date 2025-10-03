@@ -1,44 +1,23 @@
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useRef, useState, useEffect } from "react";
-import { 
-  Wallet, TrendingUp, Users, Bell, Star, Moon, Smartphone,
-  BarChart3, Shield, Zap, Activity, Globe, ArrowRight,
-  Eye, Target, Rocket, Check, Sparkles
+import { useRef } from "react";
+import {
+  Users,
+  Star,
+  Moon,
+  Smartphone,
+  BarChart3,
+  Shield,
+  Activity,
+  ArrowRight,
+  Eye,
+  Target,
+  Rocket,
+  Check,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { WalletConnect } from "@/components/WalletConnect";
-
-// Animated counter hook
-const useCounter = (end: number, duration: number = 2000) => {
-  const [count, setCount] = useState(0);
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
-
-  useEffect(() => {
-    if (!isInView) return;
-    let startTime: number;
-    let animationFrame: number;
-
-    const animate = (currentTime: number) => {
-      if (!startTime) startTime = currentTime;
-      const progress = (currentTime - startTime) / duration;
-
-      if (progress < 1) {
-        setCount(Math.floor(end * progress));
-        animationFrame = requestAnimationFrame(animate);
-      } else {
-        setCount(end);
-      }
-    };
-
-    animationFrame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [end, duration, isInView]);
-
-  return { count, ref };
-};
 
 // Particle background component
 const ParticleBackground = () => {
@@ -83,37 +62,73 @@ export const HeroLanding = () => {
     {
       icon: BarChart3,
       title: "Portfolio & Analytics",
-      description: "Real-time net worth tracking, portfolio diversification charts, and comprehensive transaction history",
+      description:
+        "Real-time net worth tracking, portfolio diversification charts, and comprehensive transaction history",
       gradient: "from-blue-500/20 to-cyan-500/20",
-      features: ["Net Worth Tracking", "Diversification Charts", "Token Prices", "Transaction History"]
+      features: [
+        "Net Worth Tracking",
+        "Diversification Charts",
+        "Token Prices",
+        "Transaction History",
+      ],
     },
     {
       icon: Target,
       title: "Top Holders & Discovery",
-      description: "Explore largest token holders, comprehensive token metadata, and NFT galleries",
+      description:
+        "Explore largest token holders, comprehensive token metadata, and NFT galleries",
       gradient: "from-purple-500/20 to-pink-500/20",
-      features: ["Top Token Holders", "Token Information", "Account Search", "NFT Gallery"]
+      features: [
+        "Top Token Holders",
+        "Token Information",
+        "Account Search",
+        "NFT Gallery",
+      ],
     },
     {
       icon: Users,
       title: "Social & Notifications",
-      description: "Follow accounts, real-time activity notifications, and secure wallet-based authentication",
+      description:
+        "Follow accounts, real-time activity notifications, and secure wallet-based authentication",
       gradient: "from-green-500/20 to-emerald-500/20",
-      features: ["Follow System", "Real-time Notifications", "Notification Center", "Social Auth"]
+      features: [
+        "Follow System",
+        "Real-time Notifications",
+        "Notification Center",
+        "Social Auth",
+      ],
     },
     {
       icon: Shield,
       title: "Wallet Integration",
-      description: "Secure HashPack integration with Ed25519 signature verification and JWT session management",
+      description:
+        "Secure HashPack integration with Ed25519 signature verification and JWT session management",
       gradient: "from-orange-500/20 to-red-500/20",
-      features: ["HashPack Support", "Secure Auth", "Session Management", "Connection Modal"]
+      features: [
+        "HashPack Support",
+        "Secure Auth",
+        "Session Management",
+        "Connection Modal",
+      ],
     },
   ];
 
   const advancedFeatures = [
-    { icon: Star, title: "Watchlist Management", description: "Track favorite accounts and tokens" },
-    { icon: Moon, title: "Dark Mode", description: "Full theme switching with system detection" },
-    { icon: Smartphone, title: "Responsive Design", description: "Mobile-first UI across all devices" },
+    {
+      icon: Star,
+      title: "Watchlist Management",
+      description: "Track favorite accounts and tokens",
+    },
+    {
+      icon: Moon,
+      title: "Dark Mode",
+      description: "Full theme switching with system detection",
+    },
+    {
+      icon: Smartphone,
+      title: "Responsive Design",
+      description: "Mobile-first UI across all devices",
+    },
   ];
 
   const techStack = [
@@ -126,19 +141,35 @@ export const HeroLanding = () => {
   ];
 
   const timeline = [
-    { phase: "Phase 1", title: "Basic Tracking", description: "Account balances and transactions" },
-    { phase: "Phase 2", title: "Analytics", description: "Portfolio insights and charts" },
-    { phase: "Phase 3", title: "Social Features", description: "Follow system and notifications" },
-    { phase: "Phase 4", title: "Advanced", description: "Top holders and discovery tools" },
+    {
+      phase: "Phase 1",
+      title: "Basic Tracking",
+      description: "Account balances and transactions",
+    },
+    {
+      phase: "Phase 2",
+      title: "Analytics",
+      description: "Portfolio insights and charts",
+    },
+    {
+      phase: "Phase 3",
+      title: "Social Features",
+      description: "Follow system and notifications",
+    },
+    {
+      phase: "Phase 4",
+      title: "Advanced",
+      description: "Top holders and discovery tools",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <ParticleBackground />
-      
+
       {/* Animated gradient mesh background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-background opacity-50" />
-      <motion.div 
+      <motion.div
         className="absolute inset-0 bg-gradient-to-tr from-accent/10 via-transparent to-primary/10"
         animate={{
           backgroundPosition: ["0% 0%", "100% 100%"],
@@ -151,7 +182,7 @@ export const HeroLanding = () => {
       />
 
       {/* Hero Section */}
-      <motion.section 
+      <motion.section
         ref={heroRef}
         className="relative min-h-screen flex items-center justify-center px-4 py-20"
       >
@@ -195,7 +226,8 @@ export const HeroLanding = () => {
               The Ultimate Hedera Network Explorer
             </p>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-              Comprehensive portfolio tracking, social features, and real-time insights for the entire Hedera ecosystem
+              Comprehensive portfolio tracking, social features, and real-time
+              insights for the entire Hedera ecosystem
             </p>
           </motion.div>
 
@@ -205,9 +237,9 @@ export const HeroLanding = () => {
             transition={{ delay: 0.6 }}
             className="flex flex-wrap gap-4 justify-center items-center"
           >
-            <Button 
-              size="lg" 
-              onClick={() => navigate('/explorer/0.0.1234')}
+            <Button
+              size="lg"
+              onClick={() => navigate("/explorer")}
               className="group relative overflow-hidden bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-lg"
             >
               <motion.span
@@ -217,15 +249,15 @@ export const HeroLanding = () => {
                 transition={{ duration: 0.5 }}
               />
               <span className="relative flex items-center gap-2">
-                Try Demo Account
+                Start Exploring
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </Button>
 
             <Button
-              size="lg" 
+              size="lg"
               variant="outline"
-              onClick={() => navigate('/top-holders')}
+              onClick={() => navigate("/top-holders")}
               className="px-8 py-6 text-lg border-2"
             >
               <Eye className="w-5 h-5 mr-2" />
@@ -240,7 +272,12 @@ export const HeroLanding = () => {
             transition={{ delay: 0.9 }}
             className="flex flex-wrap gap-3 justify-center text-sm"
           >
-            {["Real-time Analytics", "Social Features", "Secure Wallet Auth", "NFT Support"].map((badge, i) => (
+            {[
+              "Real-time Analytics",
+              "Social Features",
+              "Secure Wallet Auth",
+              "NFT Support",
+            ].map((badge, i) => (
               <motion.div
                 key={badge}
                 initial={{ opacity: 0, scale: 0 }}
@@ -283,7 +320,9 @@ export const HeroLanding = () => {
             <h2 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Powerful Features
             </h2>
-            <p className="text-xl text-muted-foreground">Everything you need to track and analyze the Hedera ecosystem</p>
+            <p className="text-xl text-muted-foreground">
+              Everything you need to track and analyze the Hedera ecosystem
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -310,10 +349,12 @@ export const HeroLanding = () => {
                         <feature.icon className="w-8 h-8 text-primary" />
                       </div>
                     </motion.div>
-                    
+
                     <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
-                    <p className="text-muted-foreground mb-6">{feature.description}</p>
-                    
+                    <p className="text-muted-foreground mb-6">
+                      {feature.description}
+                    </p>
+
                     <div className="space-y-2">
                       {feature.features.map((item, i) => (
                         <motion.div
@@ -367,7 +408,9 @@ export const HeroLanding = () => {
                 <div className="relative z-10">
                   <feature.icon className="w-12 h-12 text-primary mb-4" />
                   <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm">{feature.description}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {feature.description}
+                  </p>
                 </div>
               </motion.div>
             ))}
@@ -389,20 +432,21 @@ export const HeroLanding = () => {
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 blur-3xl"
           />
-          
+
           <div className="glass-card p-12 rounded-3xl relative">
             <Rocket className="w-20 h-20 mx-auto mb-6 text-primary" />
             <h2 className="text-4xl md:text-6xl font-bold mb-6">
               Ready to Explore?
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join the future of Hedera network exploration. Track portfolios, discover opportunities, and stay connected with the ecosystem.
+              Join the future of Hedera network exploration. Track portfolios,
+              discover opportunities, and stay connected with the ecosystem.
             </p>
-            
+
             <div className="flex flex-wrap gap-4 justify-center">
-              <Button 
+              <Button
                 size="lg"
-                onClick={() => navigate('/explorer/0.0.1234')}
+                onClick={() => navigate("/explorer")}
                 className="px-8 py-6 text-lg group"
               >
                 <motion.span
