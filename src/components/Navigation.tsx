@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Search, TrendingUp, Activity, Menu, X, Crown, Clock, Sparkles } from "lucide-react";
+import { Search, TrendingUp, Activity, Menu, X, Crown, Clock } from "lucide-react";
 import { NotificationsCenter } from "./NotificationsCenter";
 import { WalletConnect } from "./WalletConnect";
 import { FollowedAccountsDropdown } from "./FollowedAccountsDropdown";
@@ -24,8 +24,8 @@ export const Navigation: React.FC = () => {
         className={({ isActive }) =>
           `flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
             isActive
-              ? "bg-gradient-to-r from-primary/20 to-accent/20 text-foreground border border-primary/30"
-              : "text-muted-foreground hover:text-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
           }`
         }
         onClick={() => setIsOpen(false)}
@@ -39,8 +39,8 @@ export const Navigation: React.FC = () => {
         className={({ isActive }) =>
           `flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
             isActive
-              ? "bg-gradient-to-r from-primary/20 to-accent/20 text-foreground border border-primary/30"
-              : "text-muted-foreground hover:text-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
           }`
         }
         onClick={() => setIsOpen(false)}
@@ -54,8 +54,8 @@ export const Navigation: React.FC = () => {
         className={({ isActive }) =>
           `flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
             isActive
-              ? "bg-gradient-to-r from-primary/20 to-accent/20 text-foreground border border-primary/30"
-              : "text-muted-foreground hover:text-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
           }`
         }
         onClick={() => setIsOpen(false)}
@@ -67,35 +67,24 @@ export const Navigation: React.FC = () => {
   );
 
   return (
-    <nav className="sticky top-0 z-50 glass-card border-b border-primary/10 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
-      {/* Gradient overlay similar to hero */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 pointer-events-none" />
-      
-      <div className="max-w-6xl mx-auto px-4 md:px-8 relative">
+    <nav className="sticky top-0 z-50 glass-card border-b border-border/20 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      <div className="max-w-6xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <NavLink
               to="/"
-              className="flex items-center space-x-3 text-xl font-semibold group"
+              className="flex items-center space-x-3 text-xl font-semibold text-foreground hover:text-primary transition-colors group"
             >
-              <div className="relative">
-                <div className="h-8 w-8 bg-gradient-to-br from-primary via-accent to-primary rounded-lg flex items-center justify-center relative overflow-hidden">
-                  <Activity className="h-4 w-4 text-primary-foreground" />
-                  <div className="absolute inset-0 bg-primary/20 blur-sm group-hover:blur-md transition-all" />
-                </div>
+              <div className="h-6 w-6 bg-primary rounded-md flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-xs">H</span>
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="leading-none bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                    HBARWatch
-                  </span>
-                  <div className="glass-card px-2 py-0.5 rounded-full flex items-center gap-1 border border-accent/20">
-                    <Sparkles className="w-3 h-3 text-accent" />
-                    <span className="text-[10px] text-accent font-bold">BETA</span>
-                  </div>
+                  <span className="leading-none">hbarwatch.io</span>
+                  <Badge className="text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0">BETA</Badge>
                 </div>
                 <span className="text-xs text-muted-foreground font-normal">
-                  Hedera Network Explorer
+                  The smart explorer for Hedera
                 </span>
               </div>
             </NavLink>
