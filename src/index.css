@@ -6,83 +6,83 @@
 
 @layer base {
   :root {
-    /* Light Theme */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 5%;
+    /* Modern Dark Theme with Better Contrast */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 10%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 5%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 0 0% 10%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 92%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 220 70% 50%;
+    --accent: 220 70% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --success: 120 60% 40%;
+    --success: 120 60% 50%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 45 100% 50%;
+    --warning: 45 100% 60%;
     --warning-foreground: 0 0% 0%;
 
-    --destructive: 0 75% 50%;
+    --destructive: 0 75% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 92%;
-    --ring: 0 0% 10%;
+    --border: 0 0% 20%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 100%;
 
     --radius: 0.75rem;
 
-    /* Toast/Alert specific colors for light mode */
-    --toast-background: 0 0% 98%;
-    --toast-foreground: 0 0% 10%;
-    --toast-border: 0 0% 85%;
+    /* Toast/Alert specific colors for better visibility */
+    --toast-background: 0 0% 10%;
+    --toast-foreground: 0 0% 95%;
+    --toast-border: 0 0% 25%;
 
-    --toast-success-background: 120 60% 95%;
-    --toast-success-foreground: 120 60% 20%;
-    --toast-success-border: 120 60% 70%;
+    --toast-success-background: 120 60% 15%;
+    --toast-success-foreground: 120 60% 90%;
+    --toast-success-border: 120 60% 35%;
 
-    --toast-warning-background: 45 100% 95%;
-    --toast-warning-foreground: 45 100% 20%;
-    --toast-warning-border: 45 100% 70%;
+    --toast-warning-background: 45 100% 15%;
+    --toast-warning-foreground: 45 100% 90%;
+    --toast-warning-border: 45 100% 35%;
 
-    --toast-destructive-background: 0 75% 95%;
-    --toast-destructive-foreground: 0 75% 20%;
-    --toast-destructive-border: 0 75% 70%;
+    --toast-destructive-background: 0 75% 15%;
+    --toast-destructive-foreground: 0 75% 90%;
+    --toast-destructive-border: 0 75% 35%;
 
-    /* Light Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(0 0% 98%), hsl(0 0% 95%));
-    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 98%));
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 97%));
-    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.9), hsl(0 0% 98% / 0.95));
+    /* Simple Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(0 0% 5%), hsl(0 0% 10%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 0%), hsl(0 0% 5%));
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 0%), hsl(0 0% 3%));
+    --gradient-glass: linear-gradient(135deg, hsl(0 0% 5% / 0.8), hsl(0 0% 0% / 0.9));
 
-    /* Light Shadows */
-    --shadow-primary: 0 10px 40px hsl(0 0% 0% / 0.08);
-    --shadow-glass: 0 8px 32px hsl(0 0% 0% / 0.06);
-    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.05);
+    /* Shadows */
+    --shadow-primary: 0 10px 40px hsl(0 0% 0% / 0.5);
+    --shadow-glass: 0 8px 32px hsl(0 0% 0% / 0.4);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.3);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-glass: backdrop-filter 0.3s ease;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 0 0% 10%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 95%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 0 0% 10%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 0 0% 100%;
   }
 
   .dark {

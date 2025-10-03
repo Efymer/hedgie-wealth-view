@@ -17,7 +17,6 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ReactWalletsProvider } from "@/providers/ReactWalletsProvider";
-import { ThemeProvider } from "@/components/ThemeProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,9 +28,8 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <ReactWalletsProvider>
-        <TooltipProvider>
+    <ReactWalletsProvider>
+      <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -62,9 +60,8 @@ const App = () => (
             <SpeedInsights />
           </>
         )}
-        </TooltipProvider>
-      </ReactWalletsProvider>
-    </ThemeProvider>
+      </TooltipProvider>
+    </ReactWalletsProvider>
   </QueryClientProvider>
 );
 
