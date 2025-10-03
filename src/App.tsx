@@ -17,6 +17,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ReactWalletsProvider } from "@/providers/ReactWalletsProvider";
+import { ExplorerLanding } from "./components/Explorer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,15 +40,13 @@ const App = () => (
             <div className="flex-1">
               <Routes>
                 <Route path="/" element={<Landing />} />
-                <Route path="/explorer" element={<Landing />} />
+                <Route path="/explorer" element={<ExplorerLanding />} />
                 <Route path="/explorer/:accountId" element={<HederaExplorer />} />
                 <Route path="/account/:accountId" element={<HederaExplorer />} />
                 <Route path="/top-holders" element={<TopHoldersPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/premium" element={<PremiumPage />} />
                 <Route path="/waitlist" element={<WaitlistPage />} />
-                {/* <Route path="/admin" element={<AdminPage />} /> */}
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>

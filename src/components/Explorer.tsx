@@ -7,17 +7,13 @@ interface ExplorerLandingProps {
   onSearch: (id: string) => void;
   onSelect: (address: string) => void;
   isSearchLoading?: boolean;
-  onHomeClick?: () => void;
 }
 
 export const ExplorerLanding: React.FC<ExplorerLandingProps> = ({
-  onSearch,
   onSelect,
+  onSearch,
   isSearchLoading = false,
-  onHomeClick,
 }) => {
-  const breadcrumbItems = [{ label: "Home", active: true }];
-
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
