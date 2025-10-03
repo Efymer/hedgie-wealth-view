@@ -69,13 +69,8 @@ const ParticleBackground = () => {
 
 export const HeroLanding = () => {
   const navigate = useNavigate();
-  const { scrollYProgress } = useScroll();
   const heroRef = useRef(null);
   const featuresRef = useRef(null);
-  const statsRef = useRef(null);
-  
-  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
 
   const stats = [
     { value: 1000000, label: "Hedera Accounts Tracked", suffix: "+" },
@@ -158,7 +153,6 @@ export const HeroLanding = () => {
       {/* Hero Section */}
       <motion.section 
         ref={heroRef}
-        style={{ opacity, scale }}
         className="relative min-h-screen flex items-center justify-center px-4 py-20"
       >
         <div className="max-w-7xl mx-auto text-center space-y-8 z-10">
@@ -227,12 +221,8 @@ export const HeroLanding = () => {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </Button>
-            
-            <div className="glass-card p-2 rounded-lg">
-              <WalletConnect />
-            </div>
 
-            <Button 
+            <Button
               size="lg" 
               variant="outline"
               onClick={() => navigate('/top-holders')}
@@ -281,44 +271,6 @@ export const HeroLanding = () => {
         </motion.div>
       </motion.section>
 
-      {/* Animated Stats Section */}
-      <section ref={statsRef} className="relative py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-          >
-            {stats.map((stat, index) => {
-              const { count, ref } = useCounter(stat.value);
-              return (
-                <motion.div
-                  key={stat.label}
-                  ref={ref}
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05, rotateY: 5 }}
-                  className="glass-card p-8 rounded-2xl text-center relative overflow-hidden group"
-                >
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                  />
-                  <div className="relative z-10">
-                    <div className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent mb-2">
-                      {count.toLocaleString()}{stat.suffix}
-                    </div>
-                    <div className="text-muted-foreground font-medium">{stat.label}</div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </div>
-      </section>
-
       {/* Interactive Feature Showcase Grid */}
       <section ref={featuresRef} className="relative py-20 px-4">
         <div className="max-w-7xl mx-auto">
@@ -342,7 +294,6 @@ export const HeroLanding = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.02, rotateX: 2 }}
                 className="group"
               >
                 <Card className="glass-card p-8 h-full relative overflow-hidden">
@@ -417,92 +368,6 @@ export const HeroLanding = () => {
                   <feature.icon className="w-12 h-12 text-primary mb-4" />
                   <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
                   <p className="text-muted-foreground text-sm">{feature.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Evolution Timeline */}
-      <section className="relative py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-4xl md:text-5xl font-bold text-center mb-16"
-          >
-            Development Journey
-          </motion.h2>
-
-          <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-primary via-accent to-primary hidden md:block" />
-
-            <div className="space-y-12">
-              {timeline.map((item, index) => (
-                <motion.div
-                  key={item.phase}
-                  initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.2 }}
-                  className={`flex items-center gap-8 ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}
-                >
-                  <div className="flex-1 glass-card p-6 rounded-xl">
-                    <div className="text-sm text-accent font-bold mb-2">{item.phase}</div>
-                    <h3 className="text-2xl font-bold mb-2">{item.title}</h3>
-                    <p className="text-muted-foreground">{item.description}</p>
-                  </div>
-                  
-                  <motion.div
-                    whileHover={{ scale: 1.2, rotate: 180 }}
-                    className="hidden md:block w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center z-10"
-                  >
-                    <Zap className="w-6 h-6 text-background" />
-                  </motion.div>
-                  
-                  <div className="flex-1 hidden md:block" />
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Tech Stack Showcase */}
-      <section className="relative py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Powered By</h2>
-            <p className="text-xl text-muted-foreground">Built with cutting-edge technology</p>
-          </motion.div>
-
-          <div className="flex flex-wrap justify-center gap-6">
-            {techStack.map((tech, index) => (
-              <motion.div
-                key={tech.name}
-                initial={{ opacity: 0, scale: 0 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                className="relative group"
-              >
-                <div className={`glass-card px-8 py-4 rounded-full bg-gradient-to-r ${tech.color} relative overflow-hidden`}>
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent"
-                    initial={{ x: "-100%" }}
-                    whileHover={{ x: "100%" }}
-                    transition={{ duration: 0.6 }}
-                  />
-                  <span className="relative z-10 font-bold text-lg text-white">{tech.name}</span>
                 </div>
               </motion.div>
             ))}
