@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Wallet, LogOut } from "lucide-react";
+import { Wallet, LogOut, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   Popover,
   PopoverContent,
@@ -10,6 +11,7 @@ import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { WalletConnectModal } from "@/components/WalletConnectModal";
 
 export const WalletConnect: React.FC = () => {
+  const navigate = useNavigate();
   const [showConnectModal, setShowConnectModal] = useState(false);
   const {
     isConnected,
@@ -71,6 +73,15 @@ export const WalletConnect: React.FC = () => {
                   {accountId}
                 </p>
               </div>
+
+              <Button
+                variant="default"
+                onClick={() => navigate(`/explorer/${accountId}`)}
+                className="w-full flex items-center space-x-2"
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span>View Portfolio</span>
+              </Button>
 
               <Button
                 variant="outline"
