@@ -18,7 +18,7 @@ export const ExplorerLanding: React.FC<ExplorerLandingProps> = ({
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Hero Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20">
+        {/* <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20">
           <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
           <div className="relative px-6 py-8 md:py-10 text-center">
             <div className="mx-auto max-w-4xl space-y-4">
@@ -61,7 +61,7 @@ export const ExplorerLanding: React.FC<ExplorerLandingProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
         <AccountSearch onSearch={onSearch} isLoading={isSearchLoading} />
         <Watchlist onSelect={onSelect} />
       </div>

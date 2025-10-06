@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import {
   useAccountInfo,
@@ -17,6 +17,7 @@ export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
   const {onSuccess, onError } = options;
   const [connecting, setConnecting] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
+  const authInitiatedRef = useRef(false);
 
   const {
     connect: connectHashpack,
@@ -117,6 +118,7 @@ export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
   const connectAndAuthenticate = useCallback(async () => {
     try {
       setConnecting(true);
+      authInitiatedRef.current = false; // Reset auth flag for new connection
 
       // Step 1: Connect the wallet
       await connectHashpack();
@@ -151,10 +153,17 @@ export const useWalletAuth = (options: UseWalletAuthOptions = {}) => {
 
   // Auto-authenticate after wallet connects and accountId is available
   useEffect(() => {
-    if (isConnected && accountId && connecting && accountInfo?.key?.key) {
+    if (
+      isConnected &&
+      accountId &&
+      connecting &&
+      accountInfo?.key?.key &&
+      !authInitiatedRef.current
+    ) {
+      authInitiatedRef.current = true;
       authenticate();
     }
-  }, [isConnected, accountId, connecting, authenticate, accountInfo]);
+  }, [isConnected, accountId, connecting, accountInfo?.key?.key]);
 
   return {
     // State
