@@ -47,10 +47,23 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
 }) => {
   const navigate = useNavigate();
   const [timeFilter, setTimeFilter] = useState<'1W' | '1M' | 'ALL'>('ALL');
-  const currentValue = data[data.length - 1]?.value || 0;
+  
+  // Filter data based on time selection
+  const filteredData = React.useMemo(() => {
+    if (timeFilter === 'ALL') return data;
+    
+    const now = new Date();
+    const daysToShow = timeFilter === '1W' ? 7 : 30;
+    const cutoffDate = new Date(now);
+    cutoffDate.setDate(cutoffDate.getDate() - daysToShow);
+    
+    return data.filter(item => new Date(item.date) >= cutoffDate);
+  }, [data, timeFilter]);
+  
+  const currentValue = filteredData[filteredData.length - 1]?.value || 0;
   const previousValue =
-    data.length >= 2 ? data[data.length - 2]?.value || 0 : 0;
-  const hasBaseline = data.length >= 2 && previousValue !== 0;
+    filteredData.length >= 2 ? filteredData[filteredData.length - 2]?.value || 0 : 0;
+  const hasBaseline = filteredData.length >= 2 && previousValue !== 0;
   const totalChange = hasBaseline
     ? ((currentValue - previousValue) / previousValue) * 100
     : 0;
@@ -58,17 +71,17 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
 
   // Calculate 7-day and 30-day changes
   const calculatePeriodChange = (days: number) => {
-    if (data.length === 0) return { change: 0, amount: 0, hasData: false };
+    if (filteredData.length === 0) return { change: 0, amount: 0, hasData: false };
 
-    const currentIndex = data.length - 1;
+    const currentIndex = filteredData.length - 1;
     const pastIndex = Math.max(0, currentIndex - days);
 
-    if (pastIndex === currentIndex || data[pastIndex].value === 0) {
+    if (pastIndex === currentIndex || filteredData[pastIndex].value === 0) {
       return { change: 0, amount: 0, hasData: false };
     }
 
-    const currentVal = data[currentIndex].value;
-    const pastVal = data[pastIndex].value;
+    const currentVal = filteredData[currentIndex].value;
+    const pastVal = filteredData[pastIndex].value;
     const change = ((currentVal - pastVal) / pastVal) * 100;
     const amount = currentVal - pastVal;
 
@@ -76,7 +89,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
   };
 
   const sevenDayChange = calculatePeriodChange(7);
-  const thirtyDayChange = calculatePeriodChange(Math.min(30, data.length - 1));
+  const thirtyDayChange = calculatePeriodChange(Math.min(30, filteredData.length - 1));
 
   const formatValue = (value: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -337,7 +350,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            data={data}
+            data={filteredData}
             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
