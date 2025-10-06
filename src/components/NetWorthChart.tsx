@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { TrendingUp, DollarSign, Clock } from "lucide-react";
 import {
   LineChart,
@@ -46,6 +46,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
   accountId,
 }) => {
   const navigate = useNavigate();
+  const [timeFilter, setTimeFilter] = useState<'1W' | '1M' | 'ALL'>('ALL');
   const currentValue = data[data.length - 1]?.value || 0;
   const previousValue =
     data.length >= 2 ? data[data.length - 2]?.value || 0 : 0;
@@ -160,6 +161,29 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
         <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-semibold">Net Worth Over Time</h2>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant={timeFilter === '1W' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setTimeFilter('1W')}
+          >
+            1W
+          </Button>
+          <Button
+            variant={timeFilter === '1M' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setTimeFilter('1M')}
+          >
+            1M
+          </Button>
+          <Button
+            variant={timeFilter === 'ALL' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setTimeFilter('ALL')}
+          >
+            ALL
+          </Button>
         </div>
       </div>
 
