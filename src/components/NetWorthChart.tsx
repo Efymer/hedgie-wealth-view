@@ -48,7 +48,39 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
   const navigate = useNavigate();
   const [timeFilter, setTimeFilter] = useState<'1W' | '1M' | 'ALL'>('ALL');
   
-  // Filter data based on time selection
+  // Calculate statistics from full dataset (always use base data, not filtered)
+  const currentValue = data[data.length - 1]?.value || 0;
+  const previousValue =
+    data.length >= 2 ? data[data.length - 2]?.value || 0 : 0;
+  const hasBaseline = data.length >= 2 && previousValue !== 0;
+  const totalChange = hasBaseline
+    ? ((currentValue - previousValue) / previousValue) * 100
+    : 0;
+  const totalChangeAmount = hasBaseline ? currentValue - previousValue : 0;
+
+  // Calculate 7-day and 30-day changes (always from full dataset)
+  const calculatePeriodChange = (days: number) => {
+    if (data.length === 0) return { change: 0, amount: 0, hasData: false };
+
+    const currentIndex = data.length - 1;
+    const pastIndex = Math.max(0, currentIndex - days);
+
+    if (pastIndex === currentIndex || data[pastIndex].value === 0) {
+      return { change: 0, amount: 0, hasData: false };
+    }
+
+    const currentVal = data[currentIndex].value;
+    const pastVal = data[pastIndex].value;
+    const change = ((currentVal - pastVal) / pastVal) * 100;
+    const amount = currentVal - pastVal;
+
+    return { change, amount, hasData: true };
+  };
+
+  const sevenDayChange = calculatePeriodChange(7);
+  const thirtyDayChange = calculatePeriodChange(Math.min(30, data.length - 1));
+
+  // Filter data for chart display only
   const filteredData = React.useMemo(() => {
     if (timeFilter === 'ALL') return data;
     
@@ -59,37 +91,6 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
     
     return data.filter(item => new Date(item.date) >= cutoffDate);
   }, [data, timeFilter]);
-  
-  const currentValue = filteredData[filteredData.length - 1]?.value || 0;
-  const previousValue =
-    filteredData.length >= 2 ? filteredData[filteredData.length - 2]?.value || 0 : 0;
-  const hasBaseline = filteredData.length >= 2 && previousValue !== 0;
-  const totalChange = hasBaseline
-    ? ((currentValue - previousValue) / previousValue) * 100
-    : 0;
-  const totalChangeAmount = hasBaseline ? currentValue - previousValue : 0;
-
-  // Calculate 7-day and 30-day changes
-  const calculatePeriodChange = (days: number) => {
-    if (filteredData.length === 0) return { change: 0, amount: 0, hasData: false };
-
-    const currentIndex = filteredData.length - 1;
-    const pastIndex = Math.max(0, currentIndex - days);
-
-    if (pastIndex === currentIndex || filteredData[pastIndex].value === 0) {
-      return { change: 0, amount: 0, hasData: false };
-    }
-
-    const currentVal = filteredData[currentIndex].value;
-    const pastVal = filteredData[pastIndex].value;
-    const change = ((currentVal - pastVal) / pastVal) * 100;
-    const amount = currentVal - pastVal;
-
-    return { change, amount, hasData: true };
-  };
-
-  const sevenDayChange = calculatePeriodChange(7);
-  const thirtyDayChange = calculatePeriodChange(Math.min(30, filteredData.length - 1));
 
   const formatValue = (value: number) => {
     return new Intl.NumberFormat("en-US", {
