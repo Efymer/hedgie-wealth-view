@@ -276,6 +276,15 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               />
             </PopoverContent>
           </Popover>
+          {(dateRange.from || dateRange.to) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDateRange({ from: undefined, to: undefined })}
+            >
+              Reset
+            </Button>
+          )}
         </div>
       </div>
 
