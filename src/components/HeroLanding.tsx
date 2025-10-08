@@ -379,7 +379,7 @@ export const HeroLanding = () => {
       </section>
 
       {/* Advanced Features - Floating Cards */}
-      <section className="relative py-20 px-4">
+      {/* <section className="relative py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -416,7 +416,7 @@ export const HeroLanding = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Final CTA */}
       <section className="relative py-32 px-4">
