@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AccountBalance } from "./AccountBalance";
 import { TokenList } from "./TokenList";
-import { TransactionHistory, Transaction } from "./TransactionHistory";
+import { TransactionHistory } from "./TransactionHistory";
 import { Breadcrumb } from "./Breadcrumb";
 import { PortfolioDiversificationChart } from "./PortfolioDiversificationChart";
 import { NFTList } from "./NFTList";
@@ -176,83 +176,12 @@ export const HederaExplorer: React.FC = () => {
   }, [tokenDetails]);
 
 
-  // Map Mirror Node transactions to TransactionHistory's expected shape
-  const mappedTransactions: Transaction[] = useMemo(() => {
-    const flat: MirrorNodeTransaction[] = (
-      txInfinite.data?.pages || []
-    ).flatMap(
+  // Flatten raw transactions from infinite query pages
+  const rawTransactions = useMemo(() => {
+    return (txInfinite.data?.pages || []).flatMap(
       (p: { transactions?: MirrorNodeTransaction[] }) => p.transactions || []
     );
-    const list: Transaction[] = flat.map((tx: MirrorNodeTransaction) => {
-      // const type = "transfer";
-
-      // Find token transfer involving this account
-      const tokenEntry = (tx.token_transfers || []).find(
-        (t) => t.account === accountId
-      );
-      // Find HBAR transfer involving this account
-      const hbarEntry = (tx.transfers || []).find(
-        (t) => t.account === accountId
-      );
-
-      // Amount and token label
-      let amount = 0;
-      let token = "";
-      if (tokenEntry) {
-        const dec = tokenEntry.token_id
-          ? tokenDecimalsMap.get(tokenEntry.token_id) ?? 0
-          : 0;
-        amount = dec
-          ? tokenEntry.amount / Math.pow(10, dec)
-          : tokenEntry.amount;
-        const sym = tokenEntry.token_id
-          ? tokenSymbolMap.get(tokenEntry.token_id)
-          : undefined;
-        token = sym || tokenEntry.token_id || "TOKEN";
-      } else if (hbarEntry) {
-        amount = tinybarToHBAR(hbarEntry.amount);
-        token = "HBAR";
-      }
-
-      // Counterparty: pick the other side of the first relevant transfer
-      let counterparty = "";
-      if (tokenEntry) {
-        const other = (tx.token_transfers || []).find(
-          (t) => t.token_id === tokenEntry.token_id && t.account !== accountId
-        );
-        counterparty = other?.account || "";
-      } else if (hbarEntry) {
-        const other = (tx.transfers || []).find((t) => t.account !== accountId);
-        counterparty = other?.account || "";
-      }
-
-      // Timestamp to ISO
-      const sec = parseInt(
-        (tx.consensus_timestamp || "0").split(".")[0] || "0",
-        10
-      );
-      const timestamp = new Date(sec * 1000).toISOString();
-
-      const status: "success" | "failed" =
-        tx.result === "SUCCESS" ? "success" : "failed";
-
-      return {
-        id: tx.transaction_id || tx.consensus_timestamp,
-        type: tx.name,
-        timestamp,
-        amount,
-        token: token || "HBAR",
-        counterparty: counterparty || "—",
-        fee:
-          typeof tx.charged_tx_fee === "number"
-            ? tinybarToHBAR(tx.charged_tx_fee)
-            : 0,
-        hash: tx.transaction_hash || "",
-        status,
-      };
-    });
-    return list;
-  }, [txInfinite.data?.pages, accountId, tokenSymbolMap, tokenDecimalsMap]);
+  }, [txInfinite.data?.pages]);
 
   const breadcrumbItems = !accountId
     ? [{ label: "Account Explorer", active: true }]
@@ -334,7 +263,9 @@ export const HederaExplorer: React.FC = () => {
               <TabsContent value="transactions">
                 <TransactionHistory
                   accountId={accountId}
-                  transactions={mappedTransactions}
+                  rawTransactions={rawTransactions}
+                  tokenSymbolMap={tokenSymbolMap}
+                  tokenDecimalsMap={tokenDecimalsMap}
                   hasMore={!!txInfinite.hasNextPage}
                   onLoadMore={() => txInfinite.fetchNextPage()}
                   isLoadingMore={txInfinite.isFetchingNextPage}

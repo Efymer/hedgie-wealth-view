@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   History,
   Filter,
@@ -12,15 +12,13 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { formatAmount } from "@/lib/format";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { MirrorNodeTransaction, tinybarToHBAR } from "@/queries";
 
 export interface Transaction {
   id: string;
@@ -36,7 +34,9 @@ export interface Transaction {
 
 interface TransactionHistoryProps {
   accountId: string;
-  transactions: Transaction[];
+  rawTransactions: MirrorNodeTransaction[];
+  tokenSymbolMap: Map<string, string>;
+  tokenDecimalsMap: Map<string, number>;
   hasMore?: boolean;
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
@@ -44,7 +44,9 @@ interface TransactionHistoryProps {
 
 export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   accountId,
-  transactions,
+  rawTransactions,
+  tokenSymbolMap,
+  tokenDecimalsMap,
   hasMore = false,
   onLoadMore,
   isLoadingMore = false,
@@ -56,6 +58,77 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     from: undefined,
     to: undefined,
   });
+
+  // Map Mirror Node transactions to Transaction interface
+  const mappedTransactions: Transaction[] = useMemo(() => {
+    const list: Transaction[] = rawTransactions.map((tx: MirrorNodeTransaction) => {
+      // Find token transfer involving this account
+      const tokenEntry = (tx.token_transfers || []).find(
+        (t) => t.account === accountId
+      );
+      // Find HBAR transfer involving this account
+      const hbarEntry = (tx.transfers || []).find(
+        (t) => t.account === accountId
+      );
+
+      // Amount and token label
+      let amount = 0;
+      let token = "";
+      if (tokenEntry) {
+        const dec = tokenEntry.token_id
+          ? tokenDecimalsMap.get(tokenEntry.token_id) ?? 0
+          : 0;
+        amount = dec
+          ? tokenEntry.amount / Math.pow(10, dec)
+          : tokenEntry.amount;
+        const sym = tokenEntry.token_id
+          ? tokenSymbolMap.get(tokenEntry.token_id)
+          : undefined;
+        token = sym || tokenEntry.token_id || "TOKEN";
+      } else if (hbarEntry) {
+        amount = tinybarToHBAR(hbarEntry.amount);
+        token = "HBAR";
+      }
+
+      // Counterparty: pick the other side of the first relevant transfer
+      let counterparty = "";
+      if (tokenEntry) {
+        const other = (tx.token_transfers || []).find(
+          (t) => t.token_id === tokenEntry.token_id && t.account !== accountId
+        );
+        counterparty = other?.account || "";
+      } else if (hbarEntry) {
+        const other = (tx.transfers || []).find((t) => t.account !== accountId);
+        counterparty = other?.account || "";
+      }
+
+      // Timestamp to ISO
+      const sec = parseInt(
+        (tx.consensus_timestamp || "0").split(".")[0] || "0",
+        10
+      );
+      const timestamp = new Date(sec * 1000).toISOString();
+
+      const status: "success" | "failed" =
+        tx.result === "SUCCESS" ? "success" : "failed";
+
+      return {
+        id: tx.transaction_id || tx.consensus_timestamp,
+        type: tx.name,
+        timestamp,
+        amount,
+        token: token || "HBAR",
+        counterparty: counterparty || "—",
+        fee:
+          typeof tx.charged_tx_fee === "number"
+            ? tinybarToHBAR(tx.charged_tx_fee)
+            : 0,
+        hash: tx.transaction_hash || "",
+        status,
+      };
+    });
+    return list;
+  }, [rawTransactions, accountId, tokenSymbolMap, tokenDecimalsMap]);
   const getIcon = (type: string, amount?: number) => {
     switch (type) {
       case "transfer":
@@ -109,12 +182,47 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
   const openOnHashscan = (txId?: string) => {
     if (!txId) return;
-    const url = `https://hashscan.io/mainnet/transaction/${encodeURIComponent(txId)}`;
+    const url = `https://hashscan.io/mainnet/transaction/${encodeURIComponent(
+      txId
+    )}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  // Filter by date range if set
+  const dateFilteredTransactions = useMemo(() => {
+    if (!dateRange.from && !dateRange.to) {
+      return mappedTransactions;
+    }
+
+    return mappedTransactions.filter((tx) => {
+      const txDate = new Date(tx.timestamp);
+      
+      if (dateRange.from && dateRange.to) {
+        // Both dates set - check if transaction is within range
+        const fromDate = new Date(dateRange.from);
+        fromDate.setHours(0, 0, 0, 0);
+        const toDate = new Date(dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        return txDate >= fromDate && txDate <= toDate;
+      } else if (dateRange.from) {
+        // Only from date set - show transactions from that date onwards
+        const fromDate = new Date(dateRange.from);
+        fromDate.setHours(0, 0, 0, 0);
+        return txDate >= fromDate;
+      } else if (dateRange.to) {
+        // Only to date set - show transactions up to that date
+        const toDate = new Date(dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        return txDate <= toDate;
+      }
+      return true;
+    });
+  }, [mappedTransactions, dateRange]);
+
   // Hide transactions where counterparty is "—"
-  const visibleTransactions = transactions.filter((t) => t.counterparty !== "—");
+  const visibleTransactions = dateFilteredTransactions.filter(
+    (t) => t.counterparty !== "—"
+  );
 
   return (
     <div className="glass-card rounded-xl p-6 w-full  mx-auto">
@@ -226,7 +334,9 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                     <div>
                       <p className="font-semibold">
                         <span
-                          className={tx.amount >= 0 ? "text-success" : "text-destructive"}
+                          className={
+                            tx.amount >= 0 ? "text-success" : "text-destructive"
+                          }
                         >
                           {formatTxAmount(tx.amount)}
                         </span>
@@ -253,7 +363,11 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
       {hasMore && (
         <div className="flex justify-center mt-4">
-          <Button onClick={onLoadMore} disabled={isLoadingMore} variant="outline">
+          <Button
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            variant="outline"
+          >
             {isLoadingMore ? "Loading..." : "Load more"}
           </Button>
         </div>
