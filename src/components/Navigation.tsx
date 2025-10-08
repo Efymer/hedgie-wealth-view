@@ -49,7 +49,7 @@ export const Navigation: React.FC = () => {
         <span>Top Holders</span>
       </NavLink>
 
-      <NavLink
+      {/* <NavLink
         to="/waitlist"
         className={({ isActive }) =>
           `flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -62,7 +62,7 @@ export const Navigation: React.FC = () => {
       >
         <Clock className="h-4 w-4" />
         <span>Waitlist</span>
-      </NavLink>
+      </NavLink> */}
     </>
   );
 
