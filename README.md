@@ -103,24 +103,7 @@ npm install
 
 This will install all required packages including React, TypeScript, Vite, Hedera SDK, and wallet integration libraries.
 
-### Step 3: Configure Environment Variables
-
-Create a `.env` file in the root directory:
-
-```bash
-# GraphQL endpoint for social features (Hasura)
-VITE_HASURA_GRAPHQL_ENDPOINT=https://hbarwatch.hasura.app/v1/graphql
-
-# SaucerSwap API key for token prices (server-side only)
-SAUCERSWAP_KEY=your_saucerswap_api_key_here
-
-# Redis connection for caching (optional for local dev)
-REDIS_URL=redis://localhost:6379
-```
-
-**Note:** See `.env.example` for a complete template. DO NOT commit your `.env` file.
-
-### Step 4: Run the Development Server
+### Step 3: Run the Development Server
 
 ```bash
 npm run dev
@@ -134,7 +117,7 @@ VITE v5.4.19  ready in 324 ms
 ➜  Network: use --host to expose
 ```
 
-### Step 5: Access the Application
+### Step 4: Access the Application
 
 Open your browser and navigate to:
 - **Frontend:** `http://localhost:5173`
@@ -146,7 +129,7 @@ Open your browser and navigate to:
 - **Backend:** Serverless API functions are accessible at `http://localhost:5173/api/*`
 - **Network:** Connects to **Hedera Mainnet** by default (Mirror Node: `https://mainnet.mirrornode.hedera.com`)
 
-### Step 6: Test Core Features
+### Step 5: Test Core Features
 
 1. **Search for an Account:** Enter a Hedera account ID (e.g., `0.0.123456`) in the search bar
 2. **View Portfolio:** See real-time token balances and net worth
@@ -421,7 +404,6 @@ JWT_SECRET=your_jwt_secret_here
 │  ├─ App.tsx                     # Main app component with routing
 │  ├─ main.tsx                    # App entry point
 │  └─ index.css                   # Global styles
-├─ .env.example                   # Example environment variables
 ├─ .eslintrc.cjs                  # ESLint configuration
 ├─ vercel.json                    # Vercel deployment config with cron jobs
 ├─ tailwind.config.ts             # Tailwind CSS configuration

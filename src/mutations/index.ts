@@ -22,9 +22,7 @@ export async function graphQLFetch<T = unknown>(
   query: string,
   variables: Record<string, unknown> = {}
 ): Promise<T> {
-  const endpoint =
-    import.meta.env?.VITE_HASURA_GRAPHQL_ENDPOINT ||
-    (window as unknown as Record<string, unknown>)?.HASURA_GRAPHQL_ENDPOINT;
+  const endpoint = "https://hbarwatch.hasura.app/v1/graphql";
   if (!endpoint) throw new Error("Missing VITE_HASURA_GRAPHQL_ENDPOINT");
 
   const headers: Record<string, string> = {
