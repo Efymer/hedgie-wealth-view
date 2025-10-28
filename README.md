@@ -5,7 +5,7 @@ A comprehensive Hedera network explorer and portfolio tracker that provides wall
 This is a modern Vite + React + TypeScript application styled with Tailwind CSS and shadcn/ui. Data fetching is powered by TanStack Query with React Query patterns, charts are built with Recharts, and wallet integration uses Buidler Labs HashGraph React Wallets. The repository includes serverless API routes and GraphQL integration.
 
 
-🔍 Problem Statement
+## 🔍 Problem Statement
 
 African retail users and crypto operators increasingly rely on blockchain-based finance — yet visibility into on-chain assets remains limited.
 
@@ -21,7 +21,7 @@ Tools like HashScan show raw data but lack actionable analytics
 
 This reduces confidence in on-chain finance and makes informed participation in Web3 difficult for individuals, traders, and African fintech builders.
 
-🧠 Hedera-Based Solution
+## 🧠 Hedera-Based Solution
 
 HbarWatch is a smart, public explorer and portfolio tracker that turns raw Hedera network data into financial intelligence.
 
@@ -35,7 +35,7 @@ It enables African users to:
 
 By making on-chain assets transparent, contextualized, and trustworthy, HbarWatch supports responsible growth of decentralized finance across Africa.
 
-🏗️ Hedera Services Used
+## 🏗️ Hedera Services Used
 Hedera Service	Implementation in HbarWatch
 HTS – Hedera Token Service	Token balance tracking, token metadata, supply + holder analytics
 Mirror Node APIs (Data Layer)	Portfolio valuation, transaction history, NFT inventory, counterparty mapping, follow/alert system
