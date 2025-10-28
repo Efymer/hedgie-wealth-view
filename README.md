@@ -6,28 +6,28 @@ This is a modern Vite + React + TypeScript application styled with Tailwind CSS 
 
 ## 📑 Table of Contents
 
-- [🔍 Problem Statement](#problem-statement-🔍)
-- [🧠 Hedera-Based Solution](#hedera-based-solution-🧠)
-- [🏗️ Hedera Services Used](#hedera-services-used-🏗️)
-- [🎯 Hackathon Track](#hackathon-track-🎯)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Environment Variables](#environment-variables)
-  - [Development](#development)
-  - [Production Build](#production-build)
-- [Scripts](#scripts)
-- [Project Structure](#project-structure)
-- [API Endpoints](#api-endpoints)
-- [Development Guidelines](#development-guidelines)
-- [Key Dependencies](#key-dependencies)
-- [Routes & Navigation](#routes--navigation)
-- [Authentication Flow](#authentication-flow)
-- [GraphQL Integration](#graphql-integration)
+- [🔍 Problem Statement](#problem-statement)
+- [🧠 Hedera-Based Solution](#hedera-based-solution)
+- [🏗️ Hedera Services Used](#hedera-services-used)
+- [🎯 Hackathon Track](#hackathon-track)
+- [✨ Features](#features)
+- [🛠️ Tech Stack](#tech-stack)
+- [🚀 Getting Started](#getting-started)
+  - [📋 Prerequisites](#prerequisites)
+  - [⚙️ Installation](#installation)
+  - [🔐 Environment Variables](#environment-variables)
+  - [💻 Development](#development)
+  - [🏗️ Production Build](#production-build)
+- [📜 Scripts](#scripts)
+- [📁 Project Structure](#project-structure)
+- [🌐 API Endpoints](#api-endpoints)
+- [📖 Development Guidelines](#development-guidelines)
+- [📦 Key Dependencies](#key-dependencies)
+- [🗺️ Routes & Navigation](#routes--navigation)
+- [🔑 Authentication Flow](#authentication-flow)
+- [⚡ GraphQL Integration](#graphql-integration)
 
-## Problem Statement 🔍
+## Problem Statement
 
 African retail users and crypto operators increasingly rely on blockchain-based finance — yet visibility into on-chain assets remains limited.
 
@@ -41,7 +41,7 @@ Tools like HashScan show raw data but lack actionable analytics
 
 This reduces confidence in on-chain finance and makes informed participation in Web3 difficult for individuals, traders, and African fintech builders.
 
-## Hedera-Based Solution 🧠
+## Hedera-Based Solution
 
 HbarWatch is a smart, public explorer and portfolio tracker that turns raw Hedera network data into financial intelligence.
 
@@ -55,7 +55,7 @@ It enables African users to:
 
 By making on-chain assets transparent, contextualized, and trustworthy, HbarWatch supports responsible growth of decentralized finance across Africa.
 
-## Hedera Services Used 🏗️
+## Hedera Services Used
 Hedera Service	Implementation in HbarWatch
 HTS – Hedera Token Service	Token balance tracking, token metadata, supply + holder analytics
 Mirror Node APIs (Data Layer)	Portfolio valuation, transaction history, NFT inventory, counterparty mapping, follow/alert system
@@ -64,7 +64,7 @@ Serverless API on Hedera Data	Historical snapshots for net worth tracking and tr
 
 🔐 All reads are trustless — no centralized indexing required.
 
-## Hackathon Track 🎯
+## Hackathon Track
 
 ✅ On-chain Finance
 
