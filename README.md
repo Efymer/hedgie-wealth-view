@@ -6,103 +6,22 @@ This is a modern Vite + React + TypeScript application styled with Tailwind CSS 
 
 ## 📑 Table of Contents
 
-- [🔍 Problem Statement](#problem-statement)
-- [🧠 Hedera-Based Solution](#hedera-based-solution)
-- [🏗️ Hedera Services Used](#hedera-services-used)
-- [🎯 Hackathon Track](#hackathon-track)
-- [✨ Features](#features)
-- [🛠️ Tech Stack](#tech-stack)
-- [🚀 Getting Started](#getting-started)
-  - [📋 Prerequisites](#prerequisites)
-  - [⚙️ Installation](#installation)
-  - [🔐 Environment Variables](#environment-variables)
-  - [💻 Development](#development)
-  - [🏗️ Production Build](#production-build)
-- [📜 Scripts](#scripts)
-- [📁 Project Structure](#project-structure)
-- [🌐 API Endpoints](#api-endpoints)
-- [📖 Development Guidelines](#development-guidelines)
-- [📦 Key Dependencies](#key-dependencies)
-- [🗺️ Routes & Navigation](#routes--navigation)
-- [🔑 Authentication Flow](#authentication-flow)
-- [⚡ GraphQL Integration](#graphql-integration)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Environment Variables](#environment-variables)
+  - [Development](#development)
+  - [Production Build](#production-build)
+- [Scripts](#scripts)
+- [Project Structure](#project-structure)
+- [API Endpoints](#api-endpoints)
+- [Development Guidelines](#development-guidelines)
+- [Key Dependencies](#key-dependencies)
+- [Routes & Navigation](#routes--navigation)
+- [Authentication Flow](#authentication-flow)
+- [GraphQL Integration](#graphql-integration)
 
-## Problem Statement
-
-African retail users and crypto operators increasingly rely on blockchain-based finance — yet visibility into on-chain assets remains limited.
-
-Barriers include:
-
-- Difficulty viewing full portfolio value across tokens and NFTs
-- Lack of transparent token supply and concentration insights
-- No easy way to evaluate counterparty risk when transacting
-
-Tools like HashScan show raw data but lack actionable analytics
-
-This reduces confidence in on-chain finance and makes informed participation in Web3 difficult for individuals, traders, and African fintech builders.
-
-## Hedera-Based Solution
-
-HbarWatch is a smart, public explorer and portfolio tracker that turns raw Hedera network data into financial intelligence.
-
-It enables African users to:
-- Understand true portfolio value through real-time pricing
-- Identify risky or centralized tokens via supply concentration analytics
-- Improve decision-making with net worth history & diversification metrics
-- Detect whale inflows/outflows affecting market risk
-- Build trust through NFT + token verification and metadata
-- Receive real-time notifications of activity on watched accounts
-
-By making on-chain assets transparent, contextualized, and trustworthy, HbarWatch supports responsible growth of decentralized finance across Africa.
-
-## Hedera Services Used
-Hedera Service	Implementation in HbarWatch
-HTS – Hedera Token Service	Token balance tracking, token metadata, supply + holder analytics
-Mirror Node APIs (Data Layer)	Portfolio valuation, transaction history, NFT inventory, counterparty mapping, follow/alert system
-WalletConnect (HashPack)	Secure wallet login and ownership verification (Ed25519 challenge-response)
-Serverless API on Hedera Data	Historical snapshots for net worth tracking and trending insights
-
-🔐 All reads are trustless — no centralized indexing required.
-
-## Hackathon Track
-
-✅ On-chain Finance
-
-HbarWatch aligns by enabling transparent financial operations, improved asset risk evaluation, and informed participation in Hedera-based economies.
-
-
-## Features
-
-### 🔍 **Portfolio & Analytics**
-- **Net Worth Tracking**: Real-time portfolio valuation with historical charts
-- **Portfolio Diversification**: Visual breakdown of token holdings and allocations
-- **Token Price Tracking**: Live prices and 24h changes from SaucerSwap API
-- **Transaction History**: Comprehensive transaction analysis and filtering
-- **Account Balance Overview**: Multi-token balance display with USD values
-
-### 🏆 **Top Holders & Discovery**
-- **Top Token Holders**: Explore largest holders for any Hedera token
-- **Token Information**: Comprehensive token metadata from SaucerSwap
-- **Account Search**: Quick navigation and account lookup
-- **NFT Gallery**: View and explore NFT collections with detailed modals
-
-### 🔔 **Social & Notifications**
-- **Follow System**: Follow other Hedera accounts and track their activity
-- **Real-time Notifications**: Get notified of followed accounts' transactions
-- **Notification Center**: Comprehensive notification management with filtering
-- **Social Authentication**: Secure wallet-based login with JWT tokens
-
-### 🔐 **Wallet Integration**
-- **HashPack Support**: HashPack WalletConnect integration via Buidler Labs
-- **Secure Authentication**: Ed25519 signature verification with challenge-response
-- **Session Management**: JWT-based authentication with automatic token refresh
-- **Wallet Connection Modal**: Unified wallet connection experience
-
-### 📊 **Advanced Features**
-<!-- - **Counterparty Mapping**: Transaction counterparty identification and labeling -->
-- **Watchlist Management**: Track favorite accounts and tokens
-- **Dark Mode Support**: Full theme switching with system preference detection
-- **Responsive Design**: Mobile-first responsive UI across all devices
 
 ## Tech Stack
 
