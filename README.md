@@ -4,6 +4,56 @@ A comprehensive Hedera network explorer and portfolio tracker that provides wall
 
 This is a modern Vite + React + TypeScript application styled with Tailwind CSS and shadcn/ui. Data fetching is powered by TanStack Query with React Query patterns, charts are built with Recharts, and wallet integration uses Buidler Labs HashGraph React Wallets. The repository includes serverless API routes and GraphQL integration.
 
+
+🔍 Problem Statement
+
+African retail users and crypto operators increasingly rely on blockchain-based finance — yet visibility into on-chain assets remains limited.
+
+Barriers include:
+
+Difficulty viewing full portfolio value across tokens and NFTs
+
+Lack of transparent token supply and concentration insights
+
+No easy way to evaluate counterparty risk when transacting
+
+Tools like HashScan show raw data but lack actionable analytics
+
+This reduces confidence in on-chain finance and makes informed participation in Web3 difficult for individuals, traders, and African fintech builders.
+
+🧠 Hedera-Based Solution
+
+HbarWatch is a smart, public explorer and portfolio tracker that turns raw Hedera network data into financial intelligence.
+
+It enables African users to:
+✅ Understand true portfolio value through real-time pricing
+✅ Identify risky or centralized tokens via supply concentration analytics
+✅ Improve decision-making with net worth history & diversification metrics
+✅ Detect whale inflows/outflows affecting market risk
+✅ Build trust through NFT + token verification and metadata
+✅ Receive real-time notifications of activity on watched accounts
+
+By making on-chain assets transparent, contextualized, and trustworthy, HbarWatch supports responsible growth of decentralized finance across Africa.
+
+🏗️ Hedera Services Used
+Hedera Service	Implementation in HbarWatch
+HTS – Hedera Token Service	Token balance tracking, token metadata, supply + holder analytics
+Mirror Node APIs (Data Layer)	Portfolio valuation, transaction history, NFT inventory, counterparty mapping, follow/alert system
+WalletConnect (HashPack)	Secure wallet login and ownership verification (Ed25519 challenge-response)
+Serverless API on Hedera Data	Historical snapshots for net worth tracking and trending insights
+
+🔐 All reads are trustless — no centralized indexing required.
+
+🧩 Hackathon Track
+
+✅ On-chain Finance & Real-World Assets and DLT for Operations
+
+HbarWatch aligns by enabling transparent financial operations, improved asset risk evaluation, and informed participation in Hedera-based economies.
+
+
+
+
+
 ## Features
 
 ### 🔍 **Portfolio & Analytics**
