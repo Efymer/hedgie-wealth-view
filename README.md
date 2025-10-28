@@ -158,31 +158,31 @@ Ensure environment variables are configured in Vercel dashboard.
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         USER BROWSER                            │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  React Frontend (Vite + TypeScript)                      │  │
-│  │  - Portfolio Dashboard                                    │  │
-│  │  - Transaction History                                    │  │
-│  │  - Wallet Connection (HashConnect)                        │  │
-│  │  - Notifications Center                                   │  │
-│  └────────┬─────────────────────────────────────────┬───────┘  │
-└───────────┼─────────────────────────────────────────┼──────────┘
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  React Frontend (Vite + TypeScript)                      │   │
+│  │  - Portfolio Dashboard                                   │   │
+│  │  - Transaction History                                   │   │
+│  │  - Wallet Connection (HashConnect)                       │   │
+│  │  - Notifications Center                                  │   │
+│  └────────┬─────────────────────────────────────────┬───────┘   │
+└───────────┼─────────────────────────────────────────┼───────────┘
             │                                         │
             │ REST API Calls                          │ WebSocket (WalletConnect)
             │                                         │
 ┌───────────▼─────────────────────────────────────────▼──────────┐
 │              Vercel Serverless Functions (Backend)             │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐ │
-│  │  /api/auth/*     │  │  /api/tokens/*   │  │  /api/cron/* │ │
-│  │  - challenge     │  │  - info          │  │  - snapshots │ │
-│  │  - login         │  │  - prices        │  │  - polling   │ │
-│  └────────┬─────────┘  └────────┬─────────┘  └──────┬───────┘ │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐  │
+│  │  /api/auth/*     │  │  /api/tokens/*   │  │  /api/cron/* │  │
+│  │  - challenge     │  │  - info          │  │  - snapshots │  │
+│  │  - login         │  │  - prices        │  │  - polling   │  │
+│  └────────┬─────────┘  └────────┬─────────┘  └──────┬───────┘  │
 │           │                     │                    │         │
 │           │ Ed25519 Verify      │ Token Data         │ Cron    │
 │           │                     │                    │         │
 │  ┌────────▼─────────────────────▼────────────────────▼───────┐ │
 │  │              Redis Cache (Session + Data)                 │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└───────────┬──────────────────────────────┬──────────────────────┘
+│  └───────────────────────────────────────────────────────────┘ │
+└───────────┬──────────────────────────────┬─────────────────────┘
             │                              │
             │ GraphQL Queries              │ REST API Calls
             │                              │
@@ -209,11 +209,11 @@ Ensure environment variables are configured in Vercel dashboard.
 
 ┌─────────────────────────────────────────────────────────────────┐
 │                    External Data Sources                        │
-│  ┌──────────────────┐  ┌──────────────────┐                    │
-│  │  SaucerSwap API  │  │  CoinGecko API   │                    │
-│  │  - Token prices  │  │  - HBAR price    │                    │
-│  │  - DEX data      │  │  - Market data   │                    │
-│  └──────────────────┘  └──────────────────┘                    │
+│  ┌──────────────────┐  ┌──────────────────┐                     │
+│  │  SaucerSwap API  │  │  CoinGecko API   │                     │
+│  │  - Token prices  │  │  - HBAR price    │                     │
+│  │  - DEX data      │  │  - Market data   │                     │
+│  └──────────────────┘  └──────────────────┘                     │
 └─────────────────────────────────────────────────────────────────┘
 
 Data Flow:
