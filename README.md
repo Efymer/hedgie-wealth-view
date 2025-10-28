@@ -1,6 +1,6 @@
 # HBARWatch
 
-**Hackathon Track:** On-chain Finance & Real-World Assets and DLT for Operations
+**Hackathon Track:** On-chain Finance & Real-World Assets
 
 ## 🎯 Project Overview
 
