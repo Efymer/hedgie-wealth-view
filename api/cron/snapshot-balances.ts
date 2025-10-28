@@ -10,7 +10,11 @@ const SAUCERSWAP_FULL_TOKENS = "https://api.saucerswap.finance/tokens/full";
 const SAUCERSWAP_TOKENS = "https://api.saucerswap.finance/tokens";
 
 type RequestBody = { accounts?: unknown };
-type Req = { method?: string; query?: Record<string, unknown>; body?: RequestBody };
+type Req = {
+  method?: string;
+  query?: Record<string, unknown>;
+  body?: RequestBody;
+};
 type Res = {
   status: (code: number) => Res;
   json: (body: unknown) => void;
@@ -68,7 +72,11 @@ async function getHBARBalance(accountId: string): Promise<number> {
   )}`;
   log("getHBARBalance: fetching", { accountId, url });
   const res = await fetch(url, { headers: { Accept: "application/json" } });
-  log("getHBARBalance: response", { accountId, ok: res.ok, status: res.status });
+  log("getHBARBalance: response", {
+    accountId,
+    ok: res.ok,
+    status: res.status,
+  });
   if (!res.ok) return 0;
   const json = (await res.json()) as {
     balances: Array<{ account: string; balance: number }>;
@@ -86,7 +94,11 @@ async function getAccountTokens(
   )}/tokens?limit=100`;
   log("getAccountTokens: fetching", { accountId, url });
   const res = await fetch(url, { headers: { Accept: "application/json" } });
-  log("getAccountTokens: response", { accountId, ok: res.ok, status: res.status });
+  log("getAccountTokens: response", {
+    accountId,
+    ok: res.ok,
+    status: res.status,
+  });
   if (!res.ok) return [];
   const json = (await res.json()) as AccountTokensResponse;
   const tokens = json?.tokens ?? [];
@@ -98,36 +110,43 @@ async function getTokenInfos(
   tokenIds: string[]
 ): Promise<Record<string, { decimals: number }>> {
   if (!tokenIds.length) return {};
-  
-  log("getTokenInfos: fetching", { count: tokenIds.length, url: SAUCERSWAP_FULL_TOKENS });
+
+  log("getTokenInfos: fetching", {
+    count: tokenIds.length,
+    url: SAUCERSWAP_FULL_TOKENS,
+  });
+  const apiKey = process.env.SAUCERSWAP_KEY;
+  if (!apiKey) {
+    throw new Error("SAUCERSWAP_KEY environment variable not configured");
+  }
   const res = await fetch(SAUCERSWAP_FULL_TOKENS, {
     method: "GET",
     headers: {
-      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+      "x-api-key": apiKey,
     },
   });
   log("getTokenInfos: response", { ok: res.ok, status: res.status });
   if (!res.ok) return {};
-  
+
   type SaucerSwapFullToken = {
     id: string;
     decimals: number;
   };
-  
+
   const data = (await res.json()) as SaucerSwapFullToken[];
   const map: Record<string, { decimals: number }> = {};
-  
+
   // Filter to only include tokens that are in our requested tokenIds
   const tokenIdSet = new Set(tokenIds);
-  
+
   (data || []).forEach((token) => {
     const id = token.id;
     if (!id || !tokenIdSet.has(id)) return;
-    
+
     const dec = token.decimals ?? 0;
     map[id] = { decimals: Number.isFinite(dec) ? dec : 0 };
   });
-  
+
   log("getTokenInfos: parsed", { count: Object.keys(map).length });
   return map;
 }
@@ -150,10 +169,15 @@ async function getHBARPriceUSD(): Promise<number> {
 // SaucerSwap tokens API returns an array of token objects
 async function getTokenPrices(): Promise<Record<string, number>> {
   log("getTokenPrices: fetching", { url: SAUCERSWAP_TOKENS });
-  const res = await fetch(SAUCERSWAP_TOKENS, { 
+  const apiKey = process.env.SAUCERSWAP_KEY;
+  if (!apiKey) {
+    throw new Error("SAUCERSWAP_KEY environment variable not configured");
+  }
+
+  const res = await fetch(SAUCERSWAP_TOKENS, {
     method: "GET",
     headers: {
-      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+      "x-api-key": apiKey,
     },
   });
   log("getTokenPrices: response", { ok: res.ok, status: res.status });
@@ -216,7 +240,12 @@ async function computeNetWorthUSD(
   const hbar = tinybarToHBAR(hbarTiny);
   let total = hbar * (hbarUsd || 0);
   const breakdown: Record<string, number> = { HBAR: hbar * (hbarUsd || 0) };
-  log("computeNetWorthUSD: hbar", { accountId, hbar, hbarUsd, usd: breakdown.HBAR });
+  log("computeNetWorthUSD: hbar", {
+    accountId,
+    hbar,
+    hbarUsd,
+    usd: breakdown.HBAR,
+  });
 
   // Tokens USD
   for (const t of tokens) {
@@ -232,7 +261,12 @@ async function computeNetWorthUSD(
   }
 
   const ms = Date.now() - t0;
-  log("computeNetWorthUSD: done", { accountId, total, tokens: Object.keys(breakdown).length, ms });
+  log("computeNetWorthUSD: done", {
+    accountId,
+    total,
+    tokens: Object.keys(breakdown).length,
+    ms,
+  });
   return { value: total, breakdown };
 }
 
@@ -296,12 +330,9 @@ export default async function handler(req: Req, res: Res) {
     });
     if (!accounts.length) {
       log("handler: no accounts provided");
-      return res
-        .status(400)
-        .json({
-          error:
-            "No accounts provided. Pass accounts[] in body or ?accounts=...",
-        });
+      return res.status(400).json({
+        error: "No accounts provided. Pass accounts[] in body or ?accounts=...",
+      });
     }
 
     const date = midnightUTC();

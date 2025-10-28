@@ -151,10 +151,14 @@ async function getTokenInfos(
   if (!tokenIds.length) return {};
   
   log("getTokenInfos: fetching", { count: tokenIds.length, url: SAUCERSWAP_FULL_TOKENS });
+  const apiKey = process.env.SAUCERSWAP_KEY;
+  if (!apiKey) {
+    throw new Error("SAUCERSWAP_KEY environment variable not configured");
+  }
   const res = await fetch(SAUCERSWAP_FULL_TOKENS, {
     method: "GET",
     headers: {
-      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+      "x-api-key": apiKey,
     },
   });
   log("getTokenInfos: response", { ok: res.ok, status: res.status });
@@ -200,10 +204,14 @@ async function getHBARPriceUSD(): Promise<number> {
 
 async function getTokenPrices(): Promise<Record<string, number>> {
   log("getTokenPrices: fetching", { url: SAUCERSWAP_TOKENS });
+  const apiKey = process.env.SAUCERSWAP_KEY;
+  if (!apiKey) {
+    throw new Error("SAUCERSWAP_KEY environment variable not configured");
+  }
   const res = await fetch(SAUCERSWAP_TOKENS, { 
     method: "GET",
     headers: {
-      "x-api-key": "875e1017-87b8-4b12-8301-6aa1f1aa073b",
+      "x-api-key": apiKey,
     },
   });
   log("getTokenPrices: response", { ok: res.ok, status: res.status });
