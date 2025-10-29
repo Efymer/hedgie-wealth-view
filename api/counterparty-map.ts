@@ -3,7 +3,7 @@
 // It aggregates counterparties by counting transactions involving the given account,
 // tracking both sends and receives separately.
 
-const MIRROR_NODE = "https://testnet.mirrornode.hedera.com";
+const MIRROR_NODE = "https://mainnet.mirrornode.hedera.com";
 
 // Minimal request/response types to avoid external type deps
 type Req = { method?: string; query?: Record<string, unknown> };

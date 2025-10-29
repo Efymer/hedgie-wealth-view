@@ -1,7 +1,7 @@
 // Serverless function to aggregate and cache top token holders for a tokenId
 // Runtime target: Vercel serverless function (Node.js)
 
-const MIRROR_NODE = 'https://testnet.mirrornode.hedera.com';
+const MIRROR_NODE = 'https://mainnet.mirrornode.hedera.com';
 
 // Basic caps and defaults to protect the backend
 const DEFAULT_TTL_SECONDS = 900; // 15 minutes

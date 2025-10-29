@@ -127,16 +127,14 @@ Open your browser and navigate to:
 
 - **Frontend:** React app runs on `http://localhost:5173` (Vite dev server)
 - **Backend:** Serverless API functions are accessible at `http://localhost:5173/api/*`
-- **Network:** Connects to **Hedera Testnet** by default (Mirror Node: `https://testnet.mirrornode.hedera.com`)
+- **Network:** Connects to **Hedera Mainnet** by default (Mirror Node: `https://mainnet.mirrornode.hedera.com`)
 
 ### Step 5: Test Core Features
 
-1. **Search for an Account:** Enter a Hedera testnet account ID (e.g., `0.0.123456`) in the search bar
+1. **Search for an Account:** Enter a Hedera account ID (e.g., `0.0.123456`) in the search bar
 2. **View Portfolio:** See real-time token balances and net worth
-3. **Connect Wallet:** Click "Connect Wallet" and authenticate with HashPack (ensure HashPack is set to testnet)
+3. **Connect Wallet:** Click "Connect Wallet" and authenticate with HashPack
 4. **Follow Accounts:** After authentication, follow accounts to receive notifications
-
-**Note:** Make sure your HashPack wallet is configured for Hedera Testnet before connecting.
 
 ### Production Build
 
@@ -229,12 +227,12 @@ Data Flow:
 
 ## 🆔 Deployed Hedera IDs
 
-### Testnet Deployment
+### Mainnet Deployment
 
 **Note:** This application primarily uses **read-only** Mirror Node APIs and does not deploy smart contracts or create on-chain entities. All Hedera interactions are query-based.
 
-- **Mirror Node Endpoint:** `https://testnet.mirrornode.hedera.com`
-- **Network:** Hedera Testnet
+- **Mirror Node Endpoint:** `https://mainnet.mirrornode.hedera.com`
+- **Network:** Hedera Mainnet
 - **HTS Tokens Tracked:** Dynamic (any HTS token can be tracked via token ID)
 
 ### Testing the Application
@@ -300,7 +298,6 @@ See `.env.example` for the structure of required environment variables:
 
 ```bash
 # .env.example
-VITE_HEDERA_NETWORK=testnet
 VITE_HASURA_GRAPHQL_ENDPOINT=https://your-hasura-endpoint.app/v1/graphql
 SAUCERSWAP_KEY=your_api_key_here
 REDIS_URL=redis://your-redis-url:6379
@@ -533,9 +530,9 @@ This repository maintains a clean commit history with:
 
 **For Judges - Manual Testing Checklist:**
 
-1. ✅ **Account Search:** Test with various Hedera testnet account IDs
+1. ✅ **Account Search:** Test with various Hedera account IDs (mainnet)
 2. ✅ **Portfolio Display:** Verify token balances match Mirror Node data
-3. ✅ **Wallet Authentication:** Connect HashPack (testnet mode) and verify signature flow
+3. ✅ **Wallet Authentication:** Connect HashPack and verify signature flow
 4. ✅ **Follow Functionality:** Follow an account and check notification creation
 5. ✅ **Net Worth Calculation:** Compare calculated values with manual computation
 6. ✅ **API Response Times:** Monitor network tab for sub-second responses

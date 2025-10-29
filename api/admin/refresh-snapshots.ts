@@ -4,7 +4,7 @@
 
 import Redis from "ioredis";
 
-const MIRROR_NODE = "https://testnet.mirrornode.hedera.com";
+const MIRROR_NODE = "https://mainnet.mirrornode.hedera.com";
 const COINGECKO_PRICE =
   "https://api.coingecko.com/api/v3/simple/price?ids=hedera-hashgraph&vs_currencies=usd";
 const SAUCERSWAP_FULL_TOKENS = "https://api.saucerswap.finance/tokens/full";
