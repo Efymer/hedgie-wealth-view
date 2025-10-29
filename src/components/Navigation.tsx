@@ -16,6 +16,7 @@ import {
 export const Navigation: React.FC = () => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
+  const isTestnet = (import.meta.env.VITE_HEDERA_NETWORK || "testnet") === "testnet";
 
   const NavigationLinks = () => (
     <>
@@ -67,7 +68,7 @@ export const Navigation: React.FC = () => {
   );
 
   return (
-    <nav className="sticky top-0 z-50 glass-card border-b border-border/20 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+    <nav className={`sticky z-50 glass-card border-b border-border/20 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 ${isTestnet ? 'top-[40px]' : 'top-0'}`}>
       <div className="max-w-6xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
