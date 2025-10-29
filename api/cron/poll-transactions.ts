@@ -3,14 +3,14 @@
 // Env:
 // - HASURA_GRAPHQL_ENDPOINT
 // - HASURA_ADMIN_SECRET
-// - MIRROR_NODE_URL (default: https://mainnet.mirrornode.hedera.com)
+// - MIRROR_NODE_URL (default: https://testnet.mirrornode.hedera.com)
 // - ACCOUNTS_PER_RUN (default: 50)
 // - TXS_PER_ACCOUNT (default: 100)
 
 // NOTE: Extended to include token_transfers with normalization using token decimals.
 
 const MIRROR =
-  process.env.MIRROR_NODE_URL || "https://mainnet.mirrornode.hedera.com";
+  process.env.MIRROR_NODE_URL || "https://testnet.mirrornode.hedera.com";
 
 async function gql<T = unknown>(
   query: string,

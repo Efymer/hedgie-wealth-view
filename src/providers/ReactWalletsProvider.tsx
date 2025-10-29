@@ -13,7 +13,7 @@ const metadata = {
 export const ReactWalletsProvider: React.FC<PropsWithChildren> = ({ children }) => {
   type Env = { VITE_HEDERA_NETWORK?: string };
   const env: Env | undefined = typeof import.meta !== 'undefined' ? (import.meta as unknown as { env?: Env }).env : undefined;
-  const isTestnet = (env?.VITE_HEDERA_NETWORK || "mainnet") === "testnet";
+  const isTestnet = (env?.VITE_HEDERA_NETWORK || "testnet") === "testnet";
 
   return (
     <HWBridgeProvider
