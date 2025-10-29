@@ -93,7 +93,7 @@ This cost structure is **300x cheaper** than equivalent Ethereum-based solutions
 
 - **Node.js** 18+ and **npm** 9+
 - **Git** for cloning the repository
-- **Hedera Testnet Account** (optional, for testing authentication)
+- **Hedera mainnet Account** (optional, for testing authentication)
 
 ### Step 1: Clone the Repository
 
@@ -247,15 +247,14 @@ Data Flow:
 To test the full authentication and social features:
 
 **Step 1: Setup**
-1. Create a Hedera testnet account at [portal.hedera.com](https://portal.hedera.com) or use an existing one
-2. Install HashPack wallet extension and configure it for testnet
-3. Import your testnet account into HashPack
+1. Create a Hedera mainnet using Hashpack or use an existing one
+2. Install HashPack wallet extension and configure it for mainnet
 
 **Step 2: Test Portfolio Tracking**
 1. Navigate to the application homepage
-2. Search for your testnet account ID (e.g., `0.0.xxxxx`)
+2. Search for your mainnet account ID (e.g., `0.0.xxxxx`)
 3. View your account balance, token holdings, and transaction history
-4. Verify that all data matches the Hedera testnet mirror node
+4. Verify that all data matches the Hedera mainnet mirror node
 
 **Step 3: Test Wallet Authentication**
 1. Click "Connect Wallet" in the navigation bar
@@ -264,7 +263,7 @@ To test the full authentication and social features:
 4. Verify successful authentication (wallet address displayed in header)
 
 **Step 4: Test Follow Functionality**
-1. Search for another testnet account to follow
+1. Search for another mainnet account to follow
 2. Click the "Follow" button on their profile
 3. Verify the account appears in your followed accounts list
 4. Unfollow and re-follow to test both actions
@@ -280,7 +279,7 @@ To test the full authentication and social features:
 1. Explore the counterparty map to see transaction relationships
 2. View net worth charts and portfolio diversification
 3. Search for tokens and view top holders
-4. Test the NFT gallery if you have testnet NFTs
+4. Test the NFT gallery if you have mainnet NFTs
 
 ### GraphQL Endpoint
 
@@ -310,16 +309,6 @@ SAUCERSWAP_KEY=your_api_key_here
 REDIS_URL=redis://your-redis-url:6379
 JWT_SECRET=your_jwt_secret_here
 ```
-
-### Judge Credentials
-
-**For Hackathon Judges:** Test account credentials (Account IDs and Private Keys) are provided in the **DoraHacks submission notes** field. These credentials are for verification purposes only and should not be shared publicly.
-
-**To Test Authentication:**
-1. Install HashPack wallet extension
-2. Import the provided test account using the private key from submission notes
-3. Connect wallet on HBARWatch
-4. Test follow, notification, and social features
 
 ### Production Security
 
