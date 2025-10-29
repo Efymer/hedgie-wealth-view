@@ -1,5 +1,12 @@
 # HBARWatch
 
+📚 **[Hashgraph Developer Course](./hashgraph-developer-course.pdf)** - Certificate of Completion
+
+📊 **[Pitch Deck](./pitch-deck.pdf)** - Project Overview & Vision
+
+> **⚠️ MAINNET DEPLOYMENT NOTICE**  
+> This application runs on **Hedera Mainnet** and displays real account data, live token prices, and actual transaction history. All portfolio valuations, token balances, and financial data are sourced from production Hedera network APIs. Use real Hedera accounts for testing and authentication.
+
 **Hackathon Track:** On-chain Finance & Real-World Assets
 
 ## 🎯 Project Overview
