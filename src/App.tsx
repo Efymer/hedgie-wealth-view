@@ -18,7 +18,6 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ReactWalletsProvider } from "@/providers/ReactWalletsProvider";
 import Explorer from "./pages/Explorer";
-import { AlertTriangle } from "lucide-react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,27 +27,16 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => {
-  const isTestnet = (import.meta.env.VITE_HEDERA_NETWORK || "testnet") === "testnet";
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ReactWalletsProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToTop />
-            <div className="min-h-screen bg-background flex flex-col">
-              {isTestnet && (
-                <div className="fixed top-0 left-0 right-0 z-[100] bg-warning/90 backdrop-blur-sm border-b border-warning">
-                  <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-center gap-2 text-sm font-medium text-warning-foreground">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span>Running on Hedera Testnet</span>
-                  </div>
-                </div>
-              )}
-              <Navigation />
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <ReactWalletsProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <div className="min-h-screen bg-background flex flex-col">
+            <Navigation />
             <div className="flex-1">
               <Routes>
                 <Route path="/" element={<Landing />} />
@@ -74,7 +62,6 @@ const App = () => {
       </TooltipProvider>
     </ReactWalletsProvider>
   </QueryClientProvider>
-  );
-};
+);
 
 export default App;
