@@ -237,20 +237,45 @@ Data Flow:
 - **Network:** Hedera Testnet
 - **HTS Tokens Tracked:** Dynamic (any HTS token can be tracked via token ID)
 
-### Test Accounts for Judges
+### Testing the Application
 
-For testing the full authentication and social features:
+To test the full authentication and social features:
 
-**Test Account 1:**
-- **Account ID:** `0.0.123456` (example - replace with actual test account)
-- **Public Key:** Provided in DoraHacks submission notes
-- **Private Key:** Provided securely in DoraHacks submission text field
+**Step 1: Setup**
+1. Create a Hedera testnet account at [portal.hedera.com](https://portal.hedera.com) or use an existing one
+2. Install HashPack wallet extension and configure it for testnet
+3. Import your testnet account into HashPack
 
-**Test Account 2:**
-- **Account ID:** `0.0.789012` (example - replace with actual test account)
-- **Public Key:** Provided in DoraHacks submission notes
+**Step 2: Test Portfolio Tracking**
+1. Navigate to the application homepage
+2. Search for your testnet account ID (e.g., `0.0.xxxxx`)
+3. View your account balance, token holdings, and transaction history
+4. Verify that all data matches the Hedera testnet mirror node
 
-**Usage:** Import these accounts into HashPack wallet to test wallet connection, authentication, follow functionality, and notifications.
+**Step 3: Test Wallet Authentication**
+1. Click "Connect Wallet" in the navigation bar
+2. Approve the HashPack connection request
+3. Sign the authentication challenge message
+4. Verify successful authentication (wallet address displayed in header)
+
+**Step 4: Test Follow Functionality**
+1. Search for another testnet account to follow
+2. Click the "Follow" button on their profile
+3. Verify the account appears in your followed accounts list
+4. Unfollow and re-follow to test both actions
+
+**Step 5: Test Notifications**
+1. Follow your own account (or have another account follow you)
+2. Send a test transaction from your account (HBAR or token transfer)
+3. Wait 1-2 minutes for the transaction polling cron to detect it
+4. Check the notifications center for the new transaction notification
+5. Test marking notifications as read/unread
+
+**Step 6: Test Additional Features**
+1. Explore the counterparty map to see transaction relationships
+2. View net worth charts and portfolio diversification
+3. Search for tokens and view top holders
+4. Test the NFT gallery if you have testnet NFTs
 
 ### GraphQL Endpoint
 

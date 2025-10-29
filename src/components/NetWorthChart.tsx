@@ -163,9 +163,6 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({
               >
                 Join Waitlist
               </Button>
-              <p className="text-xs text-muted-foreground">
-                Get exclusive access to premium features
-              </p>
             </div>
           </div>
         </div>

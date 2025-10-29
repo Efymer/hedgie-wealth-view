@@ -182,7 +182,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
   const openOnHashscan = (txId?: string) => {
     if (!txId) return;
-    const url = `https://hashscan.io/mainnet/transaction/${encodeURIComponent(
+    const url = `https://hashscan.io/testnet/transaction/${encodeURIComponent(
       txId
     )}`;
     window.open(url, "_blank", "noopener,noreferrer");
